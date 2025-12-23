@@ -1,0 +1,29 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:6333:6333
+      - 127.0.0.1:6334:6334
+    volumes:
+      - qdrant_storage:/qdrant/storage
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: pgvector_postgres
+    restart: unless-stopped
+    profiles: [postgres]
+    environment:
+      POSTGRES_DB: analysis
+      POSTGRES_USER: analysis
+      POSTGRES_PASSWORD: analysis
+    ports:
+      - 127.0.0.1:5432:5432
+    volumes:
+      - pg_storage:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+
+volumes:
+  qdrant_storage:
+  pg_storage:

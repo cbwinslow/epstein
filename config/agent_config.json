@@ -1,0 +1,71 @@
+{
+  "agents": {
+    "epstein_data_processor": {
+      "name": "Epstein Data Processor",
+      "description": "Specialized agent for PDF document processing with OCR, NER, embeddings, and vector search",
+      "version": "1.0.0",
+      "capabilities": [
+        "OCR processing",
+        "Text extraction", 
+        "Named Entity Recognition",
+        "Vector embeddings",
+        "Semantic search"
+      ],
+      "model_config": {
+        "embedding_model": "text-embedding-ada-002",
+        "ner_model": "en_core_web_sm",
+        "ocr_engine": "tesseract"
+      },
+      "database_config": {
+        "postgres_dsn": "postgresql://analysis:analysis@localhost:5432/analysis",
+        "qdrant_url": "http://localhost:6333",
+        "qdrant_collection": "epstein_documents"
+      },
+      "processing_config": {
+        "batch_size": 10,
+        "chunk_size": 1000,
+        "chunk_overlap": 200,
+        "max_file_size": "100MB",
+        "supported_formats": ["pdf", "txt", "docx"]
+      }
+    },
+    "epstein_tools": {
+      "name": "Epstein Tools Suite",
+      "description": "Collection of tools for pipeline management, database operations, and vector search",
+      "version": "1.0.0",
+      "tools": [
+        "run_epstein_pipeline",
+        "query_epstein_database", 
+        "search_vector_embeddings",
+        "get_pipeline_status",
+        "analyze_document_entities",
+        "export_processing_results"
+      ],
+      "api_config": {
+        "base_url": "http://localhost:8000",
+        "api_key": "epstein-api-key",
+        "timeout": 300
+      }
+    },
+    "db_troubleshooter": {
+      "name": "Database Troubleshooter",
+      "description": "Specialized agent for PostgreSQL database troubleshooting, performance analysis, and optimization",
+      "version": "1.0.0",
+      "capabilities": [
+        "Database health monitoring",
+        "Query performance analysis",
+        "Index optimization recommendations",
+        "Connection pool management",
+        "Dead tuple detection",
+        "Slow query identification"
+      ],
+      "database_config": {
+        "postgres_dsn": "postgresql://analysis:analysis@localhost:5432/analysis",
+        "monitoring_interval": 60,
+        "slow_query_threshold": 1000,
+        "connection_timeout": 30
+      },
+      "analysis_config": {
+        "enable_execution_plans": true,
+        "enable_index_analysis": true,
+        "enable_table_statistics": true,

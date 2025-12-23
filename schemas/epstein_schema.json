@@ -1,0 +1,248 @@
+{
+  "name": "Epstein Project Schema",
+  "version": "1.0.0",
+  "description": "JSON schema for Epstein document processing pipeline",
+  
+  "document": {
+    "type": "object",
+    "properties": {
+      "document_id": {
+        "type": "string",
+        "description": "Unique identifier for the document",
+        "pattern": "^doc_[a-zA-Z0-9]{8}$"
+      },
+      "file_path": {
+        "type": "string",
+        "description": "Path to the original file"
+      },
+      "file_name": {
+        "type": "string",
+        "description": "Original filename"
+      },
+      "file_size": {
+        "type": "integer",
+        "description": "File size in bytes"
+      },
+      "mime_type": {
+        "type": "string",
+        "description": "MIME type of the file"
+      },
+      "created_at": {
+        "type": "string",
+        "format": "date-time",
+        "description": "Timestamp when document was processed"
+      },
+      "status": {
+        "type": "string",
+        "enum": ["pending", "processing", "completed", "failed"],
+        "description": "Processing status"
+      }
+    },
+    "required": ["document_id", "file_path", "file_name", "created_at", "status"]
+  },
+  
+  "entity": {
+    "type": "object",
+    "properties": {
+      "entity_id": {
+        "type": "string",
+        "description": "Unique identifier for the entity"
+      },
+      "document_id": {
+        "type": "string",
+        "description": "ID of the document containing this entity"
+      },
+      "entity_type": {
+        "type": "string",
+        "enum": ["PERSON", "ORG", "LOC", "DATE", "MONEY", "EMAIL", "PHONE"],
+        "description": "Type of named entity"
+      },
+      "text": {
+        "type": "string",
+        "description": "The extracted entity text"
+      },
+      "start_char": {
+        "type": "integer",
+        "description": "Start character position in document"
+      },
+      "end_char": {
+        "type": "integer",
+        "description": "End character position in document"
+      },
+      "confidence": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1,
+        "description": "Confidence score for entity extraction"
+      },
+      "metadata": {
+        "type": "object",
+        "description": "Additional metadata about the entity"
+      }
+    },
+    "required": ["entity_id", "document_id", "entity_type", "text", "confidence"]
+  },
+  
+  "chunk": {
+    "type": "object",
+    "properties": {
+      "chunk_id": {
+        "type": "string",
+        "description": "Unique identifier for the chunk"
+      },
+      "document_id": {
+        "type": "string",
+        "description": "ID of the document this chunk belongs to"
+      },
+      "chunk_text": {
+        "type": "string",
+        "description": "Text content of the chunk"
+      },
+      "start_char": {
+        "type": "integer",
+        "description": "Start character position in document"
+      },
+      "end_char": {
+        "type": "integer",
+        "description": "End character position in document"
+      },
+      "chunk_order": {
+        "type": "integer",
+        "description": "Order of this chunk in the document"
+      },
+      "embedding": {
+        "type": "array",
+        "items": {"type": "number"},
+        "description": "Vector embedding for this chunk"
+      },
+      "metadata": {
+        "type": "object",
+        "properties": {
+          "page_number": {"type": "integer"},
+          "section": {"type": "string"},
+          "word_count": {"type": "integer"}
+        }
+      }
+    },
+    "required": ["chunk_id", "document_id", "chunk_text", "chunk_order"]
+  },
+  
+  "processing_task": {
+    "type": "object",
+    "properties": {
+      "task_id": {
+        "type": "string",
+        "description": "Unique identifier for the task"
+      },
+      "task_type": {
+        "type": "string",
+        "enum": ["ocr", "extraction", "ner", "embedding", "pipeline"],
+        "description": "Type of processing task"
+      },
+      "status": {
+        "type": "string",
+        "enum": ["pending", "running", "completed", "failed", "cancelled"],
+        "description": "Current task status"
+      },
+      "input_documents": {
+        "type": "array",
+        "items": {"type": "string"},
+        "description": "List of document IDs to process"
+      },
+      "parameters": {
+        "type": "object",
+        "description": "Task-specific parameters"
+      },
+      "results": {
+        "type": "object",
+        "description": "Task execution results"
+      },
+      "error_message": {
+        "type": "string",
+        "description": "Error message if task failed"
+      },
+      "started_at": {
+        "type": "string",
+        "format": "date-time",
+        "description": "Task start time"
+      },
+      "completed_at": {
+        "type": "string",
+        "format": "date-time",
+        "description": "Task completion time"
+      },
+      "duration_seconds": {
+        "type": "number",
+        "description": "Task duration in seconds"
+      }
+    },
+    "required": ["task_id", "task_type", "status"]
+  },
+  
+  "search_result": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "Search query"
+      },
+      "search_type": {
+        "type": "string",
+        "enum": ["keyword", "semantic", "hybrid"],
+        "description": "Type of search performed"
+      },
+      "results": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "document_id": {"type": "string"},
+            "chunk_id": {"type": "string"},
+            "score": {"type": "number"},
+            "snippet": {"type": "string"},
+            "metadata": {"type": "object"}
+          }
+        }
+      },
+      "total_found": {
+        "type": "integer",
+        "description": "Total number of results found"
+      },
+      "returned": {
+        "type": "integer",
+        "description": "Number of results returned"
+      },
+      "searched_at": {
+        "type": "string",
+        "format": "date-time",
+        "description": "Search timestamp"
+      }
+    },
+    "required": ["query", "search_type", "results"]
+  },
+  
+  "export_format": {
+    "type": "object",
+    "properties": {
+      "format": {
+        "type": "string",
+        "enum": ["json", "csv", "xml", "parquet"],
+        "description": "Export format"
+      },
+      "data": {
+        "type": "object",
+        "description": "Data to export"
+      },
+      "metadata": {
+        "type": "object",
+        "properties": {
+          "exported_at": {"type": "string", "format": "date-time"},
+          "record_count": {"type": "integer"},
+          "file_size": {"type": "integer"},
+          "compression": {"type": "string"}
+        }
+      }
+    },
+    "required": ["format", "data"]
+  }
+}

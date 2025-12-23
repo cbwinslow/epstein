@@ -1,0 +1,7 @@
+# rulebook-ai generated artifacts (do not commit)
+.rulebook-ai/
+.cursor/
+.windsurf/
+.clinerules/
+GEMINI.md
+CODEX.md
