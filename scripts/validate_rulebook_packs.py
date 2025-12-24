@@ -23,25 +23,17 @@ except Exception:
 ROOT = Path(__file__).resolve().parents[1]
 PACKS_DIR = ROOT / "rulebook_packs"
 
-errors = []
-
-if not PACKS_DIR.exists():
-    print(f"No rulebook_packs directory found at {PACKS_DIR}")
-    sys.exit(0)  # nothing to validate
-
-for pack in PACKS_DIR.iterdir():
-    if not pack.is_dir():
-        continue
-    print(f"Validating pack: {pack.name}")
+def validate_pack(pack: Path) -> list[str]:
+    errors: list[str] = []
     pack_yaml = pack / "pack.yaml"
     if not pack_yaml.exists():
         errors.append(f"Missing pack.yaml in {pack}")
-        continue
+        return errors
     try:
         data = yaml.safe_load(pack_yaml.read_text(encoding="utf-8")) or {}
     except Exception as e:
         errors.append(f"Failed to parse YAML {pack_yaml}: {e}")
-        continue
+        return errors
 
     # Basic keys
     if not data.get("name") or not data.get("version"):
@@ -73,11 +65,30 @@ for pack in PACKS_DIR.iterdir():
     else:
         errors.append(f"pack {pack.name}: starters.rules_file missing")
 
-if errors:
-    print("\nValidation failed with errors:")
-    for e in errors:
-        print(" - ", e)
-    sys.exit(2)
+    return errors
 
-print("All packs validated OK.")
-sys.exit(0)
+
+def validate_packs(packs_dir: Path) -> list[str]:
+    errors: list[str] = []
+    if not packs_dir.exists():
+        return errors
+    for pack in packs_dir.iterdir():
+        if not pack.is_dir():
+            continue
+        errors.extend(validate_pack(pack))
+    return errors
+
+
+def main() -> int:
+    errors = validate_packs(PACKS_DIR)
+    if errors:
+        print("\nValidation failed with errors:")
+        for e in errors:
+            print(" - ", e)
+        return 2
+    print("All packs validated OK.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

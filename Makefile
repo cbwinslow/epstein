@@ -1,66 +1,53 @@
-# ==============================================================================
-# File: Makefile
-# Date: 2025-12-19
-# Purpose:
-#   Convenience targets for the document analysis project.
-# ======================================================================
-
 ARTIFACTS_DIR ?= ./epstein_artifacts
 VECTOR_DIR ?= ./vector-stack
-PY ?= uv run python
+CONFIG ?= ./config.json
+
+COMPOSE ?= docker compose
+COMPOSE_FILE ?= compose.yml
 
 .PHONY: help
 help:
-	@echo "Targets:"
-	@echo "  bootstrap      - run Ubuntu bootstrap (creates uv env + lock + docs)"
-	@echo "  pipeline-init  - write starter config.json"
-	@echo "  pipeline-run   - run OCR/chunk/NER pipeline"
-	@echo "  vectordb-up    - start Qdrant + Postgres stack"
-	@echo "  vectordb-down  - stop stack"
-	@echo "  db-load        - load artifacts into Postgres (requires DSN)"
-	@echo "  status         - show stack status"
-
-.PHONY: bootstrap
-bootstrap:
-	chmod +x scripts/cbw_bootstrap_project_ubuntu.sh scripts/vector_db_bootstrap.sh
-	./scripts/cbw_bootstrap_project_ubuntu.sh
-
-.PHONY: pipeline-init
-pipeline-init:
-	$(PY) epstein/epstein_files_pipeline.py init-config --out ./config.json
-
-.PHONY: pipeline-run
-pipeline-run:
-	$(PY) epstein_files_pipeline.py run --config ./config.json
-
-.PHONY: vectordb-up
-vectordb-up:
-	chmod +x scripts/vector_db_bootstrap.sh
-	./scripts/vector_db_bootstrap.sh --dir $(VECTOR_DIR) up
-
-.PHONY: vectordb-down
-vectordb-down:
-	chmod +x scripts/vector_db_bootstrap.sh
-	./scripts/vector_db_bootstrap.sh --dir $(VECTOR_DIR) down
-
-.PHONY: status
-status:
-	./scripts/vector_db_bootstrap.sh --dir $(VECTOR_DIR) status
+	@echo "Targets: bootstrap down status doctor lint pipeline-init pipeline-run db-load"
 
 .PHONY: doctor
 doctor:
-	@python3 scripts/doctor.py --check-db || true
+	@$(COMPOSE) version >/dev/null
+	@docker version >/dev/null
+	@echo "Docker OK."
 
-.PHONY: doctor-check
-doctor-check:
-	@python3 scripts/doctor.py --check-db
+.PHONY: bootstrap
+bootstrap:
+	@chmod +x ./vector_db_bootstrap.sh
+	@./vector_db_bootstrap.sh --dir $(VECTOR_DIR) up
+	@$(COMPOSE) -f $(COMPOSE_FILE) up -d qdrant postgres
 
-.PHONY: lint
-lint:
-	@uv run ruff check . || true
-	@uv run mypy epstein || true
+.PHONY: down
+down:
+	@$(COMPOSE) -f $(COMPOSE_FILE) down
+
+.PHONY: status
+status:
+	@$(COMPOSE) -f $(COMPOSE_FILE) ps
+
+.PHONY: pipeline-init
+pipeline-init:
+	@$(COMPOSE) -f $(COMPOSE_FILE) --profile pipeline run --rm pipeline epstein_files_pipeline.py init-config --out $(CONFIG)
+
+.PHONY: pipeline-run
+pipeline-run:
+	@$(COMPOSE) -f $(COMPOSE_FILE) --profile pipeline run --rm pipeline epstein_files_pipeline.py run --config $(CONFIG)
 
 .PHONY: db-load
 db-load:
-	@if [ -z "$$DSN" ]; then echo "Set DSN=postgresql://user:pass@localhost:5432/analysis"; exit 2; fi
-	$(PY) db_ingest_artifacts.py --artifacts-dir $(ARTIFACTS_DIR) --dsn "$$DSN"
+	@$(COMPOSE) -f $(COMPOSE_FILE) --profile pipeline run --rm \
+	  -e EPSTEIN_DSN="$${EPSTEIN_DSN:-postgresql://analysis:analysis@postgres:5432/analysis}" \
+	  pipeline db_ingest_artifacts.py --artifacts-dir $(ARTIFACTS_DIR) --dsn "$${EPSTEIN_DSN:-postgresql://analysis:analysis@postgres:5432/analysis}"
+
+.PHONY: lint
+lint:
+	@$(COMPOSE) -f $(COMPOSE_FILE) --profile pipeline run --rm pipeline -m ruff check .
+	@$(COMPOSE) -f $(COMPOSE_FILE) --profile pipeline run --rm pipeline -m mypy epstein_files_pipeline.py db_ingest_artifacts.py || true
+
+.PHONY: verify-bundles
+verify-bundles:
+	@bash scripts/verify_bundle.sh

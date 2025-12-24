@@ -23,8 +23,12 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyyaml
+          pip install pyyaml pytest
 
       - name: Run pack validation
         run: |
           python scripts/validate_rulebook_packs.py
+
+      - name: Run pack tests
+        run: |
+          pytest -q tests/test_validate_rulebook_packs.py

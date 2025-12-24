@@ -1,0 +1,29 @@
+name: Verify bundles
+
+on:
+  pull_request:
+    paths:
+      - 'docs/files/**'
+  push:
+    paths:
+      - 'docs/files/**'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install test deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+
+      - name: Run bundle verification
+        run: |
+          bash scripts/verify_bundle.sh
+
+      - name: Run verify-bundle tests
+        run: |
+          pytest -q tests/test_verify_bundle.py
