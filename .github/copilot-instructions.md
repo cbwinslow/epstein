@@ -60,6 +60,8 @@ The Epstein project is a comprehensive data processing pipeline for analyzing PD
 - Integration tests for pipeline components
 - Use pytest framework
 - Mock external dependencies
+- Verify snapshot bundles in `docs/files/` with `scripts/verify_bundle.sh` and CI workflow `.github/workflows/verify-bundles.yml`
+- Collect task logs with `epstein.utils.task_logger.TaskLogger` and summary with `scripts/collect_task_logs.py` (used in CI artifacts)
 
 ## Performance Considerations
 - Process documents in batches
