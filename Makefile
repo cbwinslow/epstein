@@ -51,3 +51,7 @@ lint:
 .PHONY: verify-bundles
 verify-bundles:
 	@bash scripts/verify_bundle.sh
+
+.PHONY: collect-task-logs
+collect-task-logs:
+	@python scripts/collect_task_logs.py
