@@ -31,4 +31,4 @@ jobs:
 
       - name: Run pack tests
         run: |
-          pytest -q tests/test_validate_rulebook_packs.py
+          pytest -q tests/test_validate_rulebook_packs.py tests/test_task_logger.py
