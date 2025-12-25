@@ -55,3 +55,33 @@ verify-bundles:
 .PHONY: collect-task-logs
 collect-task-logs:
 	@python scripts/collect_task_logs.py
+
+.PHONY: test
+test:
+	@echo "Running multi-agent system tests with OpenTelemetry..."
+	@python tests/run_tests.py
+
+.PHONY: test-unit
+test-unit:
+	@echo "Running unit tests..."
+	@pytest tests/test_agents.py -v
+
+.PHONY: test-integration
+test-integration:
+	@echo "Running integration tests..."
+	@pytest tests/test_integration.py -v
+
+.PHONY: test-coverage
+test-coverage:
+	@echo "Running tests with coverage..."
+	@pytest tests/ --cov=agents --cov=tools --cov-report=html --cov-report=term-missing
+
+.PHONY: test-watch
+test-watch:
+	@echo "Running tests in watch mode..."
+	@pytest-watch tests/ -v
+
+.PHONY: install-test-deps
+install-test-deps:
+	@echo "Installing test dependencies..."
+	@pip install -r tests/requirements.txt

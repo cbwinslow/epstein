@@ -1,0 +1,65 @@
+name: Mission Control CI
+
+on:
+  push:
+    paths:
+      - 'tools/mission_control/**'
+      - 'scripts/gen_issues_from_tasks.py'
+      - 'tasks/**'
+      - 'tests/**'
+  pull_request:
+    paths:
+      - 'tools/mission_control/**'
+      - 'scripts/gen_issues_from_tasks.py'
+      - 'tasks/**'
+      - 'tests/**'
+
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dev dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest PyYAML
+
+      - name: Run pytest
+        run: |
+          pytest -q
+
+  generate-issues:
+    name: Generate issues (dry-run)
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install PyYAML
+
+      - name: Generate issues.json
+        run: |
+          python scripts/gen_issues_from_tasks.py --in tasks/master_tasks.yml --out-json ./issues.json --dry-run
+
+      - name: Upload issues.json artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: issues
+          path: ./issues.json

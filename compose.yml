@@ -1,0 +1,45 @@
+services:
+  pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: epstein-pipeline:local
+    container_name: epstein_pipeline_runner
+    volumes:
+      - ./:/app
+    working_dir: /app
+    environment:
+      EPSTEIN_DSN: ${EPSTEIN_DSN:-}
+      QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
+    depends_on:
+      - qdrant
+      - postgres
+    profiles: ["pipeline"]
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${QDRANT_PORT:-6333}:6333"
+      - "127.0.0.1:${QDRANT_GRPC_PORT:-6334}:6334"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: pgvector_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-analysis}
+      POSTGRES_USER: ${POSTGRES_USER:-analysis}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pg_storage:/var/lib/postgresql/data
+      - ./vector-stack/initdb:/docker-entrypoint-initdb.d:ro
+
+volumes:
+  qdrant_storage:
+  pg_storage:

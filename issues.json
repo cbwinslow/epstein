@@ -1,0 +1,130 @@
+[
+  {
+    "title": "task: Verify repo hygiene",
+    "body": "Ensure no artifacts/secrets committed; .env is not tracked.\n\n---\nMilestone: Pre-flight & Architecture\nTask ID: M0-T01",
+    "labels": [
+      "task",
+      "m0"
+    ]
+  },
+  {
+    "title": "task: Run doctor checks",
+    "body": "Validate Docker, compose, ports, disk, volumes.\n\n---\nMilestone: Pre-flight & Architecture\nTask ID: M0-T02",
+    "labels": [
+      "task",
+      "m0"
+    ]
+  },
+  {
+    "title": "task: Bring up Postgres + Qdrant",
+    "body": "Start docker compose services; ensure localhost-bound ports.\n\n---\nMilestone: Infrastructure Bootstrap\nTask ID: M1-T01",
+    "labels": [
+      "task",
+      "m1"
+    ]
+  },
+  {
+    "title": "task: Validate schema exists",
+    "body": "doc_analysis schema and tables present.\n\n---\nMilestone: Infrastructure Bootstrap\nTask ID: M1-T02",
+    "labels": [
+      "task",
+      "m1"
+    ]
+  },
+  {
+    "title": "task: Run offline demo end-to-end",
+    "body": "Use bundled demo pdf to validate pipeline, db-load, embed, search.\n\n---\nMilestone: Config & Demo Proof\nTask ID: M2-T01",
+    "labels": [
+      "task",
+      "m2"
+    ]
+  },
+  {
+    "title": "task: Search returns results",
+    "body": "Validate semantic search returns evidence payload.\n\n---\nMilestone: Config & Demo Proof\nTask ID: M2-T02",
+    "labels": [
+      "task",
+      "m2"
+    ]
+  },
+  {
+    "title": "task: Curate seed URLs and allowlist",
+    "body": "Select small initial set; document rationale.\n\n---\nMilestone: Real Ingestion (Controlled)\nTask ID: M3-T01",
+    "labels": [
+      "task",
+      "m3"
+    ]
+  },
+  {
+    "title": "task: Pipeline run on real sources",
+    "body": "Download/OCR/extract/chunk/NER with logs.\n\n---\nMilestone: Real Ingestion (Controlled)\nTask ID: M3-T02",
+    "labels": [
+      "task",
+      "m3"
+    ]
+  },
+  {
+    "title": "task: Load to Postgres and verify counts",
+    "body": "Ingest artifacts into Postgres.\n\n---\nMilestone: Real Ingestion (Controlled)\nTask ID: M3-T03",
+    "labels": [
+      "task",
+      "m3"
+    ]
+  },
+  {
+    "title": "task: Establish query playbook",
+    "body": "Define initial query sets and how to corroborate.\n\n---\nMilestone: Analysis & Relationship Mining\nTask ID: M4-T01",
+    "labels": [
+      "task",
+      "m4"
+    ]
+  },
+  {
+    "title": "task: Produce 10 evidence-bound findings",
+    "body": "Use the finding issue template to record evidence-bound notes.\n\n---\nMilestone: Analysis & Relationship Mining\nTask ID: M4-T02",
+    "labels": [
+      "task",
+      "m4"
+    ]
+  },
+  {
+    "title": "task: Design Mission Control",
+    "body": "Document features, UI layout, integration points, and ADR in `docs/MISSION_CONTROL.md` and `docs/DECISIONS.md`.\n\n---\nMilestone: Mission Control & Observability\nTask ID: M5-T01",
+    "labels": [
+      "task",
+      "m5"
+    ]
+  },
+  {
+    "title": "task: Implement TUI PoC",
+    "body": "Minimal Textual PoC `tools/mission_control/app.py` + CLI `bin/mission-control`.\n\n---\nMilestone: Mission Control & Observability\nTask ID: M5-T02",
+    "labels": [
+      "task",
+      "m5"
+    ]
+  },
+  {
+    "title": "task: Add OpenTelemetry instrumentation",
+    "body": "Add `epstein.telemetry` helper and `OTEL_*` env vars, include doctor checks.\n\n---\nMilestone: Mission Control & Observability\nTask ID: M5-T03",
+    "labels": [
+      "task",
+      "m5"
+    ]
+  },
+  {
+    "title": "task: Tests & CI for Mission Control",
+    "body": "Add pytest tests for TUI, telemetry, doctor; update CI to run these tests.\n\n---\nMilestone: Mission Control & Observability\nTask ID: M5-T04",
+    "labels": [
+      "task",
+      "m5"
+    ]
+  },
+  {
+    "title": "task: Add issue generator + create GitHub issues for these tasks",
+    "body": "Add `scripts/gen_issues_from_tasks.py` to generate `issues.json` and optionally create issues via `gh` CLI.\n\n---\nMilestone: Mission Control & Observability\nTask ID: M5-T05",
+    "labels": [
+      "task",
+      "m5"
+    ]
+  }
+]

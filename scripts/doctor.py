@@ -3,16 +3,11 @@ from __future__ import annotations
 
 import json
 import os
-import socket
 import subprocess
 import sys
 import urllib.request
-from typing import Tuple
-
-try:
-    import psycopg
-except Exception:
-    psycopg = None
+import socket
+import urllib.parse
 
 
 def run(cmd: list[str]) -> tuple[int, str]:
@@ -55,78 +50,18 @@ def main() -> int:
     else:
         warnings.append("Qdrant not reachable on localhost (run `make bootstrap`).")
 
-
-def check_postgres(dsn: str | None = None, timeout: int = 3) -> Tuple[bool, str]:
-    """Check Postgres reachability.
-
-    Steps:
-    - If DSN provided, parse host/port and attempt TCP connection.
-    - If psycopg is installed, try a short connection and run `SELECT 1`.
-
-    Returns (ok, message)
-    """
-    # Allow env override
-    if not dsn:
-        dsn = os.getenv("EPSTEIN_DSN")
-    if not dsn:
-        # try individual POSTGRES_* vars
-        user = os.getenv("POSTGRES_USER")
-        host = os.getenv("POSTGRES_HOST", os.getenv("POSTGRES_HOSTNAME", "localhost"))
-        port = os.getenv("POSTGRES_PORT", os.getenv("PG_PORT", "5432"))
-        db = os.getenv("POSTGRES_DB")
-        if host:
-            try:
-                port_i = int(port)
-            except Exception:
-                port_i = 5432
-            try:
-                with socket.create_connection((host, port_i), timeout=timeout):
-                    pass
-            except Exception as e:
-                return False, f"Postgres TCP connect to {host}:{port} failed: {e}"
-            return True, "Postgres TCP reachable (no DSN provided, skipped SQL check)"
-        return False, "No Postgres DSN or host information found in environment"
-
-    # Parse DSN using urllib
-    try:
-        from urllib.parse import urlparse
-
-        parsed = urlparse(dsn)
-        host = parsed.hostname or "localhost"
-        port = parsed.port or 5432
-    except Exception:
-        return False, "Failed to parse EPSTEIN_DSN"
-
-    # TCP check
-    try:
-        with socket.create_connection((host, port), timeout=timeout):
-            pass
-    except Exception as e:
-        return False, f"Postgres TCP connect to {host}:{port} failed: {e}"
-
-    # If psycopg available, do a simple SELECT 1
-    if psycopg is None:
-        return True, "Postgres reachable (psycopg not installed; only TCP check performed)"
-
-    try:
-        conn = psycopg.connect(dsn, timeout=timeout)
+    # Optional: OpenTelemetry endpoint check
+    otel_enabled = os.getenv("OTEL_ENABLED", "false").lower() in ("1", "true", "yes")
+    if otel_enabled:
+        otlp = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://127.0.0.1:4317")
+        parsed = urllib.parse.urlparse(otlp)
+        host = parsed.hostname or "127.0.0.1"
+        port = parsed.port or (4317 if parsed.scheme == "http" else 4317)
         try:
-            with conn.cursor() as cur:
-                cur.execute("SELECT 1")
-                _ = cur.fetchone()
-        finally:
-            conn.close()
-        return True, "Postgres reachable and responded to SELECT 1"
-    except Exception as e:
-        return False, f"Postgres connection or query failed: {e}"
-
-
-def _parse_args() -> any:
-    import argparse
-
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--check-db", action="store_true", help="check Postgres reachability using EPSTEIN_DSN or POSTGRES_* env vars")
-    return ap.parse_args()
+            socket.create_connection((host, port), timeout=3)
+            print(f"✅ OpenTelemetry OTLP endpoint reachable at {host}:{port}")
+        except Exception:
+            warnings.append(f"OpenTelemetry OTLP endpoint not reachable at {host}:{port}")
 
     if failures:
         print("\n❌ Failures:")
@@ -143,13 +78,4 @@ def _parse_args() -> any:
 
 
 if __name__ == "__main__":
-    args = _parse_args()
-    if args.check_db:
-        ok, msg = check_postgres()
-        if ok:
-            print("✅", msg)
-            sys.exit(0)
-        else:
-            print("❌", msg)
-            sys.exit(2)
     sys.exit(main())

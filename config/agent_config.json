@@ -29,22 +29,27 @@
         "supported_formats": ["pdf", "txt", "docx"]
       }
     },
-    "epstein_tools": {
-      "name": "Epstein Tools Suite",
-      "description": "Collection of tools for pipeline management, database operations, and vector search",
+    "vector_db_analyzer": {
+      "name": "Vector Database Analyzer",
+      "description": "Specialized agent for analyzing vector databases, performance optimization, and troubleshooting Qdrant instances",
       "version": "1.0.0",
-      "tools": [
-        "run_epstein_pipeline",
-        "query_epstein_database", 
-        "search_vector_embeddings",
-        "get_pipeline_status",
-        "analyze_document_entities",
-        "export_processing_results"
+      "capabilities": [
+        "Vector collection analysis",
+        "Query performance benchmarking",
+        "Database optimization recommendations",
+        "Issue detection and troubleshooting",
+        "Performance monitoring"
       ],
-      "api_config": {
-        "base_url": "http://localhost:8000",
-        "api_key": "epstein-api-key",
-        "timeout": 300
+      "database_config": {
+        "qdrant_url": "http://localhost:6333",
+        "default_collection": "epstein_documents",
+        "timeout": 30
+      },
+      "analysis_config": {
+        "enable_sample_analysis": true,
+        "enable_performance_benchmarking": true,
+        "enable_optimization_recommendations": true,
+        "sample_size": 10
       }
     },
     "db_troubleshooter": {
@@ -69,3 +74,163 @@
         "enable_execution_plans": true,
         "enable_index_analysis": true,
         "enable_table_statistics": true,
+        "enable_vacuum_recommendations": true
+      }
+    },
+    "pipeline_monitor": {
+      "name": "Pipeline Monitor",
+      "description": "Specialized agent for monitoring pipeline execution, error detection, and performance tracking",
+      "version": "1.0.0",
+      "capabilities": [
+        "Pipeline health monitoring",
+        "Error pattern detection",
+        "Performance trend analysis",
+        "Anomaly detection",
+        "Alert generation",
+        "Resource usage monitoring"
+      ],
+      "monitoring_config": {
+        "health_check_interval": 30,
+        "error_pattern_threshold": 5,
+        "performance_alert_threshold": 0.8,
+        "anomaly_detection_enabled": true
+      },
+      "alerting_config": {
+        "enable_email_alerts": false,
+        "enable_slack_notifications": false,
+        "log_level": "INFO"
+      }
+    },
+    "document_analysis_agent": {
+      "name": "Document Analysis Agent",
+      "description": "Specialized agent for advanced document analysis, content extraction, and semantic understanding",
+      "version": "1.0.0",
+      "capabilities": [
+        "Document structure analysis",
+        "Content extraction and summarization",
+        "Semantic relationship mapping",
+        "Topic modeling",
+        "Sentiment analysis",
+        "Document classification"
+      ],
+      "analysis_config": {
+        "enable_sentiment_analysis": true,
+        "enable_topic_modeling": true,
+        "enable_entity_extraction": true,
+        "enable_summarization": true,
+        "max_document_size": "10MB"
+      },
+      "model_config": {
+        "embedding_model": "text-embedding-ada-002",
+        "classification_model": "text-classification",
+        "summarization_model": "summarization"
+      }
+    },
+    "entity_extraction_agent": {
+      "name": "Entity Extraction Agent",
+      "description": "Specialized agent for advanced entity recognition, relationship extraction, and knowledge graph construction",
+      "version": "1.0.0",
+      "capabilities": [
+        "Named Entity Recognition",
+        "Entity relationship extraction",
+        "Knowledge graph construction",
+        "Entity disambiguation",
+        "Entity linking",
+        "Relation classification"
+      ],
+      "entity_config": {
+        "entity_types": ["PERSON", "ORG", "LOC", "DATE", "MONEY", "PRODUCT"],
+        "enable_relation_extraction": true,
+        "enable_knowledge_graph": true,
+        "confidence_threshold": 0.8
+      },
+      "model_config": {
+        "ner_model": "en_core_web_lg",
+        "relation_extraction_model": "bert-base-uncased",
+        "linking_model": "entity-linking"
+      }
+    },
+    "epstein_tools": {
+      "name": "Epstein Tools Suite",
+      "description": "Collection of tools for pipeline management, database operations, and vector search",
+      "version": "1.0.0",
+      "tools": [
+        "run_epstein_pipeline",
+        "query_epstein_database", 
+        "search_vector_embeddings",
+        "get_pipeline_status",
+        "analyze_document_entities",
+        "export_processing_results"
+      ],
+      "api_config": {
+        "base_url": "http://localhost:8000",
+        "api_key": "epstein-api-key",
+        "timeout": 300
+      }
+    }
+  },
+  "multi_agent_system": {
+    "name": "Epstein Multi-Agent Analysis System",
+    "version": "1.0.0",
+    "description": "Comprehensive multi-agent system for vector database analysis, troubleshooting, and document processing",
+    "agent_coordination": {
+      "enable_agent_communication": true,
+      "enable_task_delegation": true,
+      "enable_result_aggregation": true,
+      "coordination_timeout": 300
+    },
+    "workflow_management": {
+      "enable_parallel_execution": true,
+      "enable_retry_mechanisms": true,
+      "enable_error_recovery": true,
+      "max_retries": 3
+    },
+    "resource_management": {
+      "enable_load_balancing": true,
+      "enable_resource_monitoring": true,
+      "max_concurrent_tasks": 10,
+      "memory_limit": "4GB"
+    }
+  },
+  "openai_compatibility": {
+    "function_calling": true,
+    "streaming": true,
+    "max_tokens": 4096,
+    "temperature": 0.1,
+    "response_format": "json"
+  },
+  "security": {
+    "enable_redaction": true,
+    "audit_logging": true,
+    "access_control": "rbac",
+    "encryption": "aes-256",
+    "api_key_required": true
+  },
+  "monitoring": {
+    "enable_metrics": true,
+    "metrics_endpoint": "http://localhost:9090",
+    "log_level": "INFO",
+    "trace_sampling": 0.1,
+    "enable_performance_tracking": true,
+    "enable_error_tracking": true
+  },
+  "troubleshooting": {
+    "enable_auto_recovery": true,
+    "enable_health_checks": true,
+    "health_check_interval": 60,
+    "enable_alerting": true,
+    "alert_thresholds": {
+      "error_rate": 0.05,
+      "response_time": 5000,
+      "memory_usage": 0.8,
+      "cpu_usage": 0.8
+    }
+  },
+  "optimization": {
+    "enable_query_optimization": true,
+    "enable_index_optimization": true,
+    "enable_cache_optimization": true,
+    "optimization_interval": 3600,
+    "performance_threshold": 0.9
+  }
+}
