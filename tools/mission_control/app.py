@@ -9,8 +9,8 @@ from rich.text import Text
 # imported in environments without the TUI runtime (e.g., CI / tests).
 try:
     from textual.app import App
-    from textual.widgets import Header, Footer, Static
     from textual.containers import Horizontal, Vertical
+    from textual.widgets import Footer, Header, Static
 except Exception:  # pragma: no cover - optional runtime dependency
 
     class App:  # lightweight fallback
@@ -36,7 +36,7 @@ except Exception:  # pragma: no cover - optional runtime dependency
 
 # OpenTelemetry tracer fallback
 try:
-    from epstein.telemetry import init_tracer, get_tracer
+    from epstein.telemetry import get_tracer, init_tracer
 
     init_tracer()
 except Exception:  # pragma: no cover - optional runtime dependency
@@ -92,12 +92,14 @@ class MissionControlApp(App):
 
         # Start orchestrator client and poll status every 5 seconds
         try:
-            self._orch_client = OrchestratorClient()
+            from tools.mission_control.orchestrator_client import OrchestratorClient
+
+            self.orch = OrchestratorClient()
             tracer = get_tracer("mission-control-ui")
 
             async def _update_status_once():
                 with tracer.start_as_current_span("ui_poll_status"):
-                    status = await self._orch_client.get_system_status()
+                    status = await self.orch.get_system_status()
                     agents = status.get("agents", {})
                     text_lines = []
                     for name, info in agents.items():
@@ -118,14 +120,12 @@ class MissionControlApp(App):
 
     async def app_background_task(self, coro):
         # Helper to run a one-off coroutine
-        try:
+        with contextlib.suppress(Exception):
             await coro()
-        except Exception:
-            pass
 
         # Start background polling of orchestrator status
         try:
-            from .orchestrator_client import OrchestratorClient
+            from tools.mission_control.orchestrator_client import OrchestratorClient
 
             self.orch = OrchestratorClient()
             self.set_interval(5.0, self._poll_status)
