@@ -39,6 +39,22 @@ You are working inside a repository that implements a **provenance-safe document
   - no raw PII,
   - references back to the underlying evidence.
 
+## Linting, Formatting & Syntax Rules 🔧
+- All committed Python code must pass project linters and formatters before merging.
+  - Use `uv` to install dev tooling and `uv lock` to keep `uv.lock` committed and reproducible.
+  - Run formatting and linting locally via `uv run pre-commit run --all-files` or rely on CI to enforce checks.
+- Formatting:
+  - Use `black` with a line length of **100** chars.
+  - Use `isort --profile black` for imports ordering.
+  - Let `ruff` perform auto-fixes where appropriate (`ruff --fix`).
+- Type checking:
+  - Use `mypy` for static typing checks. Keep `mypy` settings aligned in `pyproject.toml`.
+- CI & pre-commit:
+  - Add `.pre-commit-config.yaml` to the repository root to run `ruff`, `black`, `isort`, `mypy`, and basic hygiene hooks.
+  - CI must fail the build if linting/type checks fail.
+- Tests:
+  - Add `pytest` tests for new functionality and ensure deterministic behavior where possible.
+
 ## Commands you will use frequently
 - `make vectordb-up` / `make vectordb-down`
 - `make pipeline-run`
