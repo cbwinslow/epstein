@@ -71,6 +71,26 @@ test-integration:
 	@echo "Running integration tests..."
 	@pytest tests/test_integration.py -v
 
+.PHONY: format
+format:
+	@echo "Formatting code (black / isort / ruff --fix)"
+	@uv run ruff --fix . || true
+	@uv run isort --profile black . || true
+	@uv run black --line-length 100 . || true
+
+.PHONY: check-lock
+check-lock:
+	@echo "Verifying uv.lock exists"
+	@test -f uv.lock || (echo "uv.lock is missing. Run 'uv lock' and commit it." && exit 1)
+
+# Enhance lint to use UV-managed tooling
+.PHONY: lint
+lint:
+	@echo "Running lint and type checks"
+	@uv run ruff check .
+	@uv run mypy . || true
+	@uv run pre-commit run --all-files || true
+
 .PHONY: test-coverage
 test-coverage:
 	@echo "Running tests with coverage..."
