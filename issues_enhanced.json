@@ -1,0 +1,907 @@
+[
+  {
+    "title": "task: Verify repo hygiene",
+    "body": "Ensure no artifacts/secrets committed; .env is not tracked.\n\n**Priority**: P0\n\n\n**Tests**:\n- Command: `git status --ignored`\n  - Expected: No untracked artifacts committed; ignored paths visible.\n\n\n---\n**Milestone**: Pre-flight & Architecture\n**Task ID**: M0-T01",
+    "labels": [
+      "task",
+      "m0",
+      "p0"
+    ],
+    "milestone_id": "m0",
+    "task_id": "M0-T01"
+  },
+  {
+    "title": "task: Run doctor checks",
+    "body": "Validate Docker, compose, ports, disk, volumes.\n\n**Priority**: P0\n\n\n**Tests**:\n- Command: `make doctor`\n  - Expected: Exit code 0 or 2 (warnings ok).\n\n\n---\n**Milestone**: Pre-flight & Architecture\n**Task ID**: M0-T02",
+    "labels": [
+      "task",
+      "m0",
+      "p0"
+    ],
+    "milestone_id": "m0",
+    "task_id": "M0-T02"
+  },
+  {
+    "title": "task: Bring up Postgres + Qdrant",
+    "body": "Start docker compose services; ensure localhost-bound ports.\n\n**Priority**: P0\n\n\n**Tests**:\n- Command: `make bootstrap && make status`\n  - Expected: postgres and qdrant running.\n\n\n---\n**Milestone**: Infrastructure Bootstrap\n**Task ID**: M1-T01",
+    "labels": [
+      "task",
+      "m1",
+      "p0"
+    ],
+    "milestone_id": "m1",
+    "task_id": "M1-T01"
+  },
+  {
+    "title": "task: Validate schema exists",
+    "body": "doc_analysis schema and tables present.\n\n**Priority**: P0\n\n\n**Tests**:\n- Command: `docker exec -i pgvector_postgres psql -U analysis -d analysis -c \"SELECT schema_name FROM information_schema.schemata WHERE schema_name='doc_analysis';\"`\n  - Expected: 1 row\n\n\n---\n**Milestone**: Infrastructure Bootstrap\n**Task ID**: M1-T02",
+    "labels": [
+      "task",
+      "m1",
+      "p0"
+    ],
+    "milestone_id": "m1",
+    "task_id": "M1-T02"
+  },
+  {
+    "title": "task: Audit and document all data sources",
+    "body": "Create comprehensive inventory of all Epstein-related document sources with metadata, access requirements, and estimated document counts.\n\n**Priority**: P0\n\n\n---\n**Milestone**: Enhanced Download System\n**Task ID**: M6-T01",
+    "labels": [
+      "task",
+      "m6",
+      "download",
+      "documentation",
+      "p0"
+    ],
+    "milestone_id": "m6",
+    "task_id": "M6-T01"
+  },
+  {
+    "title": "task: Implement advanced download retry logic",
+    "body": "Add exponential backoff, failure mode handling, and configurable retry limits to bulk downloader.\n\n**Priority**: P0\n\n\n---\n**Milestone**: Enhanced Download System\n**Task ID**: M6-T02",
+    "labels": [
+      "task",
+      "m6",
+      "download",
+      "enhancement",
+      "p0"
+    ],
+    "milestone_id": "m6",
+    "task_id": "M6-T02"
+  },
+  {
+    "title": "task: Add download verification system",
+    "body": "Implement SHA-256 verification, file size validation, format validation, and corruption detection.\n\n**Priority**: P0\n\n\n---\n**Milestone**: Enhanced Download System\n**Task ID**: M6-T03",
+    "labels": [
+      "task",
+      "m6",
+      "download",
+      "quality",
+      "p0"
+    ],
+    "milestone_id": "m6",
+    "task_id": "M6-T03"
+  },
+  {
+    "title": "task: Create download manifest and tracking",
+    "body": "Implement comprehensive manifest system tracking all downloads with metadata, checksums, and provenance.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Enhanced Download System\n**Task ID**: M6-T04",
+    "labels": [
+      "task",
+      "m6",
+      "download",
+      "tracking",
+      "p1"
+    ],
+    "milestone_id": "m6",
+    "task_id": "M6-T04"
+  },
+  {
+    "title": "task: Implement PACER integration",
+    "body": "Add PACER API integration for court filings related to Jeffrey Epstein.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Enhanced Download System\n**Task ID**: M6-T05",
+    "labels": [
+      "task",
+      "m6",
+      "download",
+      "source",
+      "court-records",
+      "p1"
+    ],
+    "milestone_id": "m6",
+    "task_id": "M6-T05"
+  },
+  {
+    "title": "task: Add SEC EDGAR integration",
+    "body": "Implement SEC EDGAR downloader for company filings related to Epstein entities.\n\n**Priority**: P2\n\n\n---\n**Milestone**: Enhanced Download System\n**Task ID**: M6-T06",
+    "labels": [
+      "task",
+      "m6",
+      "download",
+      "source",
+      "financial",
+      "p2"
+    ],
+    "milestone_id": "m6",
+    "task_id": "M6-T06"
+  },
+  {
+    "title": "task: Enhance NER with custom entity types",
+    "body": "Add custom entity types (FLIGHT_NUMBER, AIRCRAFT, FINANCIAL_INSTITUTION, etc.) to NER system.\n\n**Priority**: P0\n\n\n---\n**Milestone**: Advanced NLP & Entity Analysis\n**Task ID**: M7-T01",
+    "labels": [
+      "task",
+      "m7",
+      "nlp",
+      "ner",
+      "enhancement",
+      "p0"
+    ],
+    "milestone_id": "m7",
+    "task_id": "M7-T01"
+  },
+  {
+    "title": "task: Train custom NER model",
+    "body": "Create training dataset and fine-tune spaCy model on Epstein-specific entities. Target >90% F1 score.\n\n**Priority**: P0\n\n\n---\n**Milestone**: Advanced NLP & Entity Analysis\n**Task ID**: M7-T02",
+    "labels": [
+      "task",
+      "m7",
+      "nlp",
+      "ner",
+      "ml-training",
+      "p0"
+    ],
+    "milestone_id": "m7",
+    "task_id": "M7-T02"
+  },
+  {
+    "title": "task: Implement entity disambiguation",
+    "body": "Add entity resolution to handle aliases, nicknames, and variant names (e.g., \"Jeffrey Epstein\" vs \"JE\" vs \"Epstein\").\n\n**Priority**: P0\n\n\n---\n**Milestone**: Advanced NLP & Entity Analysis\n**Task ID**: M7-T03",
+    "labels": [
+      "task",
+      "m7",
+      "nlp",
+      "entity-resolution",
+      "p0"
+    ],
+    "milestone_id": "m7",
+    "task_id": "M7-T03"
+  },
+  {
+    "title": "task: Build relationship extraction system",
+    "body": "Implement dependency parsing and co-occurrence analysis to extract entity relationships (KNOWS, EMPLOYED_BY, TRAVELED_WITH, etc.).\n\n**Priority**: P0\n\n\n---\n**Milestone**: Advanced NLP & Entity Analysis\n**Task ID**: M7-T04",
+    "labels": [
+      "task",
+      "m7",
+      "nlp",
+      "relationships",
+      "p0"
+    ],
+    "milestone_id": "m7",
+    "task_id": "M7-T04"
+  },
+  {
+    "title": "task: Create flight log parser",
+    "body": "Specialized parser for flight manifests extracting date, aircraft, passengers, crew, locations, and duration.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Advanced NLP & Entity Analysis\n**Task ID**: M7-T05",
+    "labels": [
+      "task",
+      "m7",
+      "nlp",
+      "parser",
+      "flight-logs",
+      "p1"
+    ],
+    "milestone_id": "m7",
+    "task_id": "M7-T05"
+  },
+  {
+    "title": "task: Create meeting and event parser",
+    "body": "Extract meeting metadata including date, location, attendees, and purpose from documents.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Advanced NLP & Entity Analysis\n**Task ID**: M7-T06",
+    "labels": [
+      "task",
+      "m7",
+      "nlp",
+      "parser",
+      "meetings",
+      "p1"
+    ],
+    "milestone_id": "m7",
+    "task_id": "M7-T06"
+  },
+  {
+    "title": "task: Implement email and communication parser",
+    "body": "Parse email threads, extract participants, reconstruct conversation flows, and build communication graphs.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Advanced NLP & Entity Analysis\n**Task ID**: M7-T07",
+    "labels": [
+      "task",
+      "m7",
+      "nlp",
+      "parser",
+      "communications",
+      "p1"
+    ],
+    "milestone_id": "m7",
+    "task_id": "M7-T07"
+  },
+  {
+    "title": "task: Add document summarization",
+    "body": "Implement both extractive and abstractive summarization with entity preservation.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Advanced NLP & Entity Analysis\n**Task ID**: M7-T08",
+    "labels": [
+      "task",
+      "m7",
+      "nlp",
+      "summarization",
+      "p1"
+    ],
+    "milestone_id": "m7",
+    "task_id": "M7-T08"
+  },
+  {
+    "title": "task: Create event extraction system",
+    "body": "Identify and extract discrete events with attributes (who, what, when, where, why).\n\n**Priority**: P1\n\n\n---\n**Milestone**: Advanced NLP & Entity Analysis\n**Task ID**: M7-T09",
+    "labels": [
+      "task",
+      "m7",
+      "nlp",
+      "events",
+      "p1"
+    ],
+    "milestone_id": "m7",
+    "task_id": "M7-T09"
+  },
+  {
+    "title": "task: Select and set up graph database",
+    "body": "Evaluate and select graph database (Neo4j, Apache AGE, RedisGraph). Set up infrastructure and document decision in ADR.\n\n**Priority**: P0\n\n\n---\n**Milestone**: Knowledge Graph Implementation\n**Task ID**: M8-T01",
+    "labels": [
+      "task",
+      "m8",
+      "knowledge-graph",
+      "infrastructure",
+      "p0"
+    ],
+    "milestone_id": "m8",
+    "task_id": "M8-T01"
+  },
+  {
+    "title": "task: Design graph schema",
+    "body": "Design comprehensive node types (Person, Organization, Location, Event, Document) and edge types (KNOWS, EMPLOYED_BY, TRAVELED_WITH, etc.) with attributes.\n\n**Priority**: P0\n\n\n---\n**Milestone**: Knowledge Graph Implementation\n**Task ID**: M8-T02",
+    "labels": [
+      "task",
+      "m8",
+      "knowledge-graph",
+      "schema",
+      "p0"
+    ],
+    "milestone_id": "m8",
+    "task_id": "M8-T02"
+  },
+  {
+    "title": "task: Create graph population pipeline",
+    "body": "Build pipeline to ingest entities and relationships from NER system into graph database.\n\n**Priority**: P0\n\n\n---\n**Milestone**: Knowledge Graph Implementation\n**Task ID**: M8-T03",
+    "labels": [
+      "task",
+      "m8",
+      "knowledge-graph",
+      "pipeline",
+      "p0"
+    ],
+    "milestone_id": "m8",
+    "task_id": "M8-T03"
+  },
+  {
+    "title": "task: Implement entity resolution for graph",
+    "body": "Add fuzzy matching, name normalization, and entity clustering to reduce duplicates in graph.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Knowledge Graph Implementation\n**Task ID**: M8-T04",
+    "labels": [
+      "task",
+      "m8",
+      "knowledge-graph",
+      "entity-resolution",
+      "p1"
+    ],
+    "milestone_id": "m8",
+    "task_id": "M8-T04"
+  },
+  {
+    "title": "task: Create core graph queries",
+    "body": "Implement essential queries (paths between entities, common associates, community detection, temporal queries).\n\n**Priority**: P1\n\n\n---\n**Milestone**: Knowledge Graph Implementation\n**Task ID**: M8-T05",
+    "labels": [
+      "task",
+      "m8",
+      "knowledge-graph",
+      "queries",
+      "p1"
+    ],
+    "milestone_id": "m8",
+    "task_id": "M8-T05"
+  },
+  {
+    "title": "task: Build graph visualization",
+    "body": "Implement interactive graph visualization with filtering, search, and export capabilities.\n\n**Priority**: P2\n\n\n---\n**Milestone**: Knowledge Graph Implementation\n**Task ID**: M8-T06",
+    "labels": [
+      "task",
+      "m8",
+      "knowledge-graph",
+      "visualization",
+      "p2"
+    ],
+    "milestone_id": "m8",
+    "task_id": "M8-T06"
+  },
+  {
+    "title": "task: Add graph query templates",
+    "body": "Create parameterized query templates and natural language to graph query translation.\n\n**Priority**: P2\n\n\n---\n**Milestone**: Knowledge Graph Implementation\n**Task ID**: M8-T07",
+    "labels": [
+      "task",
+      "m8",
+      "knowledge-graph",
+      "queries",
+      "p2"
+    ],
+    "milestone_id": "m8",
+    "task_id": "M8-T07"
+  },
+  {
+    "title": "task: Build fact-checking framework",
+    "body": "Implement cross-reference system to compare claims across documents and calculate confidence scores.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Advanced Analysis Tools\n**Task ID**: M9-T01",
+    "labels": [
+      "task",
+      "m9",
+      "analysis",
+      "fact-checking",
+      "p1"
+    ],
+    "milestone_id": "m9",
+    "task_id": "M9-T01"
+  },
+  {
+    "title": "task: Create inconsistency detection system",
+    "body": "Detect date inconsistencies, location impossibilities, and contradictory statements.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Advanced Analysis Tools\n**Task ID**: M9-T02",
+    "labels": [
+      "task",
+      "m9",
+      "analysis",
+      "verification",
+      "p1"
+    ],
+    "milestone_id": "m9",
+    "task_id": "M9-T02"
+  },
+  {
+    "title": "task: Implement timeline reconstruction",
+    "body": "Build system to extract dates, normalize formats, order events chronologically, and create interactive timeline visualization.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Advanced Analysis Tools\n**Task ID**: M9-T03",
+    "labels": [
+      "task",
+      "m9",
+      "analysis",
+      "timeline",
+      "p1"
+    ],
+    "milestone_id": "m9",
+    "task_id": "M9-T03"
+  },
+  {
+    "title": "task: Build conversation stream linker",
+    "body": "Link email threads, meeting notes, and communications across documents to reconstruct conversation flows.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Advanced Analysis Tools\n**Task ID**: M9-T04",
+    "labels": [
+      "task",
+      "m9",
+      "analysis",
+      "conversations",
+      "p1"
+    ],
+    "milestone_id": "m9",
+    "task_id": "M9-T04"
+  },
+  {
+    "title": "task: Create pattern detection system",
+    "body": "Find recurring patterns, detect anomalies, and identify unusual entity combinations or behaviors.\n\n**Priority**: P2\n\n\n---\n**Milestone**: Advanced Analysis Tools\n**Task ID**: M9-T05",
+    "labels": [
+      "task",
+      "m9",
+      "analysis",
+      "patterns",
+      "p2"
+    ],
+    "milestone_id": "m9",
+    "task_id": "M9-T05"
+  },
+  {
+    "title": "task: Implement deception detection",
+    "body": "Detect statement contradictions, linguistic deception indicators, and unsupported claims.\n\n**Priority**: P2\n\n\n---\n**Milestone**: Advanced Analysis Tools\n**Task ID**: M9-T06",
+    "labels": [
+      "task",
+      "m9",
+      "analysis",
+      "deception",
+      "p2"
+    ],
+    "milestone_id": "m9",
+    "task_id": "M9-T06"
+  },
+  {
+    "title": "task: Create inference engine",
+    "body": "Build system to predict likely but undocumented relationships and identify information gaps.\n\n**Priority**: P2\n\n\n---\n**Milestone**: Advanced Analysis Tools\n**Task ID**: M9-T07",
+    "labels": [
+      "task",
+      "m9",
+      "analysis",
+      "inference",
+      "p2"
+    ],
+    "milestone_id": "m9",
+    "task_id": "M9-T07"
+  },
+  {
+    "title": "task: Design agent framework",
+    "body": "Create base agent architecture with interface, lifecycle management, and communication protocol.\n\n**Priority**: P0\n\n\n---\n**Milestone**: AI Agent System Enhancement\n**Task ID**: M10-T01",
+    "labels": [
+      "task",
+      "m10",
+      "agents",
+      "architecture",
+      "p0"
+    ],
+    "milestone_id": "m10",
+    "task_id": "M10-T01"
+  },
+  {
+    "title": "task: Create Entity Analysis Agent",
+    "body": "Build agent to analyze entity properties, find relationships, generate profiles, and answer entity queries.\n\n**Priority**: P0\n\n\n---\n**Milestone**: AI Agent System Enhancement\n**Task ID**: M10-T02",
+    "labels": [
+      "task",
+      "m10",
+      "agents",
+      "entity-analysis",
+      "p0"
+    ],
+    "milestone_id": "m10",
+    "task_id": "M10-T02"
+  },
+  {
+    "title": "task: Create Relationship Discovery Agent",
+    "body": "Build agent to discover new relationships, validate hypotheses, and generate relationship reports.\n\n**Priority**: P0\n\n\n---\n**Milestone**: AI Agent System Enhancement\n**Task ID**: M10-T03",
+    "labels": [
+      "task",
+      "m10",
+      "agents",
+      "relationships",
+      "p0"
+    ],
+    "milestone_id": "m10",
+    "task_id": "M10-T03"
+  },
+  {
+    "title": "task: Create Timeline Analysis Agent",
+    "body": "Build agent to reconstruct timelines, find temporal patterns, and validate date consistency.\n\n**Priority**: P1\n\n\n---\n**Milestone**: AI Agent System Enhancement\n**Task ID**: M10-T04",
+    "labels": [
+      "task",
+      "m10",
+      "agents",
+      "timeline",
+      "p1"
+    ],
+    "milestone_id": "m10",
+    "task_id": "M10-T04"
+  },
+  {
+    "title": "task: Create Document Synthesis Agent",
+    "body": "Build agent to summarize documents, extract key information, and generate evidence bundles.\n\n**Priority**: P1\n\n\n---\n**Milestone**: AI Agent System Enhancement\n**Task ID**: M10-T05",
+    "labels": [
+      "task",
+      "m10",
+      "agents",
+      "documents",
+      "p1"
+    ],
+    "milestone_id": "m10",
+    "task_id": "M10-T05"
+  },
+  {
+    "title": "task: Create Pattern Detection Agent",
+    "body": "Build agent to find recurring patterns, detect anomalies, and identify suspicious behaviors.\n\n**Priority**: P1\n\n\n---\n**Milestone**: AI Agent System Enhancement\n**Task ID**: M10-T06",
+    "labels": [
+      "task",
+      "m10",
+      "agents",
+      "patterns",
+      "p1"
+    ],
+    "milestone_id": "m10",
+    "task_id": "M10-T06"
+  },
+  {
+    "title": "task: Create Verification Agent",
+    "body": "Build agent to fact-check claims, cross-reference sources, and assess evidence quality.\n\n**Priority**: P1\n\n\n---\n**Milestone**: AI Agent System Enhancement\n**Task ID**: M10-T07",
+    "labels": [
+      "task",
+      "m10",
+      "agents",
+      "verification",
+      "p1"
+    ],
+    "milestone_id": "m10",
+    "task_id": "M10-T07"
+  },
+  {
+    "title": "task: Implement multi-agent orchestration",
+    "body": "Build coordination system for task decomposition, agent selection, parallel execution, and result aggregation.\n\n**Priority**: P1\n\n\n---\n**Milestone**: AI Agent System Enhancement\n**Task ID**: M10-T08",
+    "labels": [
+      "task",
+      "m10",
+      "agents",
+      "orchestration",
+      "p1"
+    ],
+    "milestone_id": "m10",
+    "task_id": "M10-T08"
+  },
+  {
+    "title": "task: Create Knowledge Graph MCP Server",
+    "body": "Build MCP server for graph queries and operations.\n\n**Priority**: P1\n\n\n---\n**Milestone**: AI Agent System Enhancement\n**Task ID**: M10-T09",
+    "labels": [
+      "task",
+      "m10",
+      "agents",
+      "mcp",
+      "knowledge-graph",
+      "p1"
+    ],
+    "milestone_id": "m10",
+    "task_id": "M10-T09"
+  },
+  {
+    "title": "task: Create Analysis MCP Server",
+    "body": "Build MCP server to run analysis workflows and coordinate analysis agents.\n\n**Priority**: P1\n\n\n---\n**Milestone**: AI Agent System Enhancement\n**Task ID**: M10-T10",
+    "labels": [
+      "task",
+      "m10",
+      "agents",
+      "mcp",
+      "analysis",
+      "p1"
+    ],
+    "milestone_id": "m10",
+    "task_id": "M10-T10"
+  },
+  {
+    "title": "task: Create comprehensive issue templates",
+    "body": "Design templates for findings, tasks, bugs, analysis requests, and document requests.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Integration & Automation\n**Task ID**: M11-T01",
+    "labels": [
+      "task",
+      "m11",
+      "github",
+      "templates",
+      "p1"
+    ],
+    "milestone_id": "m11",
+    "task_id": "M11-T01"
+  },
+  {
+    "title": "task: Set up GitHub Projects v2",
+    "body": "Create project with custom fields, views, and automation rules for tracking analysis progress.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Integration & Automation\n**Task ID**: M11-T02",
+    "labels": [
+      "task",
+      "m11",
+      "github",
+      "projects",
+      "p1"
+    ],
+    "milestone_id": "m11",
+    "task_id": "M11-T02"
+  },
+  {
+    "title": "task: Enhance automated issue generation",
+    "body": "Expand gen_issues_from_tasks.py to handle enhanced task structure and generate finding issues.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Integration & Automation\n**Task ID**: M11-T03",
+    "labels": [
+      "task",
+      "m11",
+      "github",
+      "automation",
+      "p1"
+    ],
+    "milestone_id": "m11",
+    "task_id": "M11-T03"
+  },
+  {
+    "title": "task: Configure CodeRabbitAI",
+    "body": "Set up CodeRabbitAI with custom review rules for security, NLP, database, and agent code.\n\n**Priority**: P2\n\n\n---\n**Milestone**: Integration & Automation\n**Task ID**: M11-T04",
+    "labels": [
+      "task",
+      "m11",
+      "ci",
+      "code-review",
+      "p2"
+    ],
+    "milestone_id": "m11",
+    "task_id": "M11-T04"
+  },
+  {
+    "title": "task: Add analysis pipeline CI tests",
+    "body": "Create CI tests for NER, knowledge graph, agent functionality, and full pipeline integration.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Integration & Automation\n**Task ID**: M11-T05",
+    "labels": [
+      "task",
+      "m11",
+      "ci",
+      "testing",
+      "p1"
+    ],
+    "milestone_id": "m11",
+    "task_id": "M11-T05"
+  },
+  {
+    "title": "task: Implement performance testing",
+    "body": "Add benchmarks for document processing, vector search, and graph queries with trend tracking.\n\n**Priority**: P2\n\n\n---\n**Milestone**: Integration & Automation\n**Task ID**: M11-T06",
+    "labels": [
+      "task",
+      "m11",
+      "ci",
+      "performance",
+      "p2"
+    ],
+    "milestone_id": "m11",
+    "task_id": "M11-T06"
+  },
+  {
+    "title": "task: Add security scanning",
+    "body": "Implement dependency scanning, secret scanning, SAST, and container image scanning.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Integration & Automation\n**Task ID**: M11-T07",
+    "labels": [
+      "task",
+      "m11",
+      "ci",
+      "security",
+      "p1"
+    ],
+    "milestone_id": "m11",
+    "task_id": "M11-T07"
+  },
+  {
+    "title": "task: Create analysis methodology documentation",
+    "body": "Document analysis workflows, query cookbook, interpretation guidelines, and evidence handling best practices.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Documentation & Knowledge Base\n**Task ID**: M12-T01",
+    "labels": [
+      "task",
+      "m12",
+      "documentation",
+      "methodology",
+      "p1"
+    ],
+    "milestone_id": "m12",
+    "task_id": "M12-T01"
+  },
+  {
+    "title": "task: Document all APIs",
+    "body": "Create comprehensive API documentation for MCP servers, agents, and tools with examples.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Documentation & Knowledge Base\n**Task ID**: M12-T02",
+    "labels": [
+      "task",
+      "m12",
+      "documentation",
+      "api",
+      "p1"
+    ],
+    "milestone_id": "m12",
+    "task_id": "M12-T02"
+  },
+  {
+    "title": "task: Create knowledge graph documentation",
+    "body": "Document graph schema, query examples, visualization usage, and analysis best practices.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Documentation & Knowledge Base\n**Task ID**: M12-T03",
+    "labels": [
+      "task",
+      "m12",
+      "documentation",
+      "knowledge-graph",
+      "p1"
+    ],
+    "milestone_id": "m12",
+    "task_id": "M12-T03"
+  },
+  {
+    "title": "task: Write comprehensive tutorials",
+    "body": "Create getting started guide, analysis walkthrough, agent development guide, and troubleshooting guide.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Documentation & Knowledge Base\n**Task ID**: M12-T04",
+    "labels": [
+      "task",
+      "m12",
+      "documentation",
+      "tutorials",
+      "p1"
+    ],
+    "milestone_id": "m12",
+    "task_id": "M12-T04"
+  },
+  {
+    "title": "task: Create Architecture Decision Records",
+    "body": "Document key technical decisions, technology selections, trade-offs, and migration paths.\n\n**Priority**: P2\n\n\n---\n**Milestone**: Documentation & Knowledge Base\n**Task ID**: M12-T05",
+    "labels": [
+      "task",
+      "m12",
+      "documentation",
+      "adr",
+      "p2"
+    ],
+    "milestone_id": "m12",
+    "task_id": "M12-T05"
+  },
+  {
+    "title": "task: Build interactive documentation site",
+    "body": "Create searchable, interactive documentation site with examples and demos.\n\n**Priority**: P2\n\n\n---\n**Milestone**: Documentation & Knowledge Base\n**Task ID**: M12-T06",
+    "labels": [
+      "task",
+      "m12",
+      "documentation",
+      "website",
+      "p2"
+    ],
+    "milestone_id": "m12",
+    "task_id": "M12-T06"
+  },
+  {
+    "title": "task: Expand unit test coverage",
+    "body": "Add comprehensive unit tests for NER, entity resolution, agents, and analysis tools. Target >80% coverage.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Testing & Quality Assurance\n**Task ID**: M13-T01",
+    "labels": [
+      "task",
+      "m13",
+      "testing",
+      "unit-tests",
+      "p1"
+    ],
+    "milestone_id": "m13",
+    "task_id": "M13-T01"
+  },
+  {
+    "title": "task: Create integration test suite",
+    "body": "Build end-to-end tests for pipeline, multi-agent workflows, database integration, and MCP servers.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Testing & Quality Assurance\n**Task ID**: M13-T02",
+    "labels": [
+      "task",
+      "m13",
+      "testing",
+      "integration-tests",
+      "p1"
+    ],
+    "milestone_id": "m13",
+    "task_id": "M13-T02"
+  },
+  {
+    "title": "task: Implement data quality tests",
+    "body": "Validate entity extraction accuracy, relationship detection, graph consistency, and data provenance.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Testing & Quality Assurance\n**Task ID**: M13-T03",
+    "labels": [
+      "task",
+      "m13",
+      "testing",
+      "data-quality",
+      "p1"
+    ],
+    "milestone_id": "m13",
+    "task_id": "M13-T03"
+  },
+  {
+    "title": "task: Create ground truth validation dataset",
+    "body": "Build manually annotated dataset for validating NER, relationship extraction, and analysis accuracy.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Testing & Quality Assurance\n**Task ID**: M13-T04",
+    "labels": [
+      "task",
+      "m13",
+      "testing",
+      "validation",
+      "p1"
+    ],
+    "milestone_id": "m13",
+    "task_id": "M13-T04"
+  },
+  {
+    "title": "task: Add performance tests",
+    "body": "Implement load testing for document processing, stress testing for graph queries, and concurrency testing for agents.\n\n**Priority**: P2\n\n\n---\n**Milestone**: Testing & Quality Assurance\n**Task ID**: M13-T05",
+    "labels": [
+      "task",
+      "m13",
+      "testing",
+      "performance",
+      "p2"
+    ],
+    "milestone_id": "m13",
+    "task_id": "M13-T05"
+  },
+  {
+    "title": "task: Generate entity profiles",
+    "body": "Create comprehensive profiles for key entities including relationship networks, timeline, and document references.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Analysis Findings & Deliverables\n**Task ID**: M14-T01",
+    "labels": [
+      "task",
+      "m14",
+      "analysis",
+      "deliverable",
+      "p1"
+    ],
+    "milestone_id": "m14",
+    "task_id": "M14-T01"
+  },
+  {
+    "title": "task: Map relationship networks",
+    "body": "Generate network visualizations showing connections between entities with evidence links.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Analysis Findings & Deliverables\n**Task ID**: M14-T02",
+    "labels": [
+      "task",
+      "m14",
+      "analysis",
+      "deliverable",
+      "visualization",
+      "p1"
+    ],
+    "milestone_id": "m14",
+    "task_id": "M14-T02"
+  },
+  {
+    "title": "task: Create master timeline",
+    "body": "Build comprehensive chronological timeline of all documented events with entity involvement.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Analysis Findings & Deliverables\n**Task ID**: M14-T03",
+    "labels": [
+      "task",
+      "m14",
+      "analysis",
+      "deliverable",
+      "timeline",
+      "p1"
+    ],
+    "milestone_id": "m14",
+    "task_id": "M14-T03"
+  },
+  {
+    "title": "task: Identify conversation threads",
+    "body": "Document multi-document conversation streams linking communications over time.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Analysis Findings & Deliverables\n**Task ID**: M14-T04",
+    "labels": [
+      "task",
+      "m14",
+      "analysis",
+      "deliverable",
+      "conversations",
+      "p1"
+    ],
+    "milestone_id": "m14",
+    "task_id": "M14-T04"
+  },
+  {
+    "title": "task: Generate flight pattern analysis",
+    "body": "Analyze flight logs for travel patterns, frequent routes, passenger combinations, and temporal patterns.\n\n**Priority**: P1\n\n\n---\n**Milestone**: Analysis Findings & Deliverables\n**Task ID**: M14-T05",
+    "labels": [
+      "task",
+      "m14",
+      "analysis",
+      "deliverable",
+      "flight-logs",
+      "p1"
+    ],
+    "milestone_id": "m14",
+    "task_id": "M14-T05"
+  },
+  {
+    "title": "task: Create meeting attendance analysis",
+    "body": "Compile meeting attendance records, identify frequent participants, and analyze meeting patterns.\n\n**Priority**: P2\n\n\n---\n**Milestone**: Analysis Findings & Deliverables\n**Task ID**: M14-T06",
+    "labels": [
+      "task",
+      "m14",
+      "analysis",
+      "deliverable",
+      "meetings",
+      "p2"
+    ],
+    "milestone_id": "m14",
+    "task_id": "M14-T06"
+  },
+  {
+    "title": "task: Generate inconsistency report",
+    "body": "Document identified contradictions, discrepancies, and potential deceptions with evidence.\n\n**Priority**: P2\n\n\n---\n**Milestone**: Analysis Findings & Deliverables\n**Task ID**: M14-T07",
+    "labels": [
+      "task",
+      "m14",
+      "analysis",
+      "deliverable",
+      "verification",
+      "p2"
+    ],
+    "milestone_id": "m14",
+    "task_id": "M14-T07"
+  },
+  {
+    "title": "task: Create analysis playbook",
+    "body": "Document successful analysis techniques, query patterns, and methodology for future analysis.\n\n**Priority**: P2\n\n\n---\n**Milestone**: Analysis Findings & Deliverables\n**Task ID**: M14-T08",
+    "labels": [
+      "task",
+      "m14",
+      "analysis",
+      "deliverable",
+      "documentation",
+      "p2"
+    ],
+    "milestone_id": "m14",
+    "task_id": "M14-T08"
+  }
+]

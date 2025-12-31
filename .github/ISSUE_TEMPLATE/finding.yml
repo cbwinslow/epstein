@@ -1,0 +1,198 @@
+name: Analysis Finding
+description: Document a finding from document analysis with evidence
+title: "[FINDING]: "
+labels: ["finding", "analysis"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template to document findings from analysis of Epstein documents.
+        All findings must be evidence-based with clear provenance.
+
+  - type: input
+    id: finding_id
+    attributes:
+      label: Finding ID
+      description: Unique identifier for this finding (e.g., F-2025-001)
+      placeholder: "F-2025-001"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Finding Category
+      description: Primary category of this finding
+      options:
+        - Entity Relationship
+        - Timeline/Chronology
+        - Communication Pattern
+        - Flight/Travel Pattern
+        - Financial Transaction
+        - Meeting/Event
+        - Inconsistency/Contradiction
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: confidence
+    attributes:
+      label: Confidence Level
+      description: How confident are you in this finding?
+      options:
+        - High (multiple corroborating sources)
+        - Medium (single reliable source or multiple indirect sources)
+        - Low (requires further verification)
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Finding Summary
+      description: Brief summary of the finding (2-3 sentences)
+      placeholder: "Describe what was found..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Detailed Description
+      description: Comprehensive description of the finding
+      placeholder: |
+        Provide detailed information about:
+        - What entities are involved
+        - What relationship or pattern was identified
+        - Temporal information (dates, duration)
+        - Locations involved
+        - Any contextual information
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: List all supporting evidence with document references
+      placeholder: |
+        For each piece of evidence, provide:
+        - Document ID or filename
+        - Page number(s)
+        - Specific text excerpt or description
+        - Chunk ID (if applicable)
+        - Source URL
+
+        Example:
+        1. Document: DOJ_Dataset_01_File_123.pdf, Page 45
+           Text: "Jeffrey Epstein met with John Doe on January 15, 2010"
+           Source: https://www.justice.gov/...
+           Chunk ID: doc_123_chunk_045_001
+
+        2. Document: FBI_Vault_Part_03.pdf, Page 112
+           Text: "Flight manifest shows John Doe as passenger on January 15, 2010"
+           Source: https://vault.fbi.gov/...
+    validations:
+      required: true
+
+  - type: textarea
+    id: entities
+    attributes:
+      label: Entities Involved
+      description: List all entities (people, organizations, locations) mentioned
+      placeholder: |
+        - Jeffrey Epstein (PERSON)
+        - John Doe (PERSON)
+        - Little St. James (LOCATION)
+        - Acme Corporation (ORGANIZATION)
+
+  - type: textarea
+    id: timeline
+    attributes:
+      label: Timeline
+      description: Relevant dates and chronology
+      placeholder: |
+        - January 15, 2010: Event A
+        - January 20, 2010: Event B
+        - February 2010: Event C
+
+  - type: textarea
+    id: cross_references
+    attributes:
+      label: Cross-References
+      description: Links to related findings, issues, or documents
+      placeholder: |
+        - Related to Finding #123
+        - Contradicts claim in Issue #456
+        - Supports hypothesis in Finding #789
+
+  - type: textarea
+    id: analysis
+    attributes:
+      label: Analysis & Interpretation
+      description: What does this finding mean? What are the implications?
+      placeholder: |
+        Explain the significance of this finding:
+        - What patterns does it reveal?
+        - How does it connect to other findings?
+        - What questions does it raise?
+        - What further investigation is needed?
+
+  - type: dropdown
+    id: verification_status
+    attributes:
+      label: Verification Status
+      description: Has this finding been verified?
+      options:
+        - Unverified (needs review)
+        - Partially Verified (some evidence confirmed)
+        - Verified (multiple sources confirmed)
+        - Disputed (conflicting evidence exists)
+    validations:
+      required: true
+
+  - type: textarea
+    id: methodology
+    attributes:
+      label: Discovery Methodology
+      description: How was this finding discovered?
+      placeholder: |
+        Describe the analysis method used:
+        - Keyword search
+        - Entity co-occurrence analysis
+        - Timeline reconstruction
+        - Graph pattern matching
+        - Manual document review
+        - Agent-generated insight
+
+  - type: textarea
+    id: next_steps
+    attributes:
+      label: Recommended Next Steps
+      description: What actions should be taken based on this finding?
+      placeholder: |
+        - Investigate additional documents about entity X
+        - Cross-reference with source Y
+        - Request documents from source Z
+        - Update knowledge graph with relationship
+        - Flag for fact-checking
+
+  - type: checkboxes
+    id: quality_checklist
+    attributes:
+      label: Quality Checklist
+      description: Ensure finding meets quality standards
+      options:
+        - label: All evidence includes document IDs and page numbers
+          required: true
+        - label: Source URLs are provided where available
+          required: true
+        - label: Entities are clearly identified
+          required: true
+        - label: Dates are in ISO format (YYYY-MM-DD) where known
+          required: false
+        - label: Finding has been reviewed by at least one other person
+          required: false
+        - label: Finding does not include speculation without clear labeling
+          required: true

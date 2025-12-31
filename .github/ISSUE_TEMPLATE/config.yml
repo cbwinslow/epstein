@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📚 Documentation
+    url: https://github.com/cbwinslow/epstein/tree/main/docs
+    about: Browse comprehensive project documentation
+  - name: 💬 Discussions
+    url: https://github.com/cbwinslow/epstein/discussions
+    about: Ask questions and discuss the project
+  - name: 📖 Knowledge Base
+    url: https://github.com/cbwinslow/epstein/tree/main/knowledge_base
+    about: Access AI agent guides and workflows
