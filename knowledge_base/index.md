@@ -262,4 +262,46 @@ For questions about the knowledge base:
 
 ---
 
-*This knowledge base is maintained by the Epstein Project team and is regularly updated to reflect the current state of the project. Last updated: 2025-12-23*
+## Recent Additions (2024-12-31)
+
+### Document Releases
+- **[DOJ Releases 2024](doj_releases_2024.md)** - Comprehensive guide to the newly released DOJ Epstein documents from December 2024
+  - Overview of released materials
+  - Access methods and download instructions
+  - Integration with MCP server and bulk downloader
+  - Security and compliance guidelines
+
+### AI Agent Development
+- **[AI Agent Workflow Guide](ai_agent_workflow_guide.md)** - Complete workflow guide for AI agents
+  - Quick start instructions
+  - 7 detailed workflows (basic to advanced)
+  - PydanticAI integration examples
+  - Error handling and best practices
+  - Troubleshooting guide
+
+### Enhanced Documentation
+- **[Agents](agents.md)** - Updated with MCP server integration and PydanticAI framework
+  - MCP Server Integration section
+  - PydanticAI Agent Framework
+  - Agent Development Guidelines
+  - Integration checklists
+
+### GitHub Marketplace
+- **[GitHub Marketplace Integrations](../docs/GITHUB_MARKETPLACE_INTEGRATIONS.md)** - Guide to recommended integrations
+  - Sentry (error tracking)
+  - CodeRabbit (AI code review)
+  - Sourcery (Python quality)
+  - Agent Toolkit
+  - OpenHands (multi-agent orchestration)
+  - Jules (autonomous coding)
+
+### Examples
+- **[PydanticAI Downloader Agent](../examples/pydantic_downloader_agent.py)** - Working example of PydanticAI agent
+  - Interactive and CLI modes
+  - Full MCP server integration
+  - Type-safe tool definitions
+  - Error handling patterns
+
+---
+
+*This knowledge base is maintained by the Epstein Project team and is regularly updated to reflect the current state of the project. Last updated: 2024-12-31*
