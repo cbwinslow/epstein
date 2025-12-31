@@ -434,3 +434,247 @@ For agent-related issues:
 - **Feature Requests**: Submit enhancement proposals
 - **Documentation**: Update relevant documentation files
 - **Security**: Report security vulnerabilities privately
+
+---
+
+## MCP Server Integration (Added 2024-12-31)
+
+### Epstein Files Downloader MCP Server
+
+**Location**: `mcp_servers/epstein_files_downloader/server.py`  
+**Status**: Active  
+**Version**: 1.0.0  
+**Purpose**: Programmatic access to DOJ, FBI, and House Oversight document releases
+
+#### Key Capabilities
+
+1. **Collection Discovery**
+   - Auto-discover Epstein document collections from government sources
+   - Support for DOJ disclosures, FBI Vault, and House Oversight releases
+   - Real-time collection metadata retrieval
+   - Document count tracking
+
+2. **Bulk Download Management**
+   - Concurrent download processing (configurable workers)
+   - Queue-based task management
+   - Automatic retry logic with exponential backoff
+   - Progress tracking and status reporting
+
+3. **Status and Monitoring**
+   - Real-time download progress
+   - Task history and audit trails
+   - Health check endpoints
+   - Error tracking and reporting
+
+#### API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | Server information and endpoint list |
+| `/health` | GET | Health check and server statistics |
+| `/collections` | GET | List all available document collections |
+| `/collections/{id}` | GET | Get specific collection details |
+| `/collections/{id}/documents` | GET | List documents in a collection |
+| `/download` | POST | Download a single document |
+| `/download/bulk` | POST | Bulk download from a collection |
+| `/download/status` | GET | Get all active download statuses |
+| `/download/status/{task_id}` | GET | Get specific download status |
+| `/download/history` | GET | Get download history |
+
+#### Configuration
+
+```python
+ServerConfig(
+    host="0.0.0.0",
+    port=8765,
+    download_dir="./downloads",
+    max_concurrent_downloads=5,
+    retry_attempts=3,
+    retry_delay=5,
+    timeout_seconds=60
+)
+```
+
+#### Usage with AI Agents
+
+The MCP server provides a standardized interface for AI agents to:
+- Discover available document collections
+- Download documents in bulk or individually
+- Monitor download progress
+- Verify download completion
+- Handle errors and retries automatically
+
+**Example Usage**:
+```bash
+# Start the server
+cd mcp_servers/epstein_files_downloader
+python server.py --port 8765 --max-concurrent 5
+
+# Server runs at http://localhost:8765
+# API documentation available at http://localhost:8765/docs
+```
+
+#### Integration with Main Pipeline
+
+Downloaded documents automatically integrate with the main Epstein pipeline:
+1. Files stored in configured download directory
+2. Manifest files track provenance and checksums
+3. Documents queued for OCR and text extraction
+4. Processed through NER and embedding generation
+5. Loaded into PostgreSQL and Qdrant databases
+
+#### Security Features
+
+- **Rate Limiting**: Respects source rate limits
+- **Checksum Verification**: SHA-256 verification for all downloads
+- **ZIP Slip Protection**: Secure extraction of ZIP archives
+- **Audit Logging**: Complete audit trail of all operations
+- **Error Isolation**: Failures don't affect other downloads
+
+### PydanticAI Agent Framework (Added 2024-12-31)
+
+#### Overview
+
+The project now supports PydanticAI for building OpenAI-compatible AI agents with type-safe tools and structured outputs.
+
+#### Key Features
+
+1. **Type-Safe Tool Definitions**
+   - Pydantic models for all tool inputs/outputs
+   - Automatic validation and serialization
+   - IDE support with autocomplete
+
+2. **OpenAI Compatibility**
+   - Works with OpenAI API
+   - Compatible with other LLM providers
+   - Function calling support
+
+3. **MCP Integration**
+   - PydanticAI agents can call MCP server endpoints
+   - Structured tool definitions for MCP operations
+   - Automatic error handling and retries
+
+#### Example: Document Downloader Agent
+
+```python
+from pydantic_ai import Agent
+from pydantic import BaseModel
+import requests
+
+class DownloadRequest(BaseModel):
+    collection_id: str
+    destination: str
+
+agent = Agent(
+    model='openai:gpt-4',
+    system_prompt='You are a document retrieval specialist...'
+)
+
+@agent.tool
+async def download_collection(request: DownloadRequest) -> dict:
+    """Download all documents from a collection"""
+    response = requests.post(
+        'http://localhost:8765/download/bulk',
+        json=request.model_dump()
+    )
+    return response.json()
+
+# Use the agent
+result = await agent.run(
+    "Download all DOJ disclosure documents to ./data"
+)
+```
+
+#### Agent Workflows
+
+1. **Discovery Workflow**
+   - List available collections
+   - Filter by criteria (date, source, type)
+   - Review metadata
+   - Select collections for download
+
+2. **Download Workflow**
+   - Initiate bulk downloads
+   - Monitor progress
+   - Handle errors
+   - Verify completeness
+
+3. **Processing Workflow**
+   - Queue documents for pipeline
+   - Track processing status
+   - Generate reports
+   - Update metadata
+
+#### Best Practices
+
+1. **Error Handling**
+   - Always implement retry logic
+   - Log all operations
+   - Provide meaningful error messages
+   - Gracefully handle network failures
+
+2. **Resource Management**
+   - Respect rate limits
+   - Monitor disk space
+   - Limit concurrent operations
+   - Clean up temporary files
+
+3. **Documentation**
+   - Document all agent tools
+   - Provide usage examples
+   - Include error scenarios
+   - Maintain changelog
+
+### Agent Development Guidelines (Added 2024-12-31)
+
+#### Creating New Agents
+
+1. **Define Purpose and Scope**
+   - Single responsibility principle
+   - Clear input/output contracts
+   - Well-defined error handling
+
+2. **Follow Naming Conventions**
+   - Use descriptive names (e.g., `DocumentAnalysisAgent`)
+   - Consistent file naming (`<purpose>_agent.py`)
+   - Clear function/method names
+
+3. **Implement Required Interfaces**
+   - Health check endpoint
+   - Status reporting
+   - Error handling
+   - Logging
+
+4. **Add Documentation**
+   - Update `knowledge_base/agents.md` (append-only)
+   - Create detailed README in agent directory
+   - Include usage examples
+   - Document configuration options
+
+5. **Testing**
+   - Unit tests for core functionality
+   - Integration tests with MCP server
+   - End-to-end workflow tests
+   - Error scenario tests
+
+#### Integration Checklist
+
+- [ ] Agent registered in agent registry
+- [ ] Documentation added to knowledge base
+- [ ] Tests created and passing
+- [ ] MCP server integration tested
+- [ ] Error handling verified
+- [ ] Logging configured
+- [ ] Configuration documented
+- [ ] Usage examples provided
+
+### Related Documentation
+
+- [DOJ Releases 2024](doj_releases_2024.md)
+- [MCP Server Setup](../docs/MCP_SERVER_SETUP.md)
+- [AI Agent Cheat Sheet](../docs/AI_AGENT_CHEAT_SHEET.md)
+- [Multi-Agent System Guide](../docs/MULTI_AGENT_SYSTEM_GUIDE.md)
+
+---
+
+**Note**: This document is append-only. All additions are dated and attributed. Last updated: 2024-12-31
