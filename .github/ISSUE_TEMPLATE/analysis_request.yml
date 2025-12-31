@@ -1,0 +1,103 @@
+name: Analysis Request
+description: Request a specific analysis or investigation
+title: "[ANALYSIS]: "
+labels: ["analysis-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template to request a specific analysis or investigation.
+
+  - type: dropdown
+    id: analysis_type
+    attributes:
+      label: Analysis Type
+      description: What type of analysis is requested?
+      options:
+        - Entity Profile
+        - Relationship Network
+        - Timeline Reconstruction
+        - Communication Pattern
+        - Travel Pattern
+        - Financial Flow
+        - Fact Verification
+        - Pattern Detection
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0 (Critical)
+        - P1 (High)
+        - P2 (Medium)
+        - P3 (Low)
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Analysis Question
+      description: What specific question are you trying to answer?
+      placeholder: "What are all the documented connections between Person A and Person B?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: entities
+    attributes:
+      label: Entities of Interest
+      description: Which entities should be the focus?
+      placeholder: |
+        - Jeffrey Epstein
+        - Ghislaine Maxwell
+        - Little St. James island
+
+  - type: textarea
+    id: timeframe
+    attributes:
+      label: Time Frame
+      description: What time period should be analyzed?
+      placeholder: "January 2000 - December 2010"
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context & Background
+      description: Additional context or background information
+      placeholder: "Explain why this analysis is important or what you hope to discover..."
+
+  - type: textarea
+    id: known_sources
+    attributes:
+      label: Known Relevant Sources
+      description: Any documents or sources you already know are relevant?
+      placeholder: |
+        - DOJ Dataset 01
+        - FBI Vault Part 03
+        - Flight logs from 2005-2006
+
+  - type: textarea
+    id: methodology
+    attributes:
+      label: Suggested Methodology
+      description: Any specific analysis methods you'd like to see used?
+      placeholder: |
+        - Use knowledge graph to find all paths between entities
+        - Analyze email communication patterns
+        - Cross-reference with flight logs
+
+  - type: textarea
+    id: deliverables
+    attributes:
+      label: Expected Deliverables
+      description: What format or outputs do you expect?
+      placeholder: |
+        - Timeline visualization
+        - Network graph
+        - Summary report with evidence
+        - List of findings with issue references

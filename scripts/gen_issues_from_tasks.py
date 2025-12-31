@@ -30,11 +30,56 @@ def load_tasks(path: Path) -> dict:
 def tasks_to_issues(tasks: dict) -> list[dict]:
     issues = []
     for m in tasks.get("milestones", []):
+        milestone_id = m.get('id', '').lower()
+        milestone_title = m.get('title', '')
+        
         for t in m.get("tasks", []):
+            task_id = t.get('id', '')
             title = f"task: {t.get('title')}"
-            body = f"{t.get('description', '')}\n\n---\nMilestone: {m.get('title')}\nTask ID: {t.get('id')}"
-            labels = ["task", m.get('id').lower()]
-            issues.append({"title": title, "body": body, "labels": labels})
+            
+            # Build body with all available metadata
+            body_parts = [t.get('description', '')]
+            
+            # Add priority if present
+            priority = t.get('priority', '')
+            if priority:
+                body_parts.append(f"\n**Priority**: {priority}")
+            
+            # Add tests if present
+            tests = t.get('tests', [])
+            if tests:
+                body_parts.append("\n\n**Tests**:")
+                for test in tests:
+                    cmd = test.get('cmd', '')
+                    expect = test.get('expect', '')
+                    body_parts.append(f"- Command: `{cmd}`")
+                    body_parts.append(f"  - Expected: {expect}")
+            
+            # Add milestone and task ID footer
+            body_parts.append(f"\n\n---\n**Milestone**: {milestone_title}\n**Task ID**: {task_id}")
+            
+            body = "\n".join(body_parts)
+            
+            # Build labels list
+            labels = ["task", milestone_id]
+            
+            # Add custom labels from task if present
+            custom_labels = t.get('labels', [])
+            if custom_labels:
+                labels.extend(custom_labels)
+            
+            # Add priority as label if present
+            if priority:
+                labels.append(priority.lower())
+            
+            issues.append({
+                "title": title,
+                "body": body,
+                "labels": labels,
+                "milestone_id": milestone_id,
+                "task_id": task_id
+            })
+    
     return issues
 
 
@@ -43,10 +88,24 @@ def write_outputs(issues: list[dict], md_path: Path, json_path: Path) -> None:
     with json_path.open("w", encoding="utf-8") as f:
         json.dump(issues, f, indent=2)
 
-    # Write simple MASTER_TASKS.md
+    # Write enhanced MASTER_TASKS.md with better formatting
     lines = ["# MASTER_TASKS\n\n"]
+    lines.append(f"**Generated**: {Path(json_path).name}\n")
+    lines.append(f"**Total Tasks**: {len(issues)}\n\n")
+    
+    # Group by milestone
+    current_milestone = None
     for i in issues:
-        lines.append(f"- **{i['title']}**  \n  {i['body']}  \n  labels: {', '.join(i['labels'])}\n\n")
+        milestone = i.get('milestone_id', '')
+        if milestone != current_milestone:
+            lines.append(f"\n## Milestone: {milestone.upper()}\n\n")
+            current_milestone = milestone
+        
+        lines.append(f"### {i['title']}\n\n")
+        lines.append(f"{i['body']}\n\n")
+        lines.append(f"**Labels**: {', '.join(i['labels'])}\n\n")
+        lines.append("---\n\n")
+    
     md_path.write_text("".join(lines), encoding="utf-8")
 
 
