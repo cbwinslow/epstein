@@ -1,0 +1,4 @@
+[
+  { "sha256": "sample1", "path": "epstein_project/raw/sample_source/sample1.pdf" },
+  { "sha256": "sample2", "path": "epstein_project/raw/sample_source/sample2.pdf" }
+]

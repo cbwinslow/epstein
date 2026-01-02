@@ -1,0 +1,71 @@
+name: OCR Action
+
+on:
+  workflow_dispatch:
+    inputs:
+      manifest_path:
+        description: 'Path to manifest JSON in repo'
+        required: true
+        default: 'manifests/ocr_manifest_example.json'
+      run_embeddings:
+        description: 'Run embeddings after OCR'
+        required: true
+        default: 'true'
+      model:
+        description: 'SentenceTransformers model name'
+        required: false
+        default: 'all-MiniLM-L6-v2'
+
+jobs:
+  ocr-and-analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y poppler-utils tesseract-ocr libtesseract-dev imagemagick python3-venv build-essential 
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt || true
+          pip install sentence-transformers numpy
+      - name: Run OCR orchestrator
+        env:
+          EPSTEIN_ROOT_OVERRIDE: ${{ github.workspace }}
+        run: |
+          python3 scripts/ocr_runner.py --input-manifest ${{ github.event.inputs.manifest_path }} --batch 100 --timeout 300
+          python3 scripts/ocr_summary.py
+      - name: Chunk text
+        run: |
+          # create chunks for each text file processed
+          for txt in epstein_project/text/*.txt; do
+            sha=$(basename "$txt" .txt)
+            python3 scripts/chunking.py "$txt" epstein_project/chunks/${sha}.chunks.jsonl --max-chars 3000 --overlap-chars 600 || true
+          done
+      - name: Run embeddings (optional)
+        if: ${{ github.event.inputs.run_embeddings == 'true' }}
+        run: |
+          python3 scripts/embed_chunks.py --model "${{ github.event.inputs.model }}"
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ocr-results
+          path: |
+            epstein_project/processing_status.jsonl
+            epstein_project/ocr_summary.json
+            epstein_project/logs/ocr/
+            epstein_project/chunks/
+            epstein_project/embeddings/
+      - name: Run watcher for alerts
+        run: |
+          python3 scripts/ocr_watch.py
+      - name: Post alert to PR (if any)
+        if: ${{ always() }}
+        run: |
+          echo "OCR Action completed. Artifacts uploaded. See ocr_summary.json for metrics." | tee /tmp/ocr_action_note
