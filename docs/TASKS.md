@@ -22,10 +22,15 @@
 - [ ] OCR pipeline
 - [ ] Store extracted text
 - [ ] Confidence scoring
-- [ ] Add unit tests for OCR runner and chunking (`tests/test_ocr_runner_unit.py`, `tests/test_chunking.py`)
-- [ ] Add integration tests for OCR end-to-end (`tests/test_integration_ocr.py`)
-- [ ] Add debugging docs (`docs/ocr_debugging.md`, `docs/debug_agents.md`)
-- [ ] Add CI workflow to run OCR canary tests on PRs (`.github/workflows/ocr-tests.yml`)
+- [x] Add unit tests for OCR runner and chunking (`tests/test_ocr_runner_unit.py`, `tests/test_chunking.py`)
+- [x] Add integration tests for OCR end-to-end (`tests/test_integration_ocr.py`)
+- [x] Add debugging docs (`docs/ocr_debugging.md`, `docs/debug_agents.md`)
+- [x] Add CI workflow to run OCR canary tests on PRs (`.github/workflows/ocr-tests.yml`)
+- [ ] Add microtests for fallback PSM selection and pdftoppm -png behavior
+- [ ] Add tests for replacement logic (ensure fallback replaces original text when better)
+- [ ] Add preprocessing image pipeline (grayscale, contrast, binarize) with tests
+- [ ] Add canary dashboard to summarize pass/fail rates and trend over time
+- [ ] Add monitoring/alerting for high failure rates (pipeline_monitor agent)
 
 ## Ops
 - [ ] Logging standard
