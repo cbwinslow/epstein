@@ -25,7 +25,7 @@ jobs:
           pip install pytest pillow
       - name: Run unit tests
         run: |
-          pytest -q tests/test_chunking.py tests/test_ocr_runner_unit.py tests/test_pipeline_monitor.py tests/test_ocr_summary.py
+          pytest -q tests/test_chunking.py tests/test_ocr_runner_unit.py tests/test_pipeline_monitor.py tests/test_ocr_summary.py tests/test_ocr_watch.py
       - name: Run integration (optional)
         if: ${{ success() }}
         run: |
