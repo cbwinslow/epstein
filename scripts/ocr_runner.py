@@ -95,7 +95,7 @@ def fallback_tesseract(input_pdf, out_txt_path):
     # use pdftoppm -> tesseract
     tmp_prefix = f'/tmp/{out_txt_path.stem}_page'
     try:
-        subprocess.run(['pdftoppm', '-r', '300', str(input_pdf), tmp_prefix], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=180)
+        subprocess.run(['pdftoppm', '-r', '300', '-png', str(input_pdf), tmp_prefix], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=180)
         pages = sorted(Path('/tmp').glob(f"{out_txt_path.stem}_page*.png"))
         parts = []
         for pg in pages:

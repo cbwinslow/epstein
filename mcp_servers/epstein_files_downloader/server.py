@@ -427,13 +427,14 @@ class EpsteinFilesDownloader:
         task.status = "downloading"
         task.progress = 0.0
         task.updated_at = time.time()
-        
-        destination_path = Path(task.destination)
-        destination_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
+        # Ensure destination directory exists
+        destination_dir = Path(task.destination)
+        destination_dir.mkdir(parents=True, exist_ok=True)
+
         # Generate safe filename
         safe_filename = self._generate_safe_filename(task.url, task.metadata)
-        final_path = destination_path / safe_filename
+        final_path = destination_dir / safe_filename
         
         # Skip if already exists
         if final_path.exists() and final_path.stat().st_size > 1000:
@@ -750,15 +751,12 @@ class EpsteinFilesDownloader:
     def run(self):
         """Run the MCP server"""
         import uvicorn
-        
+
         logger.info(f"🚀 Starting Epstein Files Downloader MCP Server")
         logger.info(f"📍 Server URL: {self.config.base_url}")
         logger.info(f"📁 Download directory: {self.config.download_dir}")
         logger.info(f"🔗 Max concurrent downloads: {self.config.max_concurrent_downloads}")
-        
-        # Start background task for download queue
-        asyncio.create_task(self._process_download_queue())
-        
+
         # Run FastAPI server
         uvicorn.run(
             self.app,
