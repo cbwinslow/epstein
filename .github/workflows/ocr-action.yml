@@ -50,6 +50,10 @@ jobs:
           done
       - name: Run embeddings (optional)
         if: ${{ github.event.inputs.run_embeddings == 'true' }}
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_API_URL: ${{ secrets.OPENROUTER_API_URL }}
+          EMBEDDING_MODEL: ${{ secrets.EMBEDDING_MODEL }}
         run: |
           python3 scripts/embed_chunks.py --model "${{ github.event.inputs.model }}"
       - name: Upload artifacts
