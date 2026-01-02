@@ -58,6 +58,8 @@ python3 scripts/ocr_runner.py --batch 1 --min-bytes 1 --max-text-bytes 500 --no-
 - Spot-check a few outputs:
   - `pdftotext -layout -enc UTF-8 epstein_project/ocr/<sha>.ocr.pdf - | head`
 - If >10% of canary docs are `ocr_empty`, `fallback_empty`, or `ocr_failed`, pause and investigate.
+ - Run the quality gate report:
+   - `python3 scripts/ocr_quality_gate.py --status-file epstein_project/processing_status.jsonl --max-fail-rate 0.1 --min-total 10`
 
 ## Repeatability and resume
 - The runner is idempotent and append-only; it only targets low-text PDFs and never deletes originals.

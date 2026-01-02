@@ -12,6 +12,8 @@ from dataclasses import dataclass
 import time
 import psutil
 from enum import Enum
+from pathlib import Path
+from collections import Counter
 
 
 class TaskStatus(Enum):
@@ -373,6 +375,90 @@ class PipelineMonitor:
             "success_rate": success_rate,
             "pending_tasks": total_tasks - completed_tasks - failed_tasks - running_tasks
         }
+
+    def ingest_processing_status(self, status_path: str, window: int = 500) -> Dict[str, Any]:
+        """Ingest recent processing_status.jsonl entries and update OCR metrics.
+
+        Returns an OCR summary dict and also updates internal metrics and alerts.
+        """
+        p = Path(status_path)
+        if not p.exists():
+            return {"error": "status file not found"}
+
+        # read last N lines
+        lines = []
+        with p.open('r', encoding='utf-8') as fh:
+            for l in fh:
+                l = l.strip()
+                if l:
+                    lines.append(l)
+        entries = [json.loads(l) for l in lines[-window:]]
+
+        total = len(entries)
+        counts = Counter()
+        before_sum = 0
+        after_sum = 0
+        fallback_sum = 0
+        failures = []
+        for e in entries:
+            st = e.get('ocr_status') or 'unknown'
+            counts[st] += 1
+            if e.get('fallback_status'):
+                counts['fallback_' + e.get('fallback_status')] += 1
+            before_sum += e.get('before_chars', 0)
+            after_sum += e.get('after_chars', 0)
+            fallback_sum += e.get('fallback_chars', 0)
+            if st != 'ok':
+                failures.append({'sha256': e.get('sha256'), 'ocr_status': st, 'error': e.get('error'), 'log': e.get('log')})
+
+        avg_before = before_sum / total if total else 0
+        avg_after = after_sum / total if total else 0
+        avg_fallback = fallback_sum / total if total else 0
+        failure_rate = (counts['ocr_failed'] + counts['ocr_empty']) / total if total else 0
+
+        ocr_summary = {
+            'total': total,
+            'counts': dict(counts),
+            'avg_before_chars': avg_before,
+            'avg_after_chars': avg_after,
+            'avg_fallback_chars': avg_fallback,
+            'failure_rate': failure_rate,
+            'top_failures': failures[:10]
+        }
+
+        # update a synthetic task to reflect OCR batch health
+        task_id = f"ocr_batch_{int(time.time())}"
+        ti = TaskInfo(
+            task_id=task_id,
+            task_name='ocr_batch_ingest',
+            status=TaskStatus.COMPLETED if failure_rate < self.alert_thresholds.get('task_failure_rate', 0.1) else TaskStatus.FAILED,
+            start_time=None,
+            end_time=None,
+            duration=None,
+            error_message=None,
+            progress=1.0,
+            resource_usage={'avg_before': avg_before, 'avg_after': avg_after, 'failure_rate': failure_rate}
+        )
+        self.tasks[task_id] = ti
+
+        # emit alerts if thresholds triggered
+        if failure_rate > self.alert_thresholds.get('task_failure_rate', 0.1):
+            self.alerts.append({'level': 'warning', 'msg': f'OCR failure rate {failure_rate:.2%} exceeds threshold'})
+        # critical condition: many empty results
+        empty_rate = (counts.get('ocr_empty', 0) + counts.get('fallback_empty', 0)) / total if total else 0
+        if empty_rate > 0.05:
+            self.alerts.append({'level': 'critical', 'msg': f'OCR empty+fallback_empty rate {empty_rate:.2%} indicates data quality issue'})
+
+        # update metrics summary
+        self.metrics.total_tasks += total
+        self.metrics.completed_tasks += counts.get('ok', 0)
+        self.metrics.failed_tasks += counts.get('ocr_failed', 0) + counts.get('ocr_empty', 0)
+        self.metrics.running_tasks = max(0, self.metrics.running_tasks - 0)  # no-op but kept for pattern
+        self.metrics.average_duration = (self.metrics.average_duration + (avg_after or 0)) / 2 if self.metrics.average_duration else avg_after
+        self.metrics.success_rate = max(0.0, 1 - failure_rate)
+        self.metrics.throughput = (self.metrics.throughput + total) / 2
+
+        return ocr_summary
     
     def _calculate_health_score(self, resource_usage: Dict[str, Any], 
                               task_analysis: Dict[str, Any]) -> float:

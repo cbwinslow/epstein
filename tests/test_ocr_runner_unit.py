@@ -73,3 +73,49 @@ def test_fallback_tesseract(monkeypatch, tmp_path):
             f.unlink()
         except Exception:
             pass
+
+
+def test_fallback_psm_selection(monkeypatch, tmp_path):
+    # simulate pdftoppm creating PNG pages
+    pages = [tmp_path / 'p1.png', tmp_path / 'p2.png']
+    for p in pages:
+        p.write_bytes(b'PNG')
+
+    # simulate tesseract: return different outputs depending on '--psm' arg
+    def fake_run(args, stdout=None, stderr=None, check=False, timeout=None):
+        cmd = args
+        if 'pdftoppm' in cmd[0]:
+            return DummyProc(returncode=0)
+        # args contains '--psm' and the mode
+        try:
+            mode = cmd[cmd.index('--psm')+1]
+        except Exception:
+            mode = '3'
+        if mode == '3':
+            return DummyProc(stdout=b'a')
+        if mode == '6':
+            return DummyProc(stdout=b'aaaaa')
+        if mode == '11':
+            return DummyProc(stdout=b'aa')
+        return DummyProc(stdout=b'')
+
+    monkeypatch.setattr(subprocess, 'run', fake_run)
+    out_txt = tmp_path / 'out_psm.txt'
+    # create dummy pages in /tmp as our function will search there; copy our created pages to /tmp
+    tmp1 = Path('/tmp') / (out_txt.stem + '_page-1.png')
+    tmp2 = Path('/tmp') / (out_txt.stem + '_page-2.png')
+    tmp1.write_bytes(b'PNG')
+    tmp2.write_bytes(b'PNG')
+    try:
+        chars = ocr_runner.fallback_tesseract(str(tmp_path / 'dummy.pdf'), out_txt)
+        assert out_txt.exists()
+        txt = out_txt.read_text(encoding='utf-8')
+        # best per page should pick mode 6 (5 chars) then mode 6 again -> total 10
+        assert chars == len(txt)
+        assert chars >= 10
+    finally:
+        try:
+            tmp1.unlink()
+            tmp2.unlink()
+        except Exception:
+            pass
