@@ -1,10 +1,13 @@
 import os
+import sys
 import shutil
 import json
 import subprocess
 from pathlib import Path
 import pytest
 from PIL import Image, ImageDraw, ImageFont
+# ensure repo root is importable
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 
 @pytest.mark.skipif(shutil.which('ocrmypdf') is None or shutil.which('tesseract') is None,
