@@ -98,9 +98,19 @@ def fallback_tesseract(input_pdf, out_txt_path):
         subprocess.run(['pdftoppm', '-r', '300', '-png', str(input_pdf), tmp_prefix], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=180)
         pages = sorted(Path('/tmp').glob(f"{out_txt_path.stem}_page*.png"))
         parts = []
+        # try multiple PSM modes per page to improve OCR on tricky layouts
+        psm_modes = ['3', '6', '11']
         for pg in pages:
-            p = subprocess.run(['tesseract', str(pg), 'stdout', '-l', 'eng'], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False, timeout=60)
-            parts.append(p.stdout.decode('utf-8', errors='ignore'))
+            best = ''
+            for mode in psm_modes:
+                try:
+                    p = subprocess.run(['tesseract', str(pg), 'stdout', '-l', 'eng', '--psm', mode], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False, timeout=60)
+                    txt_try = p.stdout.decode('utf-8', errors='ignore')
+                    if len(txt_try) > len(best):
+                        best = txt_try
+                except Exception:
+                    continue
+            parts.append(best)
         txt = '\n'.join(parts)
         out_txt_path.write_text(txt, encoding='utf-8')
         # if fallback produced nothing, preserve first page image for debugging

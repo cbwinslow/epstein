@@ -39,6 +39,7 @@
 - [x] Create comprehensive test suite
 - [x] Test all data source connectivity
 - [x] Fix Pydantic serialization bug (created_at/updated_at fields)
+- [x] Fix download directory creation and filename generation
 - [ ] Update DOJ and FBI data source URLs
 - [ ] Implement PACER authentication system
 - [ ] Add rate limiting and exponential backoff
@@ -50,3 +51,11 @@
 - [ ] Implement proper logging and monitoring
 
 This file is intentionally simple and acts as the project’s task source of truth.
+
+## OCR Hardening (New)
+- [ ] Fix JBIG2 install/permissions or standardize `--optimize 0` in OCR runs
+- [ ] Add OCR quality-gate report (summarize `processing_status.jsonl`, fail-rate thresholds)
+- [ ] Extend OCR coverage to standalone images (batch script + status logging)
+- [ ] Normalize OCR pipeline usage (choose canonical flow and deprecate the other)
+- [ ] Add OCR runner unit tests and CI canary workflow
+- [ ] Add per-run OCR tracking summary (run_id, config, counts, failure totals)

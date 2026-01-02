@@ -433,7 +433,7 @@ class EpsteinFilesDownloader:
         destination_dir.mkdir(parents=True, exist_ok=True)
 
         # Generate safe filename
-        safe_filename = self._generate_safe_filename(task.url, task.metadata)
+        safe_filename = self._generate_safe_filename(task.url, str(destination_dir), task.metadata)
         final_path = destination_dir / safe_filename
         
         # Skip if already exists
@@ -505,15 +505,15 @@ class EpsteinFilesDownloader:
             for task_id, _ in sorted_tasks[:-500]:
                 del self.completed_tasks[task_id]
     
-    def _generate_safe_filename(self, url: str, metadata: Optional[Dict] = None) -> str:
+    def _generate_safe_filename(self, url: str, destination_dir: str, metadata: Optional[Dict] = None) -> str:
         """Generate safe filename from URL and metadata"""
         import re
         from urllib.parse import urlparse
-        
+
         # Extract filename from URL
         parsed = urlparse(url)
         filename = Path(parsed.path).name
-        
+
         # Use metadata title if available
         if metadata and metadata.get('title'):
             title = metadata['title']
@@ -522,17 +522,18 @@ class EpsteinFilesDownloader:
             filename = f"{safe_title}_{filename}"
         elif metadata and metadata.get('document_id'):
             filename = f"{metadata['document_id']}_{filename}"
-        
-        # Ensure unique filename
+
+        # Ensure unique filename in destination directory
         counter = 1
         base_name = Path(filename).stem
         extension = Path(filename).suffix
         final_filename = filename
-        
-        while (Path(self.config.download_dir) / final_filename).exists():
+
+        dest_path = Path(destination_dir)
+        while (dest_path / final_filename).exists():
             final_filename = f"{base_name}_{counter}{extension}"
             counter += 1
-        
+
         return final_filename
     
     async def discover_collections(self) -> List[CollectionInfo]:
