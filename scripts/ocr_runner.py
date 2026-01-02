@@ -103,6 +103,14 @@ def fallback_tesseract(input_pdf, out_txt_path):
             parts.append(p.stdout.decode('utf-8', errors='ignore'))
         txt = '\n'.join(parts)
         out_txt_path.write_text(txt, encoding='utf-8')
+        # if fallback produced nothing, preserve first page image for debugging
+        if len(txt.strip()) == 0 and pages:
+            debug_dir = LOG_DIR / 'ocr_debug_pages'
+            debug_dir.mkdir(parents=True, exist_ok=True)
+            try:
+                shutil.copy2(pages[0], debug_dir / f"{out_txt_path.stem}_page-1.png")
+            except Exception:
+                pass
         return len(txt)
     finally:
         for pg in Path('/tmp').glob(f"{out_txt_path.stem}_page*.png"):
