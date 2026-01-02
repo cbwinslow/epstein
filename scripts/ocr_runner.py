@@ -14,7 +14,8 @@ import subprocess
 import time
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+# Allow overriding root for tests via EPSTEIN_ROOT_OVERRIDE
+ROOT = Path(os.environ.get('EPSTEIN_ROOT_OVERRIDE') or Path(__file__).resolve().parents[1])
 MANIFEST = ROOT / 'epstein_project' / 'manifest.jsonl'
 TEXT_DIR = ROOT / 'epstein_project' / 'text'
 OCR_DIR = ROOT / 'epstein_project' / 'ocr'
@@ -64,9 +65,29 @@ def pdftotext_count(path):
         return 0
 
 
-def run_ocrmypdf(input_pdf, out_pdf, log_path, timeout):
+def jbig2_available():
+    exe = shutil.which('jbig2') or shutil.which('jbig2enc')
+    if not exe:
+        return False
+    return os.access(exe, os.X_OK)
+
+
+def run_ocrmypdf(input_pdf, out_pdf, log_path, timeout, *, skip_text, rotate_pages, optimize_level):
+    if optimize_level is None and not jbig2_available():
+        optimize_level = 0
     with open(log_path, 'wb') as lf:
-        proc = subprocess.run(['ocrmypdf', '--deskew', '--force', '--output-type', 'pdf', str(input_pdf), str(out_pdf)], stdout=lf, stderr=lf, timeout=timeout)
+        # avoid conflicting flags: do not use --force together with --skip-text
+        cmd = ['ocrmypdf', '--deskew', '--output-type', 'pdf']
+        if not skip_text:
+            cmd.append('--force')
+        if skip_text:
+            cmd.append('--skip-text')
+        if rotate_pages:
+            cmd.append('--rotate-pages')
+        if optimize_level is not None:
+            cmd.extend(['--optimize', str(optimize_level)])
+        cmd.extend([str(input_pdf), str(out_pdf)])
+        proc = subprocess.run(cmd, stdout=lf, stderr=lf, timeout=timeout)
     return proc.returncode
 
 
@@ -101,7 +122,7 @@ def atomic_append_status(rec):
     tmp.unlink()
 
 
-def main(batch, min_pdf_bytes, max_text_bytes, ocr_timeout):
+def main(batch, min_pdf_bytes, max_text_bytes, ocr_timeout, skip_text, rotate_pages, optimize_level):
     manifest = load_manifest()
     candidates = []
     for txt in TEXT_DIR.glob('*.txt'):
@@ -146,7 +167,15 @@ def main(batch, min_pdf_bytes, max_text_bytes, ocr_timeout):
 
         out_pdf = OCR_DIR / f'{sha}.ocr.pdf'
         try:
-            ret = run_ocrmypdf(path, out_pdf, logfile, ocr_timeout)
+            ret = run_ocrmypdf(
+                path,
+                out_pdf,
+                logfile,
+                ocr_timeout,
+                skip_text=skip_text,
+                rotate_pages=rotate_pages,
+                optimize_level=optimize_level,
+            )
             rec['ocr_return'] = ret
             if ret != 0:
                 rec['ocr_status'] = 'ocr_failed'
@@ -194,5 +223,10 @@ if __name__ == '__main__':
     p.add_argument('--min-bytes', type=int, default=DEFAULTS['min_pdf_bytes'])
     p.add_argument('--max-text-bytes', type=int, default=DEFAULTS['max_text_bytes'])
     p.add_argument('--timeout', type=int, default=DEFAULTS['ocr_timeout'])
+    p.add_argument('--skip-text', action='store_true', default=False, help='Skip pages that already have text (default: false)')
+    p.add_argument('--no-skip-text', dest='skip_text', action='store_false')
+    p.add_argument('--rotate-pages', action='store_true', default=True, help='Auto-rotate pages (default: true)')
+    p.add_argument('--no-rotate-pages', dest='rotate_pages', action='store_false')
+    p.add_argument('--optimize', type=int, default=None, help='Pass through to ocrmypdf --optimize (default: auto)')
     args = p.parse_args()
-    main(args.batch, args.min_bytes, args.max_text_bytes, args.timeout)
+    main(args.batch, args.min_bytes, args.max_text_bytes, args.timeout, args.skip_text, args.rotate_pages, args.optimize)

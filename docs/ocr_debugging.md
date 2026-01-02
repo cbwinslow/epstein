@@ -11,7 +11,8 @@ When OCR fails or produces poor text, follow this checklist:
    - ocr_timeout: increase `--timeout` and consider running single-file retry.
    - ocr_empty: `ocrmypdf` completed but produced no text; try fallback tesseract.
    - fallback_empty: tesseract returned no text; check page images and contrast.
-   - JBIG2 errors: ensure `jbig2` is installed and on PATH (`~/.local/bin/jbig2`).
+   - ocrmypdf tool missing: `ocrmypdf` not installed or not on PATH.
+   - JBIG2 errors: ensure `jbig2`/`jbig2enc` is installed and executable, or re-run with `--optimize 0`.
 
 3. Tools
    - `pdftotext -layout -enc UTF-8 file.pdf -` to check existing text.
@@ -28,3 +29,7 @@ When OCR fails or produces poor text, follow this checklist:
 6. Escalation
    - If a large corpus shows systemic ocr_empty with high-resolution images, increase DPI and test `--image-dpi` flags.
    - Consider specialized tesseract configs for poor contrast documents (PSM, OEM, language models).
+   - If `ocrmypdf` exits with JBIG2 permission errors, validate:
+     - `command -v jbig2` and `ls -l $(command -v jbig2)`
+     - `command -v jbig2enc` and `ls -l $(command -v jbig2enc)`
+     - Re-run with `--optimize 0` if binaries are missing or non-executable.

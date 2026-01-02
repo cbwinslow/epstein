@@ -5,13 +5,17 @@ import json
 import subprocess
 from pathlib import Path
 import pytest
-from PIL import Image, ImageDraw, ImageFont
 # ensure repo root is importable
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+try:
+    from PIL import Image, ImageDraw, ImageFont
+    PIL_AVAILABLE = True
+except Exception:
+    PIL_AVAILABLE = False
 
 
-@pytest.mark.skipif(shutil.which('ocrmypdf') is None or shutil.which('tesseract') is None,
-                    reason='ocrmypdf or tesseract not installed')
+@pytest.mark.skipif(not PIL_AVAILABLE or shutil.which('ocrmypdf') is None or shutil.which('tesseract') is None,
+                    reason='Pillow, ocrmypdf or tesseract not installed')
 def test_integration_ocr_runs(tmp_path):
     # create an image-based PDF that requires OCR
     img = Image.new('RGB', (600, 200), color='white')

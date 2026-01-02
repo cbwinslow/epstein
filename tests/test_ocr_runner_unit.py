@@ -40,7 +40,7 @@ def test_run_ocrmypdf_success(monkeypatch, tmp_path):
     out_pdf = tmp_path / 'out.pdf'
     log = tmp_path / 'log.txt'
     input_pdf.write_bytes(b'%PDF-1.4')
-    rc = ocr_runner.run_ocrmypdf(str(input_pdf), str(out_pdf), str(log), timeout=1)
+    rc = ocr_runner.run_ocrmypdf(str(input_pdf), str(out_pdf), str(log), timeout=1, skip_text=False, rotate_pages=False, optimize_level=None)
     assert rc == 0
 
 

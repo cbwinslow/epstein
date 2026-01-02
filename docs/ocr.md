@@ -1,22 +1,68 @@
 # OCR Procedures
 
-Overview
-- Primary OCR: `ocrmypdf` (with `jbig2` optimization where available).
-- Fallback: rasterize with `pdftoppm` then OCR with `tesseract`.
+## Scope
+Repeatable bulk OCR for PDFs and images in `epstein_project/`, producing searchable PDFs plus extracted text. Primary OCR uses `ocrmypdf`; fallback uses `pdftoppm` + `tesseract`.
 
-Runner
-- Use `scripts/ocr_runner.py` to run a checkpointed, resumable batch.
-- Default thresholds: pick files with `text` size < 500 bytes and `pdf` size >= 300k.
+## Prereqs
+- System tools: `ocrmypdf`, `tesseract-ocr`, `poppler-utils`, `ghostscript`, `qpdf`.
+- Optional: `jbig2`/`jbig2enc` for PDF optimization. If it is missing or not executable, run with `--optimize 0`.
+- Verify tools:
+  - `ocrmypdf --version`
+  - `tesseract --version`
+  - `pdftoppm -h`
 
-Usage
-- Run a debug batch: `python3 scripts/ocr_runner.py --batch 10 --min-bytes 300000 --max-text-bytes 500`
-- Logs are written to `epstein_project/logs/ocr` and per-file records to `epstein_project/processing_status.jsonl`.
+## Inputs and outputs
+- Input index: `epstein_project/manifest.jsonl` (must include `sha256`, `path`, `bytes`).
+- Candidate text: `epstein_project/text/*.txt` (used to select low-text PDFs).
+- Outputs:
+  - OCR PDFs: `epstein_project/ocr/*.ocr.pdf`
+  - Fallback text: `epstein_project/ocr_fallback/*.txt`
+  - Replaced text (backups): `epstein_project/text_pre_ocr_fix/*.txt`
+  - Logs: `epstein_project/logs/ocr/<sha>.ocr.log`
+  - Status: `epstein_project/processing_status.jsonl` (append-only)
 
-Recommendations
-- Run canary (10 files) before large runs.
-- Limit concurrency to 2–4 workers on a shared server.
-- Back up original `text` before replacement (runner writes backups to `epstein_project/text_pre_ocr_fix/`).
+## Procedure (PDFs)
+1) Canary run (10 files):
+```
+python3 scripts/ocr_runner.py --batch 10 --min-bytes 300000 --max-text-bytes 500
+```
+2) Bulk run (repeat in batches):
+```
+python3 scripts/ocr_runner.py --batch 200 --min-bytes 300000 --max-text-bytes 500
+```
+3) If `jbig2` is missing or permissioned incorrectly:
+```
+python3 scripts/ocr_runner.py --batch 200 --min-bytes 300000 --max-text-bytes 500 --optimize 0
+```
 
-Troubleshooting
-- If `ocrmypdf` fails during JBIG2 optimization, ensure `jbig2`/`jbig2enc` is in `~/.local/bin` or system path.
-- For large PDFs with many images, consider using `--output-type pdf` to avoid PDF/A conversion overhead.
+Notes:
+- The runner defaults to `--skip-text` and `--rotate-pages`; use `--no-skip-text` or `--no-rotate-pages` to disable.
+- The runner automatically falls back to `pdftoppm` + `tesseract` when OCR output is too small.
+
+## Procedure (images)
+For standalone images (JPG/PNG/TIFF), OCR with Tesseract directly or convert to PDF first.
+
+Direct OCR:
+```
+tesseract input.tif stdout -l eng --oem 1 --psm 6 > output.txt
+```
+
+Convert to PDF then OCR:
+```
+img2pdf input.jpg -o input.pdf
+python3 scripts/ocr_runner.py --batch 1 --min-bytes 1 --max-text-bytes 500 --no-skip-text
+```
+
+## QA and acceptance
+- Check `processing_status.jsonl` for `ocr_status`, `fallback_status`, and `after_chars`.
+- Spot-check a few outputs:
+  - `pdftotext -layout -enc UTF-8 epstein_project/ocr/<sha>.ocr.pdf - | head`
+- If >10% of canary docs are `ocr_empty`, `fallback_empty`, or `ocr_failed`, pause and investigate.
+
+## Repeatability and resume
+- The runner is idempotent and append-only; it only targets low-text PDFs and never deletes originals.
+- You can re-run with the same thresholds to resume after interruption.
+
+## Troubleshooting
+- If `ocrmypdf` fails during JBIG2 optimization, ensure `jbig2`/`jbig2enc` is on PATH and executable, or use `--optimize 0`.
+- For heavy scans, keep concurrency low (2-4 parallel processes) and watch disk usage.

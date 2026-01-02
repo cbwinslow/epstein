@@ -77,9 +77,9 @@ class DownloadTask:
     status: str = "pending"
     progress: float = 0.0
     error: Optional[str] = None
-    metadata: Dict[str, Any] = None
-    created_at: float = Field(default_factory=time.time)
-    updated_at: float = Field(default_factory=time.time)
+    metadata: Optional[Dict[str, Any]] = None
+    created_at: float = 0.0
+    updated_at: float = 0.0
 
 
 @dataclass
@@ -88,8 +88,8 @@ class CollectionInfo:
     collection_id: str
     name: str
     description: str
-    document_count: int = 0
     url: str
+    document_count: int = 0
     source: str = "govinfo.gov"
     last_updated: Optional[str] = None
 
