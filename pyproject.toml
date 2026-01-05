@@ -21,6 +21,7 @@ dependencies = [
   "aiohttp>=3.13.2",
   "python-multipart>=0.0.21",
   "loguru>=0.7.3",
+  "portalocker>=2.8",
 ]
 
 [tool.uv]
