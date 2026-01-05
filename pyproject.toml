@@ -22,7 +22,9 @@ dependencies = [
   "python-multipart>=0.0.21",
   "loguru>=0.7.3",
   "portalocker>=2.8",
+  "psutil>=5.9",
 ]
+
 
 [tool.uv]
 # Development dependencies (uv will install these into the dev venv when bootstrapping)
