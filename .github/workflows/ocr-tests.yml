@@ -32,7 +32,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt || true
-          pip install pytest pillow portalocker
+          # Install package and its runtime dependencies from pyproject.toml
+          pip install -e . || true
+          # Test libs and lock utilities
+          pip install pytest pillow portalocker psutil
       - name: Run unit tests
         run: |
           # include concurrency test to validate cross-process locking
