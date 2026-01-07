@@ -76,6 +76,49 @@ class CodexAgent:
         self.history.append(result)
         return result
 
+    async def build_openai_request(self, prompt: str, model: str | None = None, functions: list | None = None, temperature: float | None = None) -> dict:
+        """Return the kwargs that would be sent to OpenAI for function-calling flow.
+
+        This helper is intentionally non-destructive and does not perform network calls. It is
+        designed to be used by tests and by orchestration code that will perform the actual request
+        (if allowed by configuration).
+        """
+        model = model or self.config.get("model", "gpt-4o-mini")
+        return {
+            "model": model,
+            "messages": [{"role": "user", "content": prompt}],
+            "functions": functions or OPENAI_FUNCTIONS,
+            "temperature": float(temperature if temperature is not None else self.config.get("temperature", 0.0)),
+        }
+
+    async def call_openai(self, prompt: str, allow_live: bool = False, **kwargs) -> dict:
+        """Attempt to call OpenAI if allowed. By default, this method returns the prepared request payload.
+
+        - If `allow_live` is True and the environment contains `OPENAI_API_KEY`, the method will
+          attempt to import `openai` and perform a call. If `allow_live` is False (default), the
+          method only returns the payload for safe inspection and testing.
+        """
+        payload = await self.build_openai_request(prompt, **kwargs)
+
+        if not allow_live:
+            return {"live": False, "payload": payload}
+
+        # Live call requested — verify environment and availability
+        api_key = __import__("os").environ.get("OPENAI_API_KEY")
+        if not api_key:
+            raise RuntimeError("OPENAI_API_KEY is not set; cannot perform live OpenAI calls")
+
+        try:
+            import openai as _openai
+        except Exception as e:
+            raise RuntimeError("openai package is not available in the environment") from e
+
+        _openai.api_key = api_key
+        # Note: For safety we perform a synchronous call only if explicitly requested.
+        # Using ChatCompletion for function calling
+        response = _openai.ChatCompletion.create(**payload)
+        return {"live": True, "response": response}
+
 
 # OpenAI-compatible function definitions for tools
 TOOLS = [
@@ -117,14 +160,72 @@ TOOLS = [
     },
 ]
 
+# OpenAI-friendly function list (for function-calling compatibility)
+OPENAI_FUNCTIONS = [f["function"] for f in TOOLS]
+
 # Agent metadata
 AGENT_INFO = {
     "name": "Codex Agent",
-    "description": "Agent providing deterministic code generation, explanation, and test suggestions (no remote execution).",
+    "description": "Agent providing deterministic code generation, explanation, and test suggestions (no remote execution by default).",
     "version": "0.1.0",
     "capabilities": ["code_generation", "explain_code", "generate_tests"],
     "tools": TOOLS,
+    "openai_compatible": True,
+    "function_calling": True,
 }
+
+
+# Safe OpenAI helper: builds request payload and optionally performs a live call
+async def build_openai_request(self, prompt: str, model: str | None = None, functions: list | None = None, temperature: float | None = None) -> dict:
+    """Return the kwargs that would be sent to OpenAI for function-calling flow.
+
+    This helper is intentionally non-destructive and does not perform network calls. It is
+    designed to be used by tests and by orchestration code that will perform the actual request
+    (if allowed by configuration).
+    """
+    model = model or self.config.get("model", "gpt-4o-mini")
+    return {
+        "model": model,
+        "messages": [{"role": "user", "content": prompt}],
+        "functions": functions or OPENAI_FUNCTIONS,
+        "temperature": float(temperature if temperature is not None else self.config.get("temperature", 0.0)),
+    }
+
+
+async def call_openai(self, prompt: str, allow_live: bool = False, **kwargs) -> dict:
+    """Attempt to call OpenAI if allowed. By default, this method returns the prepared request payload.
+
+    - If `allow_live` is True and the environment contains `OPENAI_API_KEY`, the method will
+      attempt to import `openai` and perform a call. If `allow_live` is False (default), the
+      method only returns the payload for safe inspection and testing.
+    """
+    payload = await build_openai_request(self, prompt, **kwargs)
+
+    if not allow_live:
+        return {"live": False, "payload": payload}
+
+    # Live call requested — verify environment and availability
+    api_key = __import__("os").environ.get("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY is not set; cannot perform live OpenAI calls")
+
+    try:
+        import openai as _openai
+    except Exception as e:
+        raise RuntimeError("openai package is not available in the environment") from e
+
+    _openai.api_key = api_key
+    # Note: For safety we perform a synchronous call only if explicitly requested.
+    # Using ChatCompletion for function calling
+    response = _openai.ChatCompletion.create(**payload)
+    return {"live": True, "response": response}
+
+
+    async def build_openai_request(self, prompt: str, model: str | None = None, functions: list | None = None, temperature: float | None = None) -> dict:
+        return await build_openai_request(self, prompt, model=model, functions=functions, temperature=temperature)
+
+    async def call_openai(self, prompt: str, allow_live: bool = False, **kwargs) -> dict:
+        return await call_openai(self, prompt, allow_live=allow_live, **kwargs)
 
 
 if __name__ == "__main__":

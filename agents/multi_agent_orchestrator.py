@@ -2,20 +2,54 @@
 Multi-Agent Orchestrator
 Coordinates multiple specialized agents for comprehensive vector database analysis and troubleshooting.
 """
+from __future__ import annotations
 
 from typing import List, Dict, Any, Optional, Union
 import asyncio
 import json
 import logging
 from datetime import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 
-# Import all our specialized agents
-from agents.epstein_data_processor import EpsteinDataProcessor
-from agents.vector_db_analyzer import VectorDBAnalyzer
-from agents.db_troubleshooter import DatabaseTroubleshooter
-from agents.pipeline_monitor import PipelineMonitor
+# Import all our specialized agents. These are optional at import time - wrap imports
+# so tests that only need enums/dataclasses don't fail when heavy optional deps
+# (like qdrant_client) are missing.
+try:
+    from agents.epstein_data_processor import EpsteinDataProcessor
+except Exception:  # pragma: no cover - best-effort import
+    EpsteinDataProcessor = None
+
+try:
+    from agents.vector_db_analyzer import VectorDBAnalyzer
+except Exception:  # pragma: no cover
+    VectorDBAnalyzer = None
+
+try:
+    from agents.db_troubleshooter import DatabaseTroubleshooter
+except Exception:  # pragma: no cover
+    DatabaseTroubleshooter = None
+
+try:
+    from agents.pipeline_monitor import PipelineMonitor
+    from agents.pipeline_monitor import Task, TaskPriority, TaskStatus
+except Exception:  # pragma: no cover
+    PipelineMonitor = None
+    Task = None
+    TaskPriority = None
+    TaskStatus = None
+
+
+class _MissingAgent:
+    """Placeholder for agents that failed to import due to missing optional deps."""
+    def __init__(self, name: str, config: Optional[Dict[str, Any]] = None):
+        self.name = name
+        self.config = config
+
+    def __getattr__(self, item):
+        raise RuntimeError(
+            f"Agent '{self.name}' is not available because optional dependencies are missing."
+        )
 
 
 class OrchestrationMode(Enum):
@@ -28,6 +62,7 @@ class OrchestrationMode(Enum):
 class AgentStatus(Enum):
     """Agent execution status"""
     IDLE = "idle"
+    PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"
@@ -81,10 +116,18 @@ class MultiAgentOrchestrator:
         
         # Initialize all specialized agents
         self.agents = {
-            "epstein_data_processor": EpsteinDataProcessor(config),
-            "vector_db_analyzer": VectorDBAnalyzer(config),
-            "db_troubleshooter": DatabaseTroubleshooter(config),
-            "pipeline_monitor": PipelineMonitor(config)
+            "epstein_data_processor": (EpsteinDataProcessor(config)
+                                       if EpsteinDataProcessor is not None
+                                       else _MissingAgent('epstein_data_processor', config)),
+            "vector_db_analyzer": (VectorDBAnalyzer(config)
+                                   if VectorDBAnalyzer is not None
+                                   else _MissingAgent('vector_db_analyzer', config)),
+            "db_troubleshooter": (DatabaseTroubleshooter(config)
+                                  if DatabaseTroubleshooter is not None
+                                  else _MissingAgent('db_troubleshooter', config)),
+            "pipeline_monitor": (PipelineMonitor(config)
+                                 if PipelineMonitor is not None
+                                 else _MissingAgent('pipeline_monitor', config))
         }
         
         # Orchestration state
@@ -157,6 +200,25 @@ class MultiAgentOrchestrator:
                     "error": str(e),
                     "timestamp": datetime.now().isoformat()
                 }
+
+    def get_agent_status(self) -> Dict[str, Dict[str, Any]]:
+        """Return the current status for all agents as structured dictionaries.
+
+        Each agent entry includes keys like `status`, and optionally `capabilities` or `tools`
+        if the agent exposes them. This structure is easier to extend and more informative
+        for UIs and telemetry consumers.
+        """
+        statuses = {}
+        for name, status in self.agent_status.items():
+            agent = self.agents.get(name)
+            capabilities = getattr(agent, "capabilities", None)
+            tools = getattr(agent, "tools", None)
+            statuses[name] = {
+                "status": status.value,
+                "capabilities": capabilities if capabilities is not None else [],
+                "tools": tools if tools is not None else [],
+            }
+        return statuses
     
     async def run_troubleshooting_workflow(self, issue_type: str) -> Dict[str, Any]:
         """
@@ -368,7 +430,7 @@ class MultiAgentOrchestrator:
             task.completed_at = datetime.now().isoformat()
             self.logger.error(f"Task {task.task_id} failed: {e}")
     
-    async def _execute_comprehensive_analysis(self, task: Task) -> Dict[str, Any]:
+    async def _execute_comprehensive_analysis(self, task: Any) -> Dict[str, Any]:
         """Execute comprehensive analysis task"""
         collection_name = task.parameters["collection_name"]
         query_text = task.parameters.get("query_text")
@@ -418,7 +480,7 @@ class MultiAgentOrchestrator:
             "summary": self._generate_analysis_summary(results)
         }
     
-    async def _execute_database_troubleshooting(self, task: Task) -> Dict[str, Any]:
+    async def _execute_database_troubleshooting(self, task: Any) -> Dict[str, Any]:
         """Execute database troubleshooting task"""
         results = {}
         
@@ -448,7 +510,7 @@ class MultiAgentOrchestrator:
             "recommendations": self._generate_troubleshooting_recommendations(results)
         }
     
-    async def _execute_pipeline_optimization(self, task: Task) -> Dict[str, Any]:
+    async def _execute_pipeline_optimization(self, task: Any) -> Dict[str, Any]:
         """Execute pipeline optimization task"""
         results = {}
         
@@ -484,7 +546,7 @@ class MultiAgentOrchestrator:
             "optimization_plan": self._generate_optimization_plan(results)
         }
     
-    async def _execute_document_analysis(self, task: Task) -> Dict[str, Any]:
+    async def _execute_document_analysis(self, task: Any) -> Dict[str, Any]:
         """Execute document analysis task"""
         document_path = task.parameters["document_path"]
         

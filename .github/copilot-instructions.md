@@ -1,3 +1,14 @@
+<todos title="Add Codex Agent" rule="Review steps frequently throughout the conversation and DO NOT stop between steps unless they explicitly require it.">
+- [x] 1: Add `codex_agent` entry to `config/agent_config.json` and create initial agent file `agents/codex_agent.py` with scaffold and metadata 🔴
+- [x] 2: Implement `CodexAgent` methods (generate_code, explain_code, suggest_tests) and register tools and AGENT_INFO 🔴
+- [x] 3: Add unit tests `tests/test_codex_agent.py` covering key methods and metadata 🟡
+- [x] 4: Update `agents/README.md` to document the new Codex agent and usage examples 🟢
+- [-] 5: Run test suite and fix any issues; ensure linter/type checks pass 🟡
+  _Running full test suite and installing missing dependencies (qdrant-client, pdfplumber, fastapi, pytest-asyncio, openai)._
+- [ ] 6: Install missing test dependencies (qdrant_client, pdfplumber, fastapi, pytest-asyncio) and run full test suite; address any failures 🟡
+- [ ] 7: Integrate Codex agent with OpenAI-compatible toolset and add tests + docs 🔴
+</todos>
+
 # Epstein Project - GitHub Copilot Instructions
 
 ## Project Overview

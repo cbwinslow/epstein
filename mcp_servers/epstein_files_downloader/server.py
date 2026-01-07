@@ -21,17 +21,29 @@ import os
 import signal
 import sys
 import time
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any
 from uuid import uuid4
 
-import aiohttp
+try:
+    import aiohttp
+except Exception:  # pragma: no cover - optional dependency
+    aiohttp = None
+try:
+    from fastapi import FastAPI, HTTPException, BackgroundTasks
+except Exception:  # pragma: no cover - optional dependency
+    FastAPI = None
+    HTTPException = Exception
+    BackgroundTasks = None
+
 import requests
 from bs4 import BeautifulSoup
-from fastapi import FastAPI, HTTPException, BackgroundTasks
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field, HttpUrl
+
+# Import CORSMiddleware only if FastAPI is available
+if FastAPI is not None:
+    from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, HttpUrl
 from tqdm import tqdm
 
 # Configure logging
@@ -43,6 +55,13 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger("epstein_files_downloader")
+
+
+def _require_aiohttp():
+    if aiohttp is None:
+        raise RuntimeError(
+            "aiohttp is required for async downloads. Install it (e.g., `uv add aiohttp` and `uv install`)"
+        )
 
 
 # ============================================================================
@@ -78,8 +97,8 @@ class DownloadTask:
     progress: float = 0.0
     error: Optional[str] = None
     metadata: Dict[str, Any] = None
-    created_at: float = Field(default_factory=time.time)
-    updated_at: float = Field(default_factory=time.time)
+    created_at: float = field(default_factory=time.time)
+    updated_at: float = field(default_factory=time.time)
 
 
 @dataclass
@@ -447,6 +466,7 @@ class EpsteinFilesDownloader:
         for attempt in range(self.config.retry_attempts):
             try:
                 # Use aiohttp for async download
+                _require_aiohttp()
                 async with aiohttp.ClientSession() as session:
                     async with session.get(task.url, timeout=self.config.timeout_seconds) as response:
                         if response.status != 200:

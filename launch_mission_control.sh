@@ -1,4 +1,4 @@
-#!/bin/bash
+u#!/bin/bash
 # Mission Control Launch Script
 # Simple wrapper to launch Mission Control TUI interface
 

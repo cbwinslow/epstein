@@ -173,6 +173,13 @@
       "runtime_config": {
         "max_concurrent_requests": 2,
         "timeout_seconds": 60
+      },
+      "openai_compatibility": {
+        "function_calling": true,
+        "allow_live_calls": false,
+        "api_key_env": "OPENAI_API_KEY",
+        "allowed_models": ["gpt-4o-mini", "gpt-4o-mini-code", "gpt-4o-code", "gpt-4o"],
+        "use_streaming": false
       }
     },    "epstein_tools": {
       "name": "Epstein Tools Suite",

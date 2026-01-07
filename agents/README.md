@@ -61,9 +61,10 @@ This directory contains AI agent implementations for automating document analysi
    - Performance optimization
 
 9. **`codex_agent.py`**
-   - Code generation (deterministic, no remote execution)
+   - Code generation (deterministic, no remote execution by default)
    - Code explanation and advice
    - Test and lint suggestion
+   - OpenAI-compatible function calling support (see `openai_compatibility` config)
    - Useful for generating reproducible code scaffolding for the pipeline
 
 ### Planned Agents (Roadmap)
