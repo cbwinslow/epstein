@@ -315,6 +315,8 @@ outputs:
 - Cloudflare R2: $10.80/year (no egress fees)
 - **Savings: $921.60/year** with R2
 
+*Pricing verified as of January 2025. Cloud pricing may change - check current AWS S3 and Cloudflare R2 pricing pages for latest rates.*
+
 ## Public Access and SEO
 
 ### Making Documents Discoverable

@@ -35,6 +35,8 @@ on:
   
   schedule:
     # Run weekly on Sunday at 2 AM UTC
+    # Note: Users can modify this schedule or disable it by removing this section
+    # Examples: '0 2 * * 0' (weekly), '0 2 * * *' (daily), '0 2 1 * *' (monthly)
     - cron: '0 2 * * 0'
   
   # Allow manual trigger from other workflows

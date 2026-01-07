@@ -237,6 +237,7 @@ Create `index.html` for R2 or GitHub Pages:
         <pre>Epstein Documents Archive (OCR Processed) [dataset]. 
 Available at: https://documents.yourdomain.com/
 Original sources: U.S. Department of Justice, FBI, House Oversight Committee</pre>
+        <p><small>Note: Replace 'yourdomain.com' with your actual domain or R2 public URL</small></p>
     </section>
     
     <footer>
