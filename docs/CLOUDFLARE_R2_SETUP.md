@@ -15,13 +15,13 @@ This guide walks through setting up Cloudflare R2 to host OCR-processed Epstein 
 
 ## Cost Comparison
 
-| Provider | Storage (100GB) | Egress (100TB) | Total/Month |
-|----------|----------------|----------------|-------------|
+| Provider | Storage (100GB) | Egress (1TB) | Total/Month |
+|----------|----------------|--------------|-------------|
 | Cloudflare R2 | $1.50 | **$0** | **$1.50** |
-| AWS S3 | $2.30 | $9,000 | $9,002.30 |
-| Google Cloud | $2.00 | $11,000 | $11,002.00 |
+| AWS S3 | $2.30 | $92.16 | $94.46 |
+| Google Cloud | $2.00 | $120 | $122.00 |
 
-**Savings**: ~$9,000/month for public datasets! 🎉
+**Savings**: ~$93/month (~$1,116/year) for 1TB egress with R2! 🎉
 
 ## Prerequisites
 

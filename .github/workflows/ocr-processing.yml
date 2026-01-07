@@ -573,6 +573,9 @@ jobs:
           R2 URL: ${{ env.R2_URL }}
           EOF
           
+          # Note: This may fail on protected branches or with default GITHUB_TOKEN permissions
+          # The failure is non-critical - R2 upload already succeeded
+          # To enable: Grant workflow write permissions in repo settings or use PAT
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add results/r2-links/latest.txt
@@ -583,6 +586,7 @@ jobs:
             echo "⚠️ Warning: Failed to push R2 link to repository"
             echo "This is not critical - R2 upload succeeded"
             echo "Manual push may be needed or check branch protection rules"
+            echo "To fix: Enable workflow write permissions in repository settings"
           fi
   
   # Job 4: Create GitHub Release (Optional)
