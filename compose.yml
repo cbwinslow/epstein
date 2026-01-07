@@ -40,6 +40,20 @@ services:
       - pg_storage:/var/lib/postgresql/data
       - ./vector-stack/initdb:/docker-entrypoint-initdb.d:ro
 
+  neo4j:
+    image: neo4j:5.15-community
+    container_name: neo4j
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:7474:7474"  # HTTP
+      - "127.0.0.1:7687:7687"  # Bolt
+    environment:
+      - NEO4J_AUTH=neo4j/password
+      - NEO4J_PLUGINS=["apoc", "graph-data-science"]
+    volumes:
+      - neo4j_data:/data
+
 volumes:
   qdrant_storage:
   pg_storage:
+  neo4j_data:

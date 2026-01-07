@@ -21,6 +21,8 @@ dependencies = [
   "aiohttp>=3.13.2",
   "python-multipart>=0.0.21",
   "loguru>=0.7.3",
+  "textual>=7.0.0",
+  "rich>=14.2.0",
 ]
 
 [tool.uv]

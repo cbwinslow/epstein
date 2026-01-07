@@ -56,7 +56,17 @@ class OrchestrationTask:
     priority: int = 1
     timeout: int = 300  # 5 minutes
     retry_count: int = 3
-    status: AgentStatus = field(default_factory(lambda: AgentStatus.PENDING))
+    status: Optional[AgentStatus] = None
+
+    def __post_init__(self):
+        # Ensure status is an AgentStatus enum; default to PENDING
+        if self.status is None:
+            self.status = AgentStatus.PENDING
+        elif not isinstance(self.status, AgentStatus):
+            try:
+                self.status = AgentStatus(self.status)
+            except Exception:
+                pass
 
 
 class MultiAgentOrchestrator:
@@ -332,7 +342,7 @@ class MultiAgentOrchestrator:
             except Exception as e:
                 self.logger.error(f"Error processing task: {e}")
     
-    async def _process_task(self, task: Task):
+    async def _process_task(self, task: Any):
         """Process a single task"""
         try:
             # Execute task based on type
