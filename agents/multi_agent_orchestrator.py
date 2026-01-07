@@ -56,7 +56,7 @@ class OrchestrationTask:
     priority: int = 1
     timeout: int = 300  # 5 minutes
     retry_count: int = 3
-    status: AgentStatus = AgentStatus.PENDING
+    status: AgentStatus = field(default_factory(lambda: AgentStatus.PENDING))
 
 
 class MultiAgentOrchestrator:
