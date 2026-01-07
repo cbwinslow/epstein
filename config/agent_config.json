@@ -149,8 +149,32 @@
         "relation_extraction_model": "bert-base-uncased",
         "linking_model": "entity-linking"
       }
-    },
-    "epstein_tools": {
+    },    "codex_agent": {
+      "name": "Codex Agent",
+      "description": "Specialized agent for code generation, explanation, test synthesis, and refactoring suggestions",
+      "version": "0.1.0",
+      "capabilities": [
+        "Code generation",
+        "Code explanation",
+        "Test generation",
+        "Lint and refactor suggestions",
+        "Secure code review"
+      ],
+      "model_config": {
+        "model": "code-davinci-002",
+        "max_tokens": 2048,
+        "temperature": 0.0,
+        "language_support": ["python", "javascript", "bash"],
+        "safety_restrictions": {
+          "allow_remote_execution": false,
+          "allow_file_system_modifications": false
+        }
+      },
+      "runtime_config": {
+        "max_concurrent_requests": 2,
+        "timeout_seconds": 60
+      }
+    },    "epstein_tools": {
       "name": "Epstein Tools Suite",
       "description": "Collection of tools for pipeline management, database operations, and vector search",
       "version": "1.0.0",

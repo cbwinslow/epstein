@@ -60,6 +60,12 @@ This directory contains AI agent implementations for automating document analysi
    - Issue detection and resolution
    - Performance optimization
 
+9. **`codex_agent.py`**
+   - Code generation (deterministic, no remote execution)
+   - Code explanation and advice
+   - Test and lint suggestion
+   - Useful for generating reproducible code scaffolding for the pipeline
+
 ### Planned Agents (Roadmap)
 
 1. **Relationship Discovery Agent**

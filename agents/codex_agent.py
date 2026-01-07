@@ -1,0 +1,142 @@
+"""
+Codex Agent
+Specialized agent for safe code generation, explanation, test synthesis and refactoring suggestions.
+"""
+
+from typing import Any
+from datetime import datetime
+import asyncio
+
+
+class CodexAgent:
+    """A lightweight Codex-style agent that provides code generation and explanation utilities.
+
+    Note: This implementation intentionally does not call any remote code execution APIs or run
+    generated code. It provides deterministic, testable scaffolding suitable for unit tests and
+    integration with the multi-agent orchestrator.
+    """
+
+    def __init__(self, config: dict[str, Any] | None = None):
+        self.config = config or {}
+        self.history: list[dict[str, Any]] = []
+
+    async def generate_code(self, prompt: str, language: str = "python", max_tokens: int = 256) -> dict[str, Any]:
+        """Generate code for a prompt.
+
+        Returns a dictionary with generated `code` (string) and `metadata`.
+        The method simulates generation and is deterministic for tests.
+        """
+        request_id = f"gen_{datetime.now().timestamp()}"
+        await asyncio.sleep(0.01)
+
+        # Deterministic sample generation for tests
+        code = f"# Generated {language} code for prompt: {prompt}\n# (Simulated output)\n" + (
+            "def generated_function():\n    return 'ok'\n"
+        )
+
+        result = {
+            "request_id": request_id,
+            "language": language,
+            "code": code,
+            "meta": {"max_tokens": max_tokens, "temperature": self.config.get("temperature", 0.0)},
+            "timestamp": datetime.now().isoformat(),
+        }
+
+        self.history.append(result)
+        return result
+
+    async def explain_code(self, code: str, level: str = "high") -> dict[str, Any]:
+        """Return a short explanation of the provided code.
+
+        The explanation is simulated and safe.
+        """
+        request_id = f"explain_{datetime.now().timestamp()}"
+        await asyncio.sleep(0.005)
+
+        explanation = {
+            "summary": f"This {level}-level explanation says the code defines a function and returns a constant.",
+            "advice": ["Add docstrings", "Add input validation"],
+        }
+
+        result = {"request_id": request_id, "explanation": explanation, "timestamp": datetime.now().isoformat()}
+        self.history.append(result)
+        return result
+
+    async def suggest_tests(self, code: str) -> dict[str, Any]:
+        """Suggest unit tests for the given code.
+
+        Returns a dict with `tests` which is a list of suggested test snippets (strings).
+        """
+        request_id = f"test_{datetime.now().timestamp()}"
+        await asyncio.sleep(0.005)
+
+        tests = ["def test_generated_function():\n    assert generated_function() == 'ok'\n"]
+
+        result = {"request_id": request_id, "tests": tests, "timestamp": datetime.now().isoformat()}
+        self.history.append(result)
+        return result
+
+
+# OpenAI-compatible function definitions for tools
+TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "generate_code",
+            "description": "Generate code for a given prompt and language",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "prompt": {"type": "string"},
+                    "language": {"type": "string", "default": "python"},
+                    "max_tokens": {"type": "integer", "default": 256}
+                },
+                "required": ["prompt"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "explain_code",
+            "description": "Return a human-readable explanation for supplied code",
+            "parameters": {
+                "type": "object",
+                "properties": {"code": {"type": "string"}, "level": {"type": "string", "default": "high"}},
+                "required": ["code"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "suggest_tests",
+            "description": "Generate suggested unit tests for provided code",
+            "parameters": {"type": "object", "properties": {"code": {"type": "string"}}, "required": ["code"]}
+        }
+    },
+]
+
+# Agent metadata
+AGENT_INFO = {
+    "name": "Codex Agent",
+    "description": "Agent providing deterministic code generation, explanation, and test suggestions (no remote execution).",
+    "version": "0.1.0",
+    "capabilities": ["code_generation", "explain_code", "generate_tests"],
+    "tools": TOOLS,
+}
+
+
+if __name__ == "__main__":
+    import asyncio
+    agent = CodexAgent()
+
+    async def main():
+        gen = await agent.generate_code("Write a function that returns sum of list" )
+        print(gen["code"])
+        expl = await agent.explain_code(gen["code"])
+        print(expl["explanation"]["summary"])
+        tests = await agent.suggest_tests(gen["code"])
+        print(tests["tests"])
+
+    asyncio.run(main())
