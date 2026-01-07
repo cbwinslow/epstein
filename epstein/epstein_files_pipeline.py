@@ -133,6 +133,8 @@ class PipelineConfig(BaseModel):
     ocrmypdf_lang: str = "eng"
     # Conservative defaults; tweak per corpus if needed.
     ocrmypdf_extra_args: List[str] = Field(default_factory=lambda: ["--skip-text", "--rotate-pages"])
+    ocr_mode: str = "auto"  # auto|always|skip
+    ocr_min_text_chars: int = 500
 
     # Chunking behavior
     chunk_chars: int = 10_000
@@ -451,6 +453,15 @@ def append_manifest(manifest_path: Path, downloads: List[DownloadResult]) -> Non
 
 def has_tool(name: str) -> bool:
     return shutil.which(name) is not None
+
+
+def should_ocr(pdf_path: Path, cfg: PipelineConfig) -> bool:
+    if cfg.ocr_mode == "skip":
+        return False
+    if cfg.ocr_mode == "always":
+        return True
+    text = extract_text_pdf(pdf_path)
+    return len(text.strip()) < cfg.ocr_min_text_chars
 
 
 def ocr_pdf(in_pdf: Path, out_pdf: Path, cfg: PipelineConfig) -> Tuple[bool, str]:
@@ -778,7 +789,7 @@ def run_pipeline(cfg: PipelineConfig, verbose: bool = False) -> None:
             effective_pdf_for_text = in_pdf
 
             if cfg.enable_ocr:
-                if not ocr_pdf_path.exists():
+                if not ocr_pdf_path.exists() and should_ocr(in_pdf, cfg):
                     ok, msg = ocr_pdf(in_pdf, ocr_pdf_path, cfg)
                     if ok:
                         effective_pdf_for_text = ocr_pdf_path
@@ -787,7 +798,7 @@ def run_pipeline(cfg: PipelineConfig, verbose: bool = False) -> None:
                         logging.warning(f"OCR skipped/failed for {in_pdf.name}: {msg}")
                         failures.append({"stage": "ocr", "doc_id": doc_id, "url": source_url, "error": msg, "ts": now_unix(), "run_id": run_id})
                         effective_pdf_for_text = in_pdf
-                else:
+                elif ocr_pdf_path.exists():
                     effective_pdf_for_text = ocr_pdf_path
 
             # Extract text

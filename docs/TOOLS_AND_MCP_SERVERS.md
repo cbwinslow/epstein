@@ -36,6 +36,11 @@ These are the services the repo expects to be *reachable* for local runs and CI 
 
 - Optional telemetry/analytics (if enabled): PostHog or similar (refer to `posthog_install.txt` for packages). If you add such a server, add env vars to `.env.example` and a reachable check to `scripts/doctor.py`.
 
+- Epstein Files Processor MCP server (pipeline runner)
+  - Default: http://localhost:8780
+  - Purpose: orchestrates download → OCR → NER → relationships → embeddings
+  - Module: `mcp_servers/epstein_files_processor/server.py`
+
 ## Validation checklist (what `scripts/doctor.py` should assert)
 - Docker daemon reachable
 - Docker Compose plugin available

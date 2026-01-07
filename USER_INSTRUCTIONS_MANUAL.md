@@ -160,6 +160,21 @@ python epstein/epstein_files_pipeline.py export-safe --config ./config.json
 - `chunk_chars`: Text chunking size (default: 10,000)
 - `spacy_model`: NER model (default: en_core_web_sm)
 
+#### Orchestrator (`pipeline_orchestrator.py`)
+
+**Purpose**: Run the pipeline end-to-end and optionally trigger image OCR, relationship analysis, and Qdrant embeddings.
+
+**Usage**:
+
+```bash
+python -m epstein.pipeline_orchestrator \
+  --config ./config.json \
+  --dsn postgresql://analysis:analysis@localhost:5432/analysis \
+  --qdrant-url http://localhost:6333 \
+  --run-ingest \
+  --run-relationships
+```
+
 #### Pipeline Monitoring (`agents/pipeline_monitor.py`)
 
 **Purpose**: Real-time monitoring and progress tracking for long-running operations.

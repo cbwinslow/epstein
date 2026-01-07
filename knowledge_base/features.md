@@ -93,6 +93,7 @@
 - Protocol-based communication
 - Extensible architecture
 - Standardized interfaces
+- Pipeline orchestration server for download/OCR/NER/relationship/embedding runs
 
 **Benefits**:
 - Seamless integration with external tools
