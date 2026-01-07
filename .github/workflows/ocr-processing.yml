@@ -115,10 +115,11 @@ jobs:
           
           # Use the MCP server API to download documents
           python << 'PYTHON_SCRIPT'
-          import requests
+          import os
+          import sys
           import json
           import time
-          import sys
+          import requests
           from pathlib import Path
           
           MCP_URL = "http://localhost:8765"
@@ -401,6 +402,8 @@ jobs:
           
           # Generate manifest
           python << 'PYTHON_MANIFEST'
+          import os
+          import sys
           import json
           import hashlib
           import time
@@ -446,7 +449,6 @@ jobs:
           print(f"📊 Total documents in manifest: {manifest['total_documents']}")
           
           # Output for GitHub Actions
-          import os
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
               f.write(f"processed={manifest['total_documents']}\n")
               f.write(f"manifest={manifest_path}\n")
