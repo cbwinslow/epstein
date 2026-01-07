@@ -62,10 +62,10 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
       
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v5.0.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
@@ -263,7 +263,7 @@ jobs:
           echo "📊 Downloaded $COUNT PDF documents"
       
       - name: Upload download artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.3.1
         with:
           name: downloaded-documents
           path: |
@@ -293,16 +293,16 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
       
       - name: Download artifacts from previous job
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.1.3
         with:
           name: downloaded-documents
           path: ${{ env.ARTIFACTS_DIR }}
       
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v5.0.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
@@ -488,7 +488,7 @@ jobs:
           cat ${RESULTS_DIR}/SUMMARY.md
       
       - name: Upload OCR results as artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.3.1
         with:
           name: ocr-processed-results
           path: |
@@ -506,7 +506,7 @@ jobs:
           ls -lh ocr-results-${{ github.run_id }}.tar.gz
       
       - name: Upload compressed archive
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.3.1
         with:
           name: ocr-results-archive
           path: ocr-results-${{ github.run_id }}.tar.gz
@@ -524,10 +524,10 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
       
       - name: Download OCR results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.1.3
         with:
           name: ocr-results-archive
           path: ./
@@ -602,16 +602,16 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
       
       - name: Download OCR results archive
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.1.3
         with:
           name: ocr-results-archive
           path: ./
       
       - name: Download manifest
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.1.3
         with:
           name: ocr-processed-results
           path: ${{ env.RESULTS_DIR }}
@@ -651,7 +651,7 @@ jobs:
           EOF
       
       - name: Create release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2.0.2
         with:
           tag_name: ocr-${{ github.run_number }}
           name: OCR Processing Results - Run ${{ github.run_number }}
