@@ -305,10 +305,15 @@ outputs:
 - Storage for 1 year: 60GB × $0.015/GB × 12 = $10.80/year
 - Downloads: Unlimited (no egress fees)
 
-**Comparison**:
-- AWS S3: $10.80 + ~$540 for 100TB egress = $550.80/year
+**Comparison for 1TB egress**:
+- AWS S3: $10.80 storage + $90 egress (1TB) = $100.80/year
 - Cloudflare R2: $10.80/year (no egress fees)
 - GitHub Artifacts: Free (but 90-day limit)
+
+**Comparison for 10TB egress**:
+- AWS S3: $10.80 storage + $900 egress (10TB) = $910.80/year  
+- Cloudflare R2: $10.80/year (no egress fees)
+- **Savings: $900/year** with R2
 
 ## Public Access and SEO
 

@@ -317,7 +317,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r epstein/pyproject.toml || true
+          # Install pipeline dependencies directly
           pip install requests beautifulsoup4 lxml tqdm pydantic pdfminer.six spacy
           python -m spacy download en_core_web_sm
       
@@ -591,39 +591,46 @@ jobs:
           name: ocr-processed-results
           path: ${{ env.RESULTS_DIR }}
       
+      - name: Generate release body
+        id: release_body
+        run: |
+          CURRENT_DATE=$(date -u "+%Y-%m-%d %H:%M:%S UTC")
+          cat > release_body.md << EOF
+          # OCR Processing Results
+          
+          **Processing Date:** ${CURRENT_DATE}
+          **Workflow Run:** [${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          **Documents Processed:** ${{ needs.ocr-processing.outputs.processed-count }}
+          
+          ## Downloads
+          
+          - \`ocr-results-${{ github.run_id }}.tar.gz\` - Complete OCR results archive
+          - \`ocr_manifest.json\` - Document manifest with checksums
+          
+          ## Source Information
+          
+          These documents were downloaded from official government sources:
+          - Department of Justice (DOJ)
+          - FBI Vault
+          - House Oversight Committee
+          
+          All documents are public records.
+          
+          ## Processing Details
+          
+          - OCR Engine: OCRmyPDF + Tesseract
+          - Language: English
+          - Text extraction: PDFMiner.six
+          
+          For more information, see: https://github.com/${{ github.repository }}
+          EOF
+      
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ocr-${{ github.run_number }}
           name: OCR Processing Results - Run ${{ github.run_number }}
-          body: |
-            # OCR Processing Results
-            
-            **Processing Date:** $(date -u)
-            **Workflow Run:** [${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            **Documents Processed:** ${{ needs.ocr-processing.outputs.processed-count }}
-            
-            ## Downloads
-            
-            - `ocr-results-${{ github.run_id }}.tar.gz` - Complete OCR results archive
-            - `ocr_manifest.json` - Document manifest with checksums
-            
-            ## Source Information
-            
-            These documents were downloaded from official government sources:
-            - Department of Justice (DOJ)
-            - FBI Vault
-            - House Oversight Committee
-            
-            All documents are public records.
-            
-            ## Processing Details
-            
-            - OCR Engine: OCRmyPDF + Tesseract
-            - Language: English
-            - Text extraction: PDFMiner.six
-            
-            For more information, see: https://github.com/${{ github.repository }}
+          body_path: release_body.md
           files: |
             ocr-results-${{ github.run_id }}.tar.gz
             ${{ env.RESULTS_DIR }}/SUMMARY.md

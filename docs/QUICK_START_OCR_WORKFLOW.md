@@ -85,7 +85,7 @@ Create release: true
 For long-term public storage:
 
 1. **Create R2 Bucket**
-   - Sign up at cloudflare.com
+   - Sign up at https://dash.cloudflare.com
    - Go to R2 → Create Bucket
    - Name: `epstein-documents`
 
