@@ -88,8 +88,8 @@ class CollectionInfo:
     collection_id: str
     name: str
     description: str
-    document_count: int = 0
     url: str
+    document_count: int = 0
     source: str = "govinfo.gov"
     last_updated: Optional[str] = None
 
