@@ -199,7 +199,7 @@ async def call_openai(self, prompt: str, allow_live: bool = False, **kwargs) -> 
       attempt to import `openai` and perform a call. If `allow_live` is False (default), the
       method only returns the payload for safe inspection and testing.
     """
-    payload = await build_openai_request(self, prompt, **kwargs)
+    payload = await self.build_openai_request(prompt, **kwargs)
 
     if not allow_live:
         return {"live": False, "payload": payload}
