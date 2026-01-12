@@ -263,7 +263,7 @@ jobs:
           echo "📊 Downloaded $COUNT PDF documents"
       
       - name: Upload download artifacts
-        uses: actions/upload-artifact@v4.3.1
+        uses: actions/upload-artifact@v6
         with:
           name: downloaded-documents
           path: |
@@ -488,7 +488,7 @@ jobs:
           cat ${RESULTS_DIR}/SUMMARY.md
       
       - name: Upload OCR results as artifacts
-        uses: actions/upload-artifact@v4.3.1
+        uses: actions/upload-artifact@v6
         with:
           name: ocr-processed-results
           path: |
@@ -506,7 +506,7 @@ jobs:
           ls -lh ocr-results-${{ github.run_id }}.tar.gz
       
       - name: Upload compressed archive
-        uses: actions/upload-artifact@v4.3.1
+        uses: actions/upload-artifact@v6
         with:
           name: ocr-results-archive
           path: ocr-results-${{ github.run_id }}.tar.gz
