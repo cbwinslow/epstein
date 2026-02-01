@@ -7,7 +7,8 @@
 set -e
 
 echo "🔍 Validating API keys and configuration..."
-echo "=" 70
+printf '=%.0s' {1..70}
+echo ""
 
 # Load .env if it exists
 if [ -f .env ]; then
@@ -24,7 +25,8 @@ WARNINGS=0
 
 echo ""
 echo "Required Configuration:"
-echo "-" * 70
+printf -- '-%.0s' {1..70}
+echo ""
 
 # Check OpenRouter (required for AI features)
 if [ -z "$OPENROUTER_API_KEY" ]; then
@@ -69,7 +71,8 @@ fi
 # Check Optional Configuration
 echo ""
 echo "Optional Configuration:"
-echo "-" * 70
+printf -- '-%.0s' {1..70}
+echo ""
 
 # GitHub Token (optional for some operations)
 if [ -z "$GITHUB_TOKEN" ]; then
@@ -115,7 +118,8 @@ fi
 # Test API Connections
 echo ""
 echo "Connection Tests:"
-echo "-" * 70
+printf -- '-%.0s' {1..70}
+echo ""
 
 # Test OpenRouter connection (if key is set)
 if [ -n "$OPENROUTER_API_KEY" ]; then
@@ -169,9 +173,11 @@ fi
 
 # Summary
 echo ""
-echo "=" * 70
+printf '=%.0s' {1..70}
+echo ""
 echo "📊 Validation Summary"
-echo "=" * 70
+printf '=%.0s' {1..70}
+echo ""
 
 if [ $ERRORS -eq 0 ] && [ $WARNINGS -eq 0 ]; then
     echo "✅ All checks passed! Configuration is complete."
