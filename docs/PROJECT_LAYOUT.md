@@ -14,6 +14,9 @@
 - `db_ingest_artifacts.py`  
   Loads pipeline outputs into Postgres, so you can query and build reports.
 
+- `pipeline_orchestrator.py`  
+  Orchestrates the pipeline end-to-end and optionally runs relationship analysis + embeddings.
+
 - `Makefile`  
   One-liners for repeatable commands.
 
@@ -91,4 +94,3 @@ Once this works, we can add:
 - date normalization + timelines
 - custom NER patterns
 - vector indexing + hybrid retrieval
-
