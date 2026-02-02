@@ -356,15 +356,38 @@ def append_manifest(manifest_path: Path, record: dict) -> None:
 # -----------------------------
 
 def discover_doj_tasks(sess: requests.Session, index_url: str, out_dir: Path, timeout_s: int, max_retries: int, backoff_base_s: float, log: Log) -> List[DownloadTask]:
+    """
+    Discover DOJ Epstein disclosure datasets.
+    
+    Supports the January 30, 2026 release with 3.5M+ pages across multiple data sets.
+    Auto-discovers Data Set 1-N (including new Data Sets 9, 10, 11+).
+    
+    Args:
+        sess: Requests session
+        index_url: DOJ disclosures index URL
+        out_dir: Output directory
+        timeout_s: Request timeout
+        max_retries: Maximum retries
+        backoff_base_s: Backoff base seconds
+        log: Logger instance
+    
+    Returns:
+        List of DownloadTask objects
+    """
+    log.info("DOJ: Fetching index page to discover datasets...")
     html = http_get_text(sess, index_url, timeout_s, max_retries, backoff_base_s, log)
 
+    # Try to find dataset file pages (e.g., "data-set-9-files", "data-set-10-files")
     dataset_page_matches = re.findall('href="([^"]*data-set-[0-9]+-files)"', html, flags=re.IGNORECASE)
     dataset_pages = sorted({normalize_url(index_url, m) for m in dataset_page_matches})
 
     if not dataset_pages:
         log.warn("DOJ: Could not find explicit dataset file pages on index; attempting broader extraction.")
+        # Fallback: find any pages with "data-set-N" pattern
         dataset_page_matches = re.findall('href="([^"]*data-set-[0-9]+[^\"]*)"', html, flags=re.IGNORECASE)
         dataset_pages = sorted({normalize_url(index_url, m) for m in dataset_page_matches if "data-set" in m})
+    
+    log.info(f"DOJ: Found {len(dataset_pages)} potential dataset page(s)")
 
     tasks: List[DownloadTask] = []
     raw_base = out_dir / DEFAULT_RAW_DIR / "doj_disclosures"
@@ -372,22 +395,37 @@ def discover_doj_tasks(sess: requests.Session, index_url: str, out_dir: Path, ti
     extracted_dir = raw_base / "extracted"
 
     for page_url in dataset_pages:
+        # Extract dataset number
         m = re.search("data-set-([0-9]+)", page_url)
         if not m:
+            log.debug(f"DOJ: Could not extract dataset number from {page_url}, skipping")
             continue
         ds_num = safe_int(m.group(1), default=-1)
         if ds_num <= 0:
+            log.debug(f"DOJ: Invalid dataset number {ds_num}, skipping")
             continue
 
-        page_html = http_get_text(sess, page_url, timeout_s, max_retries, backoff_base_s, log)
+        log.info(f"DOJ: Processing Data Set {ds_num:02d} from {page_url}")
+        
+        try:
+            page_html = http_get_text(sess, page_url, timeout_s, max_retries, backoff_base_s, log)
+        except Exception as e:
+            log.error(f"DOJ: Failed to fetch Data Set {ds_num:02d} page: {e}")
+            continue
+        
+        # Find ZIP download links
         zip_links = re.findall('href="([^"]+\.zip)"', page_html, flags=re.IGNORECASE)
         if not zip_links:
             log.warn(f"DOJ: No ZIP link found on dataset page {page_url} (Data Set {ds_num}).")
+            log.warn("DOJ: This dataset may use a different format or be unavailable.")
             continue
 
+        # Use first ZIP link found (typically the main download)
         zip_url = normalize_url(page_url, zip_links[0])
         zip_path = zips_dir / f"doj_dataset_{ds_num:02d}.zip"
         ds_extract_dir = extracted_dir / f"dataset_{ds_num:02d}"
+        
+        log.info(f"DOJ: Data Set {ds_num:02d} → {zip_path.name}")
 
         tasks.append(
             DownloadTask(
@@ -396,20 +434,33 @@ def discover_doj_tasks(sess: requests.Session, index_url: str, out_dir: Path, ti
                 url=zip_url,
                 dest=zip_path,
                 kind="zip",
-                meta={"dataset_num": ds_num, "dataset_page_url": page_url, "extract_dir": str(ds_extract_dir)},
+                meta={
+                    "dataset_num": ds_num,
+                    "dataset_page_url": page_url,
+                    "extract_dir": str(ds_extract_dir),
+                    "release_date": "2026-01-30",  # January 30, 2026 release
+                },
             )
         )
 
+    # Deduplicate tasks by dataset number
     seen: set = set()
     uniq: List[DownloadTask] = []
     for t in sorted(tasks, key=lambda x: x.meta.get("dataset_num", 9999)):
         dn = t.meta.get("dataset_num")
         if dn in seen:
+            log.debug(f"DOJ: Skipping duplicate Data Set {dn}")
             continue
         seen.add(dn)
         uniq.append(t)
 
-    log.info(f"DOJ: Discovered {len(uniq)} dataset ZIP task(s).")
+    log.info(f"DOJ: Discovered {len(uniq)} unique dataset ZIP task(s) (Data Sets: {sorted(seen)})")
+    
+    # Helpful message about the January 2026 release
+    if any(ds >= 9 for ds in seen):
+        log.info("DOJ: ℹ️  Detected Data Sets from January 30, 2026 release (3.5M+ pages)")
+        log.info("DOJ: ℹ️  This release includes videos and images in addition to PDFs")
+    
     return uniq
 
 
