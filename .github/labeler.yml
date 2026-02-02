@@ -1,0 +1,19 @@
+feature:
+  - changed-files:
+      - any-glob-to-any-file: ["epstein/**", "lib/**", "vector-stack/**"]
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file: ["docs/**", "README.md", "**/*.md"]
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file: [".github/**", "scripts/**"]
+
+configuration:
+  - changed-files:
+      - any-glob-to-any-file: ["config/**", "compose.yml", "*.yml", "*.yaml"]
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file: ["tests/**"]
