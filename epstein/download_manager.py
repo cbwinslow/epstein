@@ -9,7 +9,6 @@ Date: 2026-02-13
 
 from __future__ import annotations
 
-import asyncio
 import hashlib
 import json
 import logging
@@ -20,9 +19,22 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Callable
 from enum import Enum
 
-import aiohttp
 import requests
-from tqdm import tqdm
+
+try:
+    from tqdm import tqdm
+except ImportError:
+    # Fallback if tqdm not available
+    class tqdm:
+        def __init__(self, *args, **kwargs):
+            self.total = kwargs.get('total', 0)
+            self.n = kwargs.get('initial', 0)
+        def update(self, n):
+            self.n += n
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            pass
 
 logger = logging.getLogger(__name__)
 

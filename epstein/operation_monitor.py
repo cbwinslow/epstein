@@ -21,19 +21,35 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Callable, Deque
 
-from rich.console import Console
-from rich.live import Live
-from rich.table import Table
-from rich.progress import (
-    Progress,
-    SpinnerColumn,
-    BarColumn,
-    TextColumn,
-    TimeRemainingColumn,
-    TaskID,
-)
-from rich.panel import Panel
-from rich.layout import Layout
+try:
+    from rich.console import Console
+    from rich.live import Live
+    from rich.table import Table
+    from rich.progress import (
+        Progress,
+        SpinnerColumn,
+        BarColumn,
+        TextColumn,
+        TimeRemainingColumn,
+        TaskID,
+    )
+    from rich.panel import Panel
+    from rich.layout import Layout
+    RICH_AVAILABLE = True
+except ImportError:
+    RICH_AVAILABLE = False
+    # Create dummy classes
+    class Console:
+        pass
+    class Progress:
+        def __init__(self, *args, **kwargs):
+            pass
+        def add_task(self, *args, **kwargs):
+            return None
+        def update(self, *args, **kwargs):
+            pass
+    class Table:
+        pass
 
 logger = logging.getLogger(__name__)
 
@@ -186,17 +202,25 @@ class OperationMonitor:
         self.alerts_file = self.log_dir / "alerts.jsonl"
         
         # Progress tracking (for Rich progress bars)
-        self.progress = Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
-            TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
-            TimeRemainingColumn(),
-        )
+        if RICH_AVAILABLE:
+            self.progress = Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+                TimeRemainingColumn(),
+            )
+        else:
+            self.progress = Progress()
+        
         self.progress_tasks: Dict[str, TaskID] = {}
         
         # Dashboard
-        self.console = Console()
+        if RICH_AVAILABLE:
+            self.console = Console()
+        else:
+            self.console = None
+        
         self.dashboard_thread: Optional[threading.Thread] = None
         self.dashboard_running = False
         
@@ -566,7 +590,8 @@ class OperationMonitor:
     
     def start_dashboard(self, refresh_rate: float = 1.0) -> None:
         """Start real-time dashboard in background thread"""
-        if not self.enable_dashboard:
+        if not self.enable_dashboard or not RICH_AVAILABLE:
+            logger.warning("Dashboard not available (Rich library not installed)")
             return
         
         self.dashboard_running = True
