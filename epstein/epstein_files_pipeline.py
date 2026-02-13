@@ -460,8 +460,11 @@ def should_ocr(pdf_path: Path, cfg: PipelineConfig) -> bool:
         return False
     if cfg.ocr_mode == "always":
         return True
-    text = extract_text_pdf(pdf_path)
-    return len(text.strip()) < cfg.ocr_min_text_chars
+    if cfg.ocr_mode == "auto":
+        text = extract_text_pdf(pdf_path)
+        return len(text.strip()) < cfg.ocr_min_text_chars
+    # Fallback for unexpected modes: do not perform OCR or unnecessary text extraction.
+    return False
 
 
 def ocr_pdf(in_pdf: Path, out_pdf: Path, cfg: PipelineConfig) -> Tuple[bool, str]:

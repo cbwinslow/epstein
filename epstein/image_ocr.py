@@ -24,17 +24,34 @@ def has_tool(tool: str) -> bool:
 
 
 def iter_images(input_dir: Path, extensions: Iterable[str]) -> List[Path]:
-    exts = {ext.lower() for ext in extensions}
-    images: List[Path] = []
-    for path in sorted(input_dir.rglob("*")):
-        if path.is_file() and path.suffix.lower() in exts:
-            images.append(path)
-    return images
+    # Normalize extensions to include a leading dot and be lowercase (e.g., "jpg" -> ".jpg").
+    normalized_exts = {
+        ext.lower() if ext.startswith(".") else f".{ext.lower()}"
+        for ext in extensions
+        if ext
+    }
+
+    images_set: set[Path] = set()
+    for ext in normalized_exts:
+        pattern = f"*{ext}"
+        for path in input_dir.rglob(pattern):
+            if path.is_file():
+                images_set.add(path)
+
+    return sorted(images_set)
 
 
 def ocr_image(image_path: Path, output_dir: Path, lang: str = "eng") -> ImageOcrResult:
     if not has_tool("tesseract"):
         return ImageOcrResult(image_path, output_dir / f"{image_path.stem}.txt", False, "tesseract not found")
+
+    if not image_path.exists() or not image_path.is_file():
+        return ImageOcrResult(
+            image_path,
+            output_dir / f"{image_path.stem}.txt",
+            False,
+            f"Image file does not exist or is not readable: {image_path}",
+        )
 
     output_dir.mkdir(parents=True, exist_ok=True)
     output_base = output_dir / image_path.stem

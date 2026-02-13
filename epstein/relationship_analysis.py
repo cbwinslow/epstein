@@ -39,13 +39,20 @@ def normalize_entity(text: str, normalize_case: bool = True) -> str:
 def iter_entity_mentions(entities_dir: Path) -> Iterable[EntityMention]:
     for path in sorted(entities_dir.glob("*.entities.jsonl")):
         with path.open("r", encoding="utf-8", errors="replace") as handle:
-            for line in handle:
+            for line_no, line in enumerate(handle, 1):
                 line = line.strip()
                 if not line:
                     continue
                 try:
                     obj = json.loads(line)
-                except json.JSONDecodeError:
+                except json.JSONDecodeError as exc:
+                    import logging
+                    logging.warning(
+                        "Malformed JSON at %s:%d - %s",
+                        path.name,
+                        line_no,
+                        str(exc),
+                    )
                     continue
                 doc_id = str(obj.get("doc_id", ""))
                 label = str(obj.get("label", ""))
@@ -69,6 +76,23 @@ def build_cooccurrence_relationships(
     max_evidence: int = 5,
     normalize_case: bool = True,
 ) -> List[Relationship]:
+    """
+    Build entity co-occurrence relationships from entity mentions.
+    
+    Performance note: For chunks with many entities, this generates all pairwise 
+    combinations (O(n²) complexity). A chunk with 100 entities would generate 
+    4,950 pairs. Consider filtering or limiting entities per chunk for entity-dense 
+    documents to prevent performance degradation.
+    
+    Args:
+        entities_dir: Directory containing *.entities.jsonl files
+        min_count: Minimum co-occurrence count to include relationship
+        max_evidence: Maximum number of evidence records per relationship
+        normalize_case: Whether to normalize entity text to lowercase
+    
+    Returns:
+        List of Relationship objects sorted by count (descending)
+    """
     chunk_map: Dict[Tuple[str, str], List[EntityMention]] = {}
     for mention in iter_entity_mentions(entities_dir):
         key = (mention.doc_id, mention.chunk_id)

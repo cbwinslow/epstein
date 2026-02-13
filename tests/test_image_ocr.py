@@ -37,3 +37,26 @@ def test_run_image_ocr_success(tmp_path: Path, monkeypatch) -> None:
     assert len(successes) == 1
     assert not failures
     assert successes[0].text_path.read_text(encoding="utf-8") == "ok"
+
+
+def test_ocr_image_malformed_data(tmp_path: Path, monkeypatch) -> None:
+    """Test that OCR handles malformed image data gracefully."""
+    image_path = tmp_path / "corrupted.jpg"
+    image_path.write_bytes(b"\x00\x01\x02corrupted_data")
+
+    def fake_which(_: str) -> str:
+        return "/usr/bin/tesseract"
+
+    def fake_run(cmd, capture_output, text, check):
+        class Result:
+            returncode = 1
+            stderr = "Error: Image file is corrupted or invalid"
+            stdout = ""
+        return Result()
+
+    monkeypatch.setattr("shutil.which", fake_which)
+    monkeypatch.setattr("subprocess.run", fake_run)
+
+    result = ocr_image(image_path, tmp_path)
+    assert result.success is False
+    assert "corrupted" in result.message.lower() or "invalid" in result.message.lower()
