@@ -198,6 +198,9 @@ Establish performance baselines and optimization opportunities for the pipeline 
 - Optimize database queries
 - Consider caching strategies
 **Testing Notes:**
+- Performance testing scenarios
+- Load testing for scalability
+- Resource usage monitoring
 
 ---
 
@@ -234,9 +237,6 @@ Create a script that runs checks (lint, tests, dependency scans) and produces ac
 
 **Priority:** P2 - Medium
 **Estimated Complexity:** S - 2-4 days
-- Performance testing scenarios
-- Load testing for scalability
-- Resource usage monitoring
 
 ---
 
