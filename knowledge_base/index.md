@@ -103,6 +103,8 @@ The [GitHub project setup](github_project_setup.md) provides:
 
 ### Specialized Utility Agents
 - **Government Information Downloader** - GovInfo.gov integration, bulk downloading
+- **Epstein Files Downloader MCP** - Pagination, streaming, archive bundling for large releases
+- **Epstein Files Processor MCP** - Pipeline orchestration and analysis runs
 
 ## Integration Points
 

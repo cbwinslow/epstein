@@ -218,6 +218,13 @@ The following files are APPEND-ONLY and must never have content removed:
 - Upload build artifacts for debugging
 - Store test results and coverage reports
 - Keep artifacts for 30 days minimum
+
+## Large Release Download Rules (Added 2026-01-07)
+
+- Use pagination (`offset` + `limit`) for releases exceeding 1M documents.
+- Keep `page_size` aligned with source limits (default 100).
+- Respect `max_requests_per_minute` and `polite_delay_seconds`.
+- Prefer batch archives (ZIP) for transport/storage; record archive names in manifests.
 - Include logs for failed builds
 
 ## Security Standards (Added 2024-12-31)
@@ -271,3 +278,12 @@ The following files are APPEND-ONLY and must never have content removed:
 ---
 
 **Note**: This RULES.md file is append-only. All additions are dated and clearly marked. Last updated: 2024-12-31
+
+---
+
+## Large Release Download Rules (Added 2026-01-07)
+
+- Use pagination (`offset` + `limit`) for releases exceeding 1M documents.
+- Keep `page_size` aligned with source limits (default 100).
+- Respect `max_requests_per_minute` and `polite_delay_seconds`.
+- Prefer batch archives (ZIP) for transport/storage; record archive names in manifests.

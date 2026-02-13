@@ -198,6 +198,42 @@ Establish performance baselines and optimization opportunities for the pipeline 
 - Optimize database queries
 - Consider caching strategies
 **Testing Notes:**
+
+---
+
+### Issue 8: Large Release Download Operations
+**Title:** 📦 [TASK] M3-T04: Incremental bulk download for 3M+ document release
+**Labels:** task, m3, high-priority, ingestion
+**Description:**
+Support incremental bulk downloads with pagination, rate limiting, and archive bundling to safely process multi-million document releases.
+
+**Acceptance Criteria:**
+- [ ] Add offset/limit/page_size controls to bulk download flows
+- [ ] Document rate limiting and polite delay settings
+- [ ] Support ZIP archive packaging for completed batches
+- [ ] Provide streaming retrieval for completed downloads
+- [ ] Add operational runbook for 3M+ release batches
+
+**Priority:** P1 - High
+**Estimated Complexity:** M - 1-2 weeks
+**Dependencies:** None
+
+---
+
+### Issue 9: Automated Repair/Validation Script
+**Title:** 🧰 [TASK] Create automated repair and validation script
+**Labels:** task, tooling, medium-priority
+**Description:**
+Create a script that runs checks (lint, tests, dependency scans) and produces actionable remediation steps for common errors.
+
+**Acceptance Criteria:**
+- [ ] Run lint, format, and test suites with clear output
+- [ ] Summarize failures and recommended fixes
+- [ ] Provide optional clean-up steps for temporary files
+- [ ] Document script usage and limitations
+
+**Priority:** P2 - Medium
+**Estimated Complexity:** S - 2-4 days
 - Performance testing scenarios
 - Load testing for scalability
 - Resource usage monitoring

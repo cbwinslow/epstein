@@ -41,6 +41,11 @@ These are the services the repo expects to be *reachable* for local runs and CI 
   - Purpose: orchestrates download → OCR → NER → relationships → embeddings
   - Module: `mcp_servers/epstein_files_processor/server.py`
 
+- Epstein Files Downloader MCP server (data acquisition)
+  - Default: http://localhost:8765
+  - Purpose: pagination, rate limiting, streaming, and archive support for large downloads
+  - Module: `mcp_servers/epstein_files_downloader/server.py`
+
 ## Validation checklist (what `scripts/doctor.py` should assert)
 - Docker daemon reachable
 - Docker Compose plugin available

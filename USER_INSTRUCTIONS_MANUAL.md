@@ -175,6 +175,20 @@ python -m epstein.pipeline_orchestrator \
   --run-relationships
 ```
 
+#### Downloader MCP Server (`epstein_files_downloader`)
+
+**Purpose**: Safely download large releases with pagination, rate limiting, streaming, and archive bundling.
+
+**Usage**:
+
+```bash
+python mcp_servers/epstein_files_downloader/server.py --port 8765 --polite-delay 0.25
+
+curl -X POST http://localhost:8765/download/bulk/paginated \
+  -H "Content-Type: application/json" \
+  -d '{"collection_id":"court_documents","limit":1000,"offset":0,"page_size":100}'
+```
+
 #### Pipeline Monitoring (`agents/pipeline_monitor.py`)
 
 **Purpose**: Real-time monitoring and progress tracking for long-running operations.

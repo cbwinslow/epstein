@@ -21,9 +21,11 @@ import os
 import signal
 import sys
 import time
-from dataclasses import dataclass, asdict, field
+import zipfile
+from collections import deque
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any, Deque, Dict, List, Optional, Tuple
 from uuid import uuid4
 
 try:
@@ -31,11 +33,13 @@ try:
 except Exception:  # pragma: no cover - optional dependency
     aiohttp = None
 try:
-    from fastapi import FastAPI, HTTPException, BackgroundTasks
+    from fastapi import BackgroundTasks, FastAPI, HTTPException
+    from fastapi.responses import FileResponse
 except Exception:  # pragma: no cover - optional dependency
     FastAPI = None
     HTTPException = Exception
     BackgroundTasks = None
+    FileResponse = None
 
 import requests
 from bs4 import BeautifulSoup
@@ -80,6 +84,9 @@ class ServerConfig:
     retry_delay: int = 5
     user_agent: str = "MCP-EpsteinFilesDownloader/1.0"
     timeout_seconds: int = 60
+    polite_delay_seconds: float = 0.25
+    max_bulk_documents: int = 100000
+    max_requests_per_minute: int = 120
     
     # GovInfo.gov specific settings
     govinfo_base_url: str = "https://www.govinfo.gov"
@@ -97,6 +104,7 @@ class DownloadTask:
     progress: float = 0.0
     error: Optional[str] = None
     metadata: Dict[str, Any] = None
+    file_path: Optional[str] = None
     created_at: float = field(default_factory=time.time)
     updated_at: float = field(default_factory=time.time)
 
@@ -161,6 +169,7 @@ class DownloadStatus(BaseModel):
     progress: float
     error: Optional[str] = None
     metadata: Dict[str, Any] = None
+    file_path: Optional[str] = None
     created_at: float
     updated_at: float
 
@@ -177,6 +186,34 @@ class BulkDownloadRequest(BaseModel):
     collection_id: str
     destination: Optional[str] = None
     filter_criteria: Dict[str, Any] = None
+    metadata: Dict[str, Any] = None
+    limit: Optional[int] = None
+    offset: int = 0
+    page_size: int = 100
+    max_pages: Optional[int] = None
+    archive_after: bool = False
+    archive_name: Optional[str] = None
+    output_mode: str = "download"  # download|manifest
+
+
+class BulkDownloadResponse(BaseModel):
+    """API response for bulk download with pagination"""
+    tasks: List[DownloadStatus]
+    next_offset: Optional[int] = None
+    total_requested: int
+
+
+class DocumentPageResponse(BaseModel):
+    """Paginated documents response"""
+    documents: List[DocumentResponse]
+    next_offset: Optional[int] = None
+
+
+class ArchiveRequest(BaseModel):
+    """Request to create an archive from completed tasks or a directory."""
+    task_ids: Optional[List[str]] = None
+    directory: Optional[str] = None
+    archive_path: Optional[str] = None
 
 
 # ============================================================================
@@ -192,6 +229,9 @@ class EpsteinFilesDownloader:
         self.download_queue = asyncio.Queue()
         self.active_tasks: Dict[str, DownloadTask] = {}
         self.completed_tasks: Dict[str, DownloadTask] = {}
+        self._request_times: Deque[float] = deque()
+        self._rate_lock = asyncio.Lock()
+        self.status = "initialized"
         
         # Initialize download directory
         Path(config.download_dir).mkdir(parents=True, exist_ok=True)
@@ -300,15 +340,22 @@ class EpsteinFilesDownloader:
                             last_updated=coll.last_updated
                         )
                 raise HTTPException(status_code=404, detail="Collection not found")
+            except HTTPException:
+                raise
             except Exception as e:
                 logger.error(f"Failed to get collection {collection_id}: {e}")
                 raise HTTPException(status_code=500, detail=str(e))
         
         @self.app.get("/collections/{collection_id}/documents", response_model=List[DocumentResponse])
-        async def list_collection_documents(collection_id: str, limit: int = 100, offset: int = 0):
+        async def list_collection_documents(
+            collection_id: str,
+            limit: int = 100,
+            offset: int = 0,
+            page_size: int = 100,
+        ):
             """List documents in a collection"""
             try:
-                documents = await self.get_collection_documents(collection_id, limit, offset)
+                documents = await self.get_collection_documents(collection_id, limit, offset, page_size=page_size)
                 return [
                     DocumentResponse(
                         document_id=doc.document_id,
@@ -323,6 +370,38 @@ class EpsteinFilesDownloader:
                     )
                     for doc in documents
                 ]
+            except Exception as e:
+                logger.error(f"Failed to list documents for collection {collection_id}: {e}")
+                raise HTTPException(status_code=500, detail=str(e))
+
+        @self.app.get("/collections/{collection_id}/documents/paginated", response_model=DocumentPageResponse)
+        async def list_collection_documents_paginated(
+            collection_id: str,
+            limit: int = 100,
+            offset: int = 0,
+            page_size: int = 100,
+        ):
+            """List documents in a collection with pagination metadata"""
+            try:
+                documents = await self.get_collection_documents(collection_id, limit, offset, page_size=page_size)
+                next_offset = None if len(documents) < limit else offset + limit
+                return DocumentPageResponse(
+                    documents=[
+                        DocumentResponse(
+                            document_id=doc.document_id,
+                            collection_id=doc.collection_id,
+                            title=doc.title,
+                            url=doc.url,
+                            file_size=doc.file_size,
+                            publish_date=doc.publish_date,
+                            mime_type=doc.mime_type,
+                            file_name=doc.file_name,
+                            metadata=doc.metadata or {},
+                        )
+                        for doc in documents
+                    ],
+                    next_offset=next_offset,
+                )
             except Exception as e:
                 logger.error(f"Failed to list documents for collection {collection_id}: {e}")
                 raise HTTPException(status_code=500, detail=str(e))
@@ -358,7 +437,15 @@ class EpsteinFilesDownloader:
             """Bulk download documents from a collection"""
             try:
                 # Get documents from collection
-                documents = await self.get_collection_documents(request.collection_id)
+                limit = request.limit or self.config.max_bulk_documents
+                offset = request.offset
+                documents = await self.get_collection_documents(
+                    request.collection_id,
+                    limit,
+                    offset,
+                    page_size=request.page_size,
+                    max_pages=request.max_pages,
+                )
                 
                 # Filter documents if criteria provided
                 if request.filter_criteria:
@@ -376,6 +463,9 @@ class EpsteinFilesDownloader:
                             filtered_docs.append(doc)
                     documents = filtered_docs
                 
+                if request.output_mode == "manifest":
+                    return []
+
                 # Create download tasks
                 tasks = []
                 for doc in documents:
@@ -401,10 +491,69 @@ class EpsteinFilesDownloader:
                 
                 # Start processing queue in background
                 background_tasks.add_task(self._process_download_queue)
+
+                if request.archive_after and tasks:
+                    archive_name = request.archive_name or f"{request.collection_id}_{int(time.time())}.zip"
+                    archive_path = Path(request.destination or self.config.download_dir) / archive_name
+                    background_tasks.add_task(self._archive_after_tasks, [t.task_id for t in tasks], archive_path)
                 
                 return [DownloadStatus(**asdict(task)) for task in tasks]
             except Exception as e:
                 logger.error(f"Failed to start bulk download: {e}")
+                raise HTTPException(status_code=500, detail=str(e))
+
+        @self.app.post("/download/bulk/paginated", response_model=BulkDownloadResponse)
+        async def bulk_download_paginated(request: BulkDownloadRequest, background_tasks: BackgroundTasks):
+            """Bulk download documents with pagination metadata."""
+            try:
+                limit = request.limit or self.config.max_bulk_documents
+                offset = request.offset
+                documents = await self.get_collection_documents(
+                    request.collection_id,
+                    limit,
+                    offset,
+                    page_size=request.page_size,
+                    max_pages=request.max_pages,
+                )
+                next_offset = None if len(documents) < limit else offset + limit
+
+                if request.output_mode == "manifest":
+                    return BulkDownloadResponse(tasks=[], next_offset=next_offset, total_requested=len(documents))
+
+                tasks = []
+                for doc in documents:
+                    task_id = str(uuid4())
+                    destination = request.destination or self.config.download_dir
+                    task = DownloadTask(
+                        task_id=task_id,
+                        url=doc.url,
+                        destination=destination,
+                        status="queued",
+                        metadata={
+                            "document_id": doc.document_id,
+                            "collection_id": doc.collection_id,
+                            "title": doc.title,
+                            **(request.metadata or {}),
+                        },
+                    )
+                    self.active_tasks[task_id] = task
+                    await self.download_queue.put(task)
+                    tasks.append(task)
+
+                background_tasks.add_task(self._process_download_queue)
+
+                if request.archive_after and tasks:
+                    archive_name = request.archive_name or f"{request.collection_id}_{int(time.time())}.zip"
+                    archive_path = Path(request.destination or self.config.download_dir) / archive_name
+                    background_tasks.add_task(self._archive_after_tasks, [t.task_id for t in tasks], archive_path)
+
+                return BulkDownloadResponse(
+                    tasks=[DownloadStatus(**asdict(task)) for task in tasks],
+                    next_offset=next_offset,
+                    total_requested=len(tasks),
+                )
+            except Exception as e:
+                logger.error(f"Failed to start bulk paginated download: {e}")
                 raise HTTPException(status_code=500, detail=str(e))
         
         @self.app.get("/download/status", response_model=List[DownloadStatus])
@@ -421,6 +570,19 @@ class EpsteinFilesDownloader:
                 return DownloadStatus(**asdict(self.completed_tasks[task_id]))
             else:
                 raise HTTPException(status_code=404, detail="Task not found")
+
+        @self.app.get("/download/stream/{task_id}")
+        async def stream_download(task_id: str):
+            """Stream a completed download to the client."""
+            if FileResponse is None:
+                raise HTTPException(status_code=500, detail="FastAPI FileResponse unavailable")
+            task = self.completed_tasks.get(task_id)
+            if not task or not task.file_path:
+                raise HTTPException(status_code=404, detail="File not available for streaming")
+            path = Path(task.file_path)
+            if not path.exists():
+                raise HTTPException(status_code=404, detail="File not found on disk")
+            return FileResponse(path)
         
         @self.app.get("/download/history", response_model=List[DownloadStatus])
         async def get_download_history(limit: int = 100):
@@ -428,6 +590,28 @@ class EpsteinFilesDownloader:
             # Return most recent completed tasks
             completed = sorted(self.completed_tasks.values(), key=lambda x: x.updated_at, reverse=True)
             return [DownloadStatus(**asdict(task)) for task in completed[:limit]]
+
+        @self.app.post("/download/archive")
+        async def archive_downloads(request: ArchiveRequest):
+            """Create a ZIP archive from completed downloads or a directory."""
+            archive_path = request.archive_path or str(Path(self.config.download_dir) / f"downloads_{int(time.time())}.zip")
+            files: List[Path] = []
+            if request.task_ids:
+                for tid in request.task_ids:
+                    task = self.completed_tasks.get(tid)
+                    if task and task.file_path:
+                        path = Path(task.file_path)
+                        if path.exists():
+                            files.append(path)
+            if request.directory:
+                directory = Path(request.directory)
+                if directory.exists():
+                    files.extend([p for p in directory.rglob("*") if p.is_file()])
+
+            if not files:
+                raise HTTPException(status_code=404, detail="No files found to archive")
+            self._create_archive(files, Path(archive_path))
+            return {"archive_path": archive_path, "file_count": len(files)}
     
     async def _process_download_queue(self):
         """Process download queue with concurrency control"""
@@ -440,6 +624,19 @@ class EpsteinFilesDownloader:
             
             # Process tasks concurrently
             await asyncio.gather(*[self._download_single(task) for task in tasks])
+
+    async def _apply_rate_limit(self) -> None:
+        """Best-effort rate limiting to respect source limits."""
+        async with self._rate_lock:
+            now = time.time()
+            window_start = now - 60
+            while self._request_times and self._request_times[0] < window_start:
+                self._request_times.popleft()
+            if len(self._request_times) >= self.config.max_requests_per_minute:
+                sleep_for = self._request_times[0] + 60 - now
+                if sleep_for > 0:
+                    await asyncio.sleep(sleep_for)
+            self._request_times.append(time.time())
     
     async def _download_single(self, task: DownloadTask):
         """Download a single file with retry logic"""
@@ -448,17 +645,22 @@ class EpsteinFilesDownloader:
         task.updated_at = time.time()
         
         destination_path = Path(task.destination)
-        destination_path.parent.mkdir(parents=True, exist_ok=True)
+        if destination_path.suffix:
+            destination_dir = destination_path.parent
+        else:
+            destination_dir = destination_path
+        destination_dir.mkdir(parents=True, exist_ok=True)
         
         # Generate safe filename
         safe_filename = self._generate_safe_filename(task.url, task.metadata)
-        final_path = destination_path / safe_filename
+        final_path = destination_dir / safe_filename
         
         # Skip if already exists
         if final_path.exists() and final_path.stat().st_size > 1000:
             task.status = "completed"
             task.progress = 100.0
             task.destination = str(final_path)
+            task.file_path = str(final_path)
             self._complete_task(task)
             return
         
@@ -467,8 +669,13 @@ class EpsteinFilesDownloader:
             try:
                 # Use aiohttp for async download
                 _require_aiohttp()
+                await self._apply_rate_limit()
                 async with aiohttp.ClientSession() as session:
-                    async with session.get(task.url, timeout=self.config.timeout_seconds) as response:
+                    async with session.get(
+                        task.url,
+                        timeout=self.config.timeout_seconds,
+                        headers={"User-Agent": self.config.user_agent},
+                    ) as response:
                         if response.status != 200:
                             raise HTTPException(status_code=response.status, detail=f"HTTP {response.status}")
                         
@@ -490,9 +697,12 @@ class EpsteinFilesDownloader:
                         task.status = "completed"
                         task.progress = 100.0
                         task.destination = str(final_path)
+                        task.file_path = str(final_path)
                         task.updated_at = time.time()
                         self._complete_task(task)
                         logger.info(f"✅ Completed download {task.task_id}: {task.url}")
+                        if self.config.polite_delay_seconds:
+                            await asyncio.sleep(self.config.polite_delay_seconds)
                         return
                         
             except Exception as e:
@@ -523,6 +733,33 @@ class EpsteinFilesDownloader:
             sorted_tasks = sorted(self.completed_tasks.items(), key=lambda x: x[1].updated_at)
             for task_id, _ in sorted_tasks[:-500]:
                 del self.completed_tasks[task_id]
+
+    async def _archive_after_tasks(self, task_ids: List[str], archive_path: Path) -> None:
+        """Wait for tasks to finish and archive completed files."""
+        pending = set(task_ids)
+        while pending:
+            done = {tid for tid in list(pending) if tid in self.completed_tasks}
+            pending -= done
+            if pending:
+                await asyncio.sleep(2)
+
+        files: List[Path] = []
+        for tid in task_ids:
+            task = self.completed_tasks.get(tid)
+            if task and task.file_path:
+                path = Path(task.file_path)
+                if path.exists():
+                    files.append(path)
+        if not files:
+            logger.warning("Archive requested but no files found to include.")
+            return
+        self._create_archive(files, archive_path)
+
+    def _create_archive(self, files: List[Path], archive_path: Path) -> None:
+        archive_path.parent.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+            for path in files:
+                zf.write(path, arcname=path.name)
     
     def _generate_safe_filename(self, url: str, metadata: Optional[Dict] = None) -> str:
         """Generate safe filename from URL and metadata"""
@@ -532,12 +769,14 @@ class EpsteinFilesDownloader:
         # Extract filename from URL
         parsed = urlparse(url)
         filename = Path(parsed.path).name
+        filename = re.sub(r'[^\w\-_.]', '_', filename)
         
         # Use metadata title if available
         if metadata and metadata.get('title'):
             title = metadata['title']
             # Clean title for filename
-            safe_title = re.sub(r'[^\w\s\-_.]', '_', title)[:50]
+            safe_title = re.sub(r'[^\w\s\-_.]', '_', title)
+            safe_title = re.sub(r'\s+', '_', safe_title).strip('_')[:50]
             filename = f"{safe_title}_{filename}"
         elif metadata and metadata.get('document_id'):
             filename = f"{metadata['document_id']}_{filename}"
@@ -713,9 +952,16 @@ class EpsteinFilesDownloader:
             logger.debug(f"Could not get document count for {collection.collection_id}: {e}")
             return 0
     
-    async def get_collection_documents(self, collection_id: str, limit: int = 100, offset: int = 0) -> List[DocumentInfo]:
-        """Get documents from a specific collection"""
-        documents = []
+    async def get_collection_documents(
+        self,
+        collection_id: str,
+        limit: int = 100,
+        offset: int = 0,
+        page_size: int = 100,
+        max_pages: Optional[int] = None,
+    ) -> List[DocumentInfo]:
+        """Get documents from a specific collection with pagination support."""
+        documents: List[DocumentInfo] = []
         
         try:
             # Find collection URL
@@ -729,36 +975,46 @@ class EpsteinFilesDownloader:
             if not collection_url:
                 raise ValueError(f"Collection {collection_id} not found")
             
-            # Use bulk API if available
-            api_url = f"{self.config.govinfo_bulk_api}?collection={collection_id}"
-            if offset > 0:
-                api_url += f"&offset={offset}"
-            if limit > 0:
-                api_url += f"&limit={limit}"
-            
-            response = self.session.get(api_url, timeout=self.config.timeout_seconds)
-            response.raise_for_status()
-            
-            data = response.json()
-            
-            if 'packages' in data:
-                for pkg_data in data['packages']:
-                    doc = DocumentInfo(
-                        document_id=pkg_data.get('packageId', str(uuid4())),
-                        collection_id=collection_id,
-                        title=pkg_data.get('title', 'Untitled Document'),
-                        url=pkg_data.get('downloadUrl', ''),
-                        file_size=pkg_data.get('size'),
-                        publish_date=pkg_data.get('publishDate'),
-                        mime_type=pkg_data.get('mimeType'),
-                        file_name=pkg_data.get('fileName'),
-                        metadata={
-                            'granuleId': pkg_data.get('granuleId'),
-                            'granuleTitle': pkg_data.get('granuleTitle'),
-                            'collectionName': pkg_data.get('collectionName')
-                        }
-                    )
-                    documents.append(doc)
+            remaining = limit
+            current_offset = offset
+            page = 0
+            while remaining > 0:
+                if max_pages is not None and page >= max_pages:
+                    break
+                page_limit = min(page_size, remaining)
+                api_url = (
+                    f"{self.config.govinfo_bulk_api}?collection={collection_id}"
+                    f"&offset={current_offset}&limit={page_limit}"
+                )
+                response = self.session.get(api_url, timeout=self.config.timeout_seconds)
+                response.raise_for_status()
+
+                data = response.json()
+
+                if "packages" in data:
+                    for pkg_data in data["packages"]:
+                        doc = DocumentInfo(
+                            document_id=pkg_data.get("packageId", str(uuid4())),
+                            collection_id=collection_id,
+                            title=pkg_data.get("title", "Untitled Document"),
+                            url=pkg_data.get("downloadUrl", ""),
+                            file_size=pkg_data.get("size"),
+                            publish_date=pkg_data.get("publishDate"),
+                            mime_type=pkg_data.get("mimeType"),
+                            file_name=pkg_data.get("fileName"),
+                            metadata={
+                                "granuleId": pkg_data.get("granuleId"),
+                                "granuleTitle": pkg_data.get("granuleTitle"),
+                                "collectionName": pkg_data.get("collectionName"),
+                            },
+                        )
+                        documents.append(doc)
+
+                    if len(data["packages"]) < page_limit:
+                        break
+                    remaining -= len(data["packages"])
+                    current_offset += len(data["packages"])
+                    page += 1
             
             logger.info(f"Found {len(documents)} documents in collection {collection_id}")
             return documents
@@ -839,11 +1095,44 @@ MCP_SERVER_TOOLS = {
                         "type": "integer",
                         "description": "Offset for pagination",
                         "default": 0
+                    },
+                    "page_size": {
+                        "type": "integer",
+                        "description": "Page size for API requests",
+                        "default": 100
                     }
                 },
                 "returns": {
                     "type": "array",
                     "description": "List of documents with metadata"
+                }
+            },
+            "list_collection_documents_paginated": {
+                "description": "List documents with pagination metadata",
+                "parameters": {
+                    "collection_id": {
+                        "type": "string",
+                        "description": "ID of the collection to list documents from"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum number of documents to return",
+                        "default": 100
+                    },
+                    "offset": {
+                        "type": "integer",
+                        "description": "Offset for pagination",
+                        "default": 0
+                    },
+                    "page_size": {
+                        "type": "integer",
+                        "description": "Page size for API requests",
+                        "default": 100
+                    }
+                },
+                "returns": {
+                    "type": "object",
+                    "description": "Documents plus next_offset for incremental fetching"
                 }
             },
             "download_document": {
@@ -890,11 +1179,146 @@ MCP_SERVER_TOOLS = {
                         "type": "object",
                         "description": "Additional metadata to associate with all downloads",
                         "optional": True
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum number of documents to download",
+                        "optional": True
+                    },
+                    "offset": {
+                        "type": "integer",
+                        "description": "Offset for incremental downloads",
+                        "default": 0
+                    },
+                    "page_size": {
+                        "type": "integer",
+                        "description": "Page size per API request",
+                        "default": 100
+                    },
+                    "max_pages": {
+                        "type": "integer",
+                        "description": "Maximum pages to fetch per request",
+                        "optional": True
+                    },
+                    "archive_after": {
+                        "type": "boolean",
+                        "description": "Create a ZIP archive after downloads finish",
+                        "default": False
+                    },
+                    "archive_name": {
+                        "type": "string",
+                        "description": "Optional archive filename",
+                        "optional": True
+                    },
+                    "output_mode": {
+                        "type": "string",
+                        "description": "download or manifest",
+                        "default": "download"
                     }
                 },
                 "returns": {
                     "type": "array",
                     "description": "List of download task statuses"
+                }
+            },
+            "bulk_download_paginated": {
+                "description": "Download documents with pagination metadata",
+                "parameters": {
+                    "collection_id": {
+                        "type": "string",
+                        "description": "ID of the collection to download"
+                    },
+                    "destination": {
+                        "type": "string",
+                        "description": "Base destination directory for downloaded files",
+                        "optional": True
+                    },
+                    "filter_criteria": {
+                        "type": "object",
+                        "description": "Criteria to filter documents before downloading",
+                        "optional": True
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "description": "Additional metadata to associate with all downloads",
+                        "optional": True
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum number of documents to download",
+                        "optional": True
+                    },
+                    "offset": {
+                        "type": "integer",
+                        "description": "Offset for incremental downloads",
+                        "default": 0
+                    },
+                    "page_size": {
+                        "type": "integer",
+                        "description": "Page size per API request",
+                        "default": 100
+                    },
+                    "max_pages": {
+                        "type": "integer",
+                        "description": "Maximum pages to fetch per request",
+                        "optional": True
+                    },
+                    "archive_after": {
+                        "type": "boolean",
+                        "description": "Create a ZIP archive after downloads finish",
+                        "default": False
+                    },
+                    "archive_name": {
+                        "type": "string",
+                        "description": "Optional archive filename",
+                        "optional": True
+                    },
+                    "output_mode": {
+                        "type": "string",
+                        "description": "download or manifest",
+                        "default": "download"
+                    }
+                },
+                "returns": {
+                    "type": "object",
+                    "description": "Download tasks plus next_offset"
+                }
+            },
+            "stream_download": {
+                "description": "Stream a completed download by task ID",
+                "parameters": {
+                    "task_id": {
+                        "type": "string",
+                        "description": "Download task ID"
+                    }
+                },
+                "returns": {
+                    "type": "file",
+                    "description": "Streamed file response"
+                }
+            },
+            "archive_downloads": {
+                "description": "Create an archive from completed downloads or a directory",
+                "parameters": {
+                    "task_ids": {
+                        "type": "array",
+                        "description": "List of task IDs to archive",
+                        "optional": True
+                    },
+                    "directory": {
+                        "type": "string",
+                        "description": "Directory to archive",
+                        "optional": True
+                    },
+                    "archive_path": {
+                        "type": "string",
+                        "description": "Output archive path",
+                        "optional": True
+                    }
+                },
+                "returns": {
+                    "type": "object",
+                    "description": "Archive path and file count"
                 }
             },
             "get_download_status": {
@@ -976,6 +1400,24 @@ def main():
         help="Maximum concurrent downloads"
     )
     parser.add_argument(
+        "--polite-delay",
+        type=float,
+        default=0.25,
+        help="Delay (seconds) between downloads to respect source limits"
+    )
+    parser.add_argument(
+        "--max-requests-per-minute",
+        type=int,
+        default=120,
+        help="Max HTTP requests per minute"
+    )
+    parser.add_argument(
+        "--max-bulk-docs",
+        type=int,
+        default=100000,
+        help="Maximum documents per bulk download request"
+    )
+    parser.add_argument(
         "--verbose",
         action="store_true",
         help="Enable verbose logging"
@@ -992,7 +1434,10 @@ def main():
         host=args.host,
         port=args.port,
         download_dir=args.download_dir,
-        max_concurrent_downloads=args.max_concurrent
+        max_concurrent_downloads=args.max_concurrent,
+        polite_delay_seconds=args.polite_delay,
+        max_requests_per_minute=args.max_requests_per_minute,
+        max_bulk_documents=args.max_bulk_docs,
     )
     
     # Create and run server

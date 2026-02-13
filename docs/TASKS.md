@@ -1,6 +1,6 @@
 # Tasks — Epstein Files Pipeline
 
-*Last Updated: 2026-01-02T11:05:13.777Z*
+*Last Updated: 2026-01-07T12:45:00.000Z*
 
 ## Master Task Status Summary
 
@@ -22,10 +22,12 @@
 - [x] Curate seed URLs and allowlist
 - [x] Pipeline run on real sources
 - [ ] Load to Postgres and verify counts (M3-T03) - **NEEDS TESTING**
+- [ ] Implement incremental bulk download strategy for 3M+ release (M3-T04) - **NEW**
 
 ### Milestone M4: Analysis & Relationship Mining ❌ NOT STARTED
 - [ ] Establish query playbook (M4-T01) - **NEXT MAJOR MILESTONE**
 - [ ] Produce 10 evidence-bound findings (M4-T02) - **PENDING**
+- [ ] Validate relationship co-occurrence output ingestion (M4-T03) - **NEW**
 
 ### Milestone M5: Mission Control & Observability ✅ MOSTLY COMPLETE
 - [x] Design Mission Control
@@ -49,6 +51,11 @@
 3. **Analysis Phase (M4)**
    - Begin analysis & relationship mining
    - Create ANALYSIS_PLAYBOOK.md
+   - Priority: P1
+
+4. **Large Release Operations (M3-T04)**
+   - Validate pagination + rate limiting for 3M+ docs
+   - Establish batch archive strategy
    - Priority: P1
 
 ## GitHub Integration Status

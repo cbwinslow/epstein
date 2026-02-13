@@ -198,6 +198,18 @@ Description: |
 
 ### Data Pipeline Tasks
 
+#### FR-002: Large Release Incremental Download
+```yaml
+Title: "Incremental bulk download for 3M+ release"
+Category: "Core Processing"
+Priority: "High"
+SRS Reference: "FR-002"
+Estimated Hours: 24
+Description: |
+  Implement pagination-first downloads with rate limiting, streaming,
+  and archive bundling for multi-million document releases.
+```
+
 #### FR-017: Resume-Safe Ingestion
 ```yaml
 Title: "Implement Resume-Safe Ingestion Pipelines"

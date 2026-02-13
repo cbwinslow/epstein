@@ -7,6 +7,8 @@ Download → OCR → text extraction → chunking (overlap) → NER → Postgres
 
 **Principle:** PDFs are stored on the filesystem; SQL stores relationships and provenance, not blobs.
 
+**Large Releases:** Use incremental bulk download via the MCP downloader (offset/limit/page_size) with rate limits and batch archives for releases exceeding 1M documents.
+
 ## Data model (logical)
 - documents: doc_id (sha256), source_url, timestamps, artifact paths
 - document_text: extracted text metadata (path, encoding, hash)

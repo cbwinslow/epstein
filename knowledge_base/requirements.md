@@ -32,6 +32,10 @@ This document outlines the comprehensive requirements for the Epstein Files proj
 - [ ] Handle download failures with retry logic
 - [ ] Track download progress and status
 - [ ] Support concurrent downloads (configurable)
+- [ ] Support incremental downloads with offset/limit pagination
+- [ ] Support streaming retrieval of completed downloads
+- [ ] Support archive packaging (ZIP) for batch transport
+- [ ] Respect source rate limits via throttling controls
 
 ### FR-003: Text Extraction
 **Priority**: P1

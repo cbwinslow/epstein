@@ -91,3 +91,21 @@ uv run python server.py --host 0.0.0.0 --port 8780
 ```
 
 Use the API to start pipeline runs.
+
+## 9) Large release download strategy (3M+ docs)
+
+Use the downloader MCP server with pagination offsets and archive support to avoid overwhelming sources:
+
+```bash
+curl -X POST http://localhost:8765/download/bulk/paginated \
+  -H "Content-Type: application/json" \
+  -d '{
+    "collection_id": "court_documents",
+    "destination": "/data/epstein",
+    "limit": 5000,
+    "offset": 0,
+    "page_size": 100,
+    "archive_after": true,
+    "archive_name": "batch_0001.zip"
+  }'
+```

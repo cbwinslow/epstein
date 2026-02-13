@@ -20,6 +20,8 @@ The Epstein Files Downloader MCP Server provides a standardized REST API for AI 
 - ✅ **Retry Logic**: Automatic retry with exponential backoff
 - ✅ **Checksum Verification**: SHA-256 integrity checking
 - ✅ **Queue Management**: Concurrent download processing
+- ✅ **Pagination + Incremental Downloads**: Offset/limit controls for large releases
+- ✅ **Streaming + Archives**: Stream completed files and bundle downloads into ZIP archives
 - ✅ **Manifest Generation**: JSONL manifest files for provenance
 
 ### API Features
@@ -90,9 +92,13 @@ open http://localhost:8765/docs
 | `/collections/{id}/documents` | GET | List documents in a collection |
 | `/download` | POST | Download a single document |
 | `/download/bulk` | POST | Bulk download from a collection |
+| `/download/bulk/paginated` | POST | Bulk download with pagination metadata |
 | `/download/status` | GET | Get all active download statuses |
 | `/download/status/{task_id}` | GET | Get specific download status |
+| `/download/stream/{task_id}` | GET | Stream a completed download |
+| `/download/archive` | POST | Create a ZIP archive from downloads |
 | `/download/history` | GET | Get download history |
+| `/collections/{collection_id}/documents/paginated` | GET | List documents with next_offset |
 
 ### Example Usage
 
@@ -125,6 +131,28 @@ curl -X POST http://localhost:8765/download/bulk \
     "collection_id": "doj_releases",
     "destination": "/tmp/downloads"
   }'
+
+## Incremental pagination example (large releases)
+
+```bash
+curl -X POST http://localhost:8765/download/bulk/paginated \
+  -H "Content-Type: application/json" \
+  -d '{
+    "collection_id": "court_documents",
+    "destination": "/tmp/downloads",
+    "limit": 1000,
+    "offset": 0,
+    "page_size": 100
+  }'
+```
+
+## Create a ZIP archive
+
+```bash
+curl -X POST http://localhost:8765/download/archive \
+  -H "Content-Type: application/json" \
+  -d '{"directory": "/tmp/downloads", "archive_path": "/tmp/downloads.zip"}'
+```
 ```
 
 Response:

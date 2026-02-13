@@ -232,6 +232,64 @@ class TestAPIEndpoints:
         assert len(data) == 1
         assert "task_id" in data[0]
 
+    def test_bulk_download_paginated_endpoint(self, test_client, mocker):
+        """Test bulk download paginated endpoint"""
+        mock_documents = [
+            DocumentInfo(
+                document_id="doc_1",
+                collection_id="test_coll",
+                title="Test Document",
+                url="http://example.com/doc1.pdf"
+            )
+        ]
+
+        mocker.patch.object(
+            EpsteinFilesDownloader,
+            'get_collection_documents',
+            return_value=mock_documents
+        )
+
+        mocker.patch.object(
+            EpsteinFilesDownloader,
+            '_process_download_queue',
+            return_value=None
+        )
+
+        payload = {
+            "collection_id": "test_coll",
+            "destination": TEST_CONFIG.download_dir,
+            "limit": 1,
+            "offset": 0
+        }
+
+        response = test_client.post("/download/bulk/paginated", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total_requested"] == 1
+        assert len(data["tasks"]) == 1
+
+    def test_archive_endpoint(self, test_client, test_server, tmp_path):
+        """Test archive creation endpoint"""
+        sample_file = tmp_path / "sample.txt"
+        sample_file.write_text("ok", encoding="utf-8")
+        task = DownloadTask(
+            task_id="task_archive",
+            url="http://example.com/sample.txt",
+            destination=str(tmp_path),
+            status="completed",
+            file_path=str(sample_file)
+        )
+        test_server.completed_tasks[task.task_id] = task
+
+        payload = {
+            "task_ids": ["task_archive"],
+            "archive_path": str(tmp_path / "archive.zip")
+        }
+        response = test_client.post("/download/archive", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert Path(data["archive_path"]).exists()
+
 
 # ============================================================================
 # Download Functionality Tests

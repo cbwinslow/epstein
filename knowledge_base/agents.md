@@ -678,3 +678,16 @@ result = await agent.run(
 ---
 
 **Note**: This document is append-only. All additions are dated and attributed. Last updated: 2024-12-31
+
+---
+
+## 2026-01-07 Additions
+
+### Epstein Files Downloader MCP Enhancements
+- Pagination-first bulk download controls for large releases (offset/limit/page_size).
+- Streaming endpoint for completed downloads to support remote retrieval.
+- Archive creation for batch transport and storage.
+
+### Epstein Files Processor MCP
+- Orchestrates pipeline runs (download → OCR → NER → relationships → embeddings).
+- Supports image OCR and relationship extraction as optional stages.
