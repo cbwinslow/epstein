@@ -70,11 +70,18 @@ def ingest_artifacts(artifacts_dir: Path, dsn: str, truncate: bool = False) -> N
     paths = resolve_paths(artifacts_dir)
     with psycopg.connect(dsn, row_factory=dict_row) as conn:
         conn.execute("SET statement_timeout = '10min'")
+        conn.execute("SET idle_in_transaction_session_timeout = '10min'")
         ensure_schema_exists(conn)
 
         if truncate:
             logging.warning("TRUNCATE enabled. This will delete existing analysis tables.")
-            conn.execute(TRUNCATE_SQL)
+            try:
+                conn.execute(TRUNCATE_SQL)
+                conn.commit()
+            except Exception as exc:
+                logging.error("TRUNCATE operation failed; rolling back transaction.", exc_info=exc)
+                conn.rollback()
+                raise
 
         if paths.manifest.exists():
             for obj in iter_jsonl(paths.manifest):
@@ -114,7 +121,8 @@ def run_embeddings(dsn: str, qdrant_url: str, collection: str) -> None:
         collection,
     ]
     logging.info("Running embeddings: %s", " ".join(cmd))
-    proc = subprocess.run(cmd, check=False)
+    # Set a reasonable timeout (30 minutes) to prevent hanging on stuck processes
+    proc = subprocess.run(cmd, check=False, timeout=1800)
     if proc.returncode != 0:
         raise RuntimeError(f"Embedding step failed with code {proc.returncode}")
 
