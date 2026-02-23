@@ -1,0 +1,127 @@
+version: 1
+project: epstein-files-pipeline
+principles:
+  - auditability_over_speed
+  - provenance_required
+  - no_destructive_defaults
+
+milestones:
+  - id: M0
+    title: Pre-flight & Architecture
+    tasks:
+      - id: M0-T01
+        title: Verify repo hygiene
+        description: Ensure no artifacts/secrets committed; .env is not tracked.
+        tests:
+          - cmd: "git status --ignored"
+            expect: "No untracked artifacts committed; ignored paths visible."
+      - id: M0-T02
+        title: Run doctor checks
+        description: Validate Docker, compose, ports, disk, volumes.
+        tests:
+          - cmd: "make doctor"
+            expect: "Exit code 0 or 2 (warnings ok)."
+
+  - id: M1
+    title: Infrastructure Bootstrap
+    tasks:
+      - id: M1-T01
+        title: Bring up Postgres + Qdrant
+        description: Start docker compose services; ensure localhost-bound ports.
+        tests:
+          - cmd: "make bootstrap && make status"
+            expect: "postgres and qdrant running."
+      - id: M1-T02
+        title: Validate schema exists
+        description: doc_analysis schema and tables present.
+        tests:
+          - cmd: "docker exec -i pgvector_postgres psql -U analysis -d analysis -c \"SELECT schema_name FROM information_schema.schemata WHERE schema_name='doc_analysis';\""
+            expect: "1 row"
+
+  - id: M2
+    title: Config & Demo Proof
+    tasks:
+      - id: M2-T01
+        title: Run offline demo end-to-end
+        description: Use bundled demo pdf to validate pipeline, db-load, embed, search.
+        tests:
+          - cmd: "make demo"
+            expect: "Completes without error; chunks/entities > 0; Qdrant populated."
+      - id: M2-T02
+        title: Search returns results
+        description: Validate semantic search returns evidence payload.
+        tests:
+          - cmd: "make search Q=\"demo\""
+            expect: "At least 1 result with doc_id + chunk_id."
+
+  - id: M3
+    title: Real Ingestion (Controlled)
+    tasks:
+      - id: M3-T01
+        title: Curate seed URLs and allowlist
+        description: Select small initial set; document rationale.
+        tests:
+          - cmd: "jq . config.json"
+            expect: "seed_urls non-empty; allow_domains set."
+      - id: M3-T02
+        title: Pipeline run on real sources
+        description: Download/OCR/extract/chunk/NER with logs.
+        tests:
+          - cmd: "make pipeline-run"
+            expect: "Artifacts populated in epstein_artifacts/."
+      - id: M3-T03
+        title: Load to Postgres and verify counts
+        description: Ingest artifacts into Postgres.
+        tests:
+          - cmd: "make db-load && docker exec -i pgvector_postgres psql -U analysis -d analysis -c \"SELECT COUNT(*) FROM doc_analysis.documents;\""
+            expect: ">0"
+
+  - id: M4
+    title: Analysis & Relationship Mining
+    tasks:
+      - id: M4-T01
+        title: Establish query playbook
+        description: Define initial query sets and how to corroborate.
+        tests:
+          - cmd: "test -f docs/ANALYSIS_PLAYBOOK.md && echo OK"
+            expect: "OK"
+      - id: M4-T02
+        title: Produce 10 evidence-bound findings
+        description: Use the finding issue template to record evidence-bound notes.
+        tests:
+          - cmd: "echo 'Use GitHub issues labeled finding OR docs/findings/'"
+            expect: "10 findings exist"
+
+  - id: M5
+    title: Mission Control & Observability
+    tasks:
+      - id: M5-T01
+        title: Design Mission Control
+        description: Document features, UI layout, integration points, and ADR in `docs/MISSION_CONTROL.md` and `docs/DECISIONS.md`.
+        tests:
+          - cmd: "test -f docs/MISSION_CONTROL.md && grep -q 'Mission Control' docs/MISSION_CONTROL.md && echo OK"
+            expect: "OK"
+      - id: M5-T02
+        title: Implement TUI PoC
+        description: Minimal Textual PoC `tools/mission_control/app.py` + CLI `bin/mission-control`.
+        tests:
+          - cmd: "python -c \"import tools.mission_control.app\" && echo OK"
+            expect: "OK"
+      - id: M5-T03
+        title: Add OpenTelemetry instrumentation
+        description: Add `epstein.telemetry` helper and `OTEL_*` env vars, include doctor checks.
+        tests:
+          - cmd: "python -c \"from epstein.telemetry import get_tracer; t=get_tracer(); ctx = t.start_as_current_span('test'); print('OK')\""
+            expect: "OK"
+      - id: M5-T04
+        title: Tests & CI for Mission Control
+        description: Add pytest tests for TUI, telemetry, doctor; update CI to run these tests.
+        tests:
+          - cmd: "pytest -q"
+            expect: "All tests pass (exit 0)"
+      - id: M5-T05
+        title: Add issue generator + create GitHub issues for these tasks
+        description: Add `scripts/gen_issues_from_tasks.py` to generate `issues.json` and optionally create issues via `gh` CLI.
+        tests:
+          - cmd: "python scripts/gen_issues_from_tasks.py --in tasks/master_tasks.yml --out-json /tmp/issues.json --dry-run"
+            expect: "/tmp/issues.json created"

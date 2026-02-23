@@ -1,0 +1,30 @@
+# Epstein Files Ingestion Pipeline Requirements
+
+# Core dependencies
+pdfplumber>=0.10.0
+pytesseract>=0.3.10
+spacy>=3.0.0
+pillow>=10.0.0
+beautifulsoup4>=4.12.0
+pydantic>=2.0.0
+psycopg2-binary>=2.9.0
+
+# OCR dependencies
+pdf2image>=1.16.0
+
+# NLP dependencies
+en-core-web-lg @ https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.7.0/en_core_web_lg-3.7.0-py3-none-any.whl
+
+# Utility
+tqdm>=4.66.0
+python-multipart>=0.0.6
+
+# Tesseract OCR (system dependency)
+# On Ubuntu/Debian: sudo apt-get install tesseract-ocr tesseract-ocr-eng
+# On Mac: brew install tesseract
+# On Windows: Download installer from https://github.com/UB-Mannheim/tesseract/wiki
+
+# Poppler (for pdf2image)
+# On Ubuntu/Debian: sudo apt-get install poppler-utils
+# On Mac: brew install poppler
+# On Windows: Download from https://github.com/oschwartz10612/poppler-windows/releases

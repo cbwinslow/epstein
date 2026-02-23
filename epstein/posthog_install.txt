@@ -1,0 +1,11 @@
+@posthog/cli
+posthog-node
+posthog-js
+@posthog/ai
+posthog-react-native
+@posthog/cli
+@posthog/nextjs-config
+@posthog/webpack-plugin
+@posthog/plugin-server
+@posthog/react
+posthog-openapi-client

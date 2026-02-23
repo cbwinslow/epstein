@@ -1,0 +1,121 @@
+name: "🔍 Analysis Finding"
+description: "Record an evidence-bound finding from document analysis"
+title: "🔍 [FINDING] "
+labels: ["finding", "analysis", "evidence"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template to record evidence-bound findings from the Epstein document analysis phase. Each finding must be supported by specific document references and evidence.
+
+  - type: input
+    id: finding-id
+    attributes:
+      label: "Finding ID"
+      description: "Unique identifier for this finding (e.g., FIND-001, FIND-002)"
+      placeholder: "e.g., FIND-001"
+    validations:
+      required: true
+
+  - type: textarea
+    id: finding-summary
+    attributes:
+      label: "Finding Summary"
+      description: "Brief, descriptive summary of the finding"
+      placeholder: "Clear summary of what this finding reveals..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence-description
+    attributes:
+      label: "Evidence Description"
+      description: "Detailed description of the evidence supporting this finding"
+      placeholder: "Describe the evidence found and how it supports the finding..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: document-references
+    attributes:
+      label: "Document References"
+      description: "Specific document IDs, chunk IDs, and source URLs that support this finding"
+      placeholder: |
+        - doc_id: [document hash]
+        - chunk_id: [chunk identifier]
+        - source_url: [original source URL]
+        - page/section: [location in document]
+    validations:
+      required: true
+
+  - type: textarea
+    id: corroborating-evidence
+    attributes:
+      label: "Corroborating Evidence"
+      description: "Additional evidence from other sources that supports or validates this finding"
+      placeholder: "Cross-reference evidence from other documents or sources..."
+
+  - type: textarea
+    id: analysis-methods
+    attributes:
+      label: "Analysis Methods"
+      description: "What methods were used to discover this finding?"
+      placeholder: |
+        - Text search
+        - Entity recognition
+        - Semantic similarity
+        - Pattern analysis
+        - Cross-reference validation
+
+  - type: dropdown
+    id: confidence-level
+    attributes:
+      label: "Confidence Level"
+      description: "How confident are we in this finding?"
+      options:
+        - "High - Strong evidence from multiple sources"
+        - "Medium - Good evidence, some corroboration"
+        - "Low - Limited evidence, requires further investigation"
+        - "Speculative - Hypothesis requiring validation"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: significance
+    attributes:
+      label: "Significance"
+      description: "How significant is this finding to the overall analysis?"
+      options:
+        - "Critical - Major revelation or breakthrough"
+        - "Important - Significant detail or clarification"
+        - "Moderate - Useful information"
+        - "Minor - Supporting detail"
+    validations:
+      required: true
+
+  - type: textarea
+    id: related-findings
+    attributes:
+      label: "Related Findings"
+      description: "Other findings that are related to or support this one"
+      placeholder: "References to other finding IDs that are related..."
+
+  - type: textarea
+    id: follow-up-actions
+    attributes:
+      label: "Follow-up Actions"
+      description: "What additional investigation or actions are needed?"
+      placeholder: |
+        - Further document analysis required
+        - Cross-reference with external sources
+        - Validate with domain experts
+        - Search for additional corroborating evidence
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: "Additional Notes"
+      description: "Any other relevant information, context, or observations"
+      placeholder: "Additional context, questions, or observations..."

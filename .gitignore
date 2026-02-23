@@ -1,0 +1,104 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+.env
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+pytestdebug.log
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# Project specific
+epstein_artifacts/
+.epstein/
+logs/*.log
+*.log
+
+# Data files (exclude from git)
+*.pdf
+*.zip
+*.tar.gz
+*.db
+*.sqlite
+*.sqlite3
+
+# Vector database storage
+vector-stack/data/
+qdrant_storage/
+
+# Docker
+.dockerignore
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Build artifacts
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# UV package manager
+.uv/
+uv.lock
+
+# Secrets
+*.env.local
+*.env.*.local
+credentials.json

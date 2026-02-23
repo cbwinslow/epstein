@@ -1,0 +1,212 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Epstein Agent Configuration Schema",
+  "description": "Schema for configuring AI agents in the Epstein multi-agent system",
+  "version": "2.0.0",
+  
+  "definitions": {
+    "capability": {
+      "type": "string",
+      "enum": [
+        "document_processing",
+        "entity_extraction",
+        "vector_search",
+        "database_query",
+        "analysis",
+        "monitoring",
+        "orchestration",
+        "code_generation",
+        "downloading",
+        "troubleshooting",
+        "optimization"
+      ]
+    },
+    
+    "tool_definition": {
+      "type": "object",
+      "required": ["name", "description", "parameters"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Tool name (snake_case)"
+        },
+        "description": {
+          "type": "string",
+          "description": "Clear description of what the tool does"
+        },
+        "parameters": {
+          "type": "object",
+          "description": "JSON Schema for tool parameters"
+        },
+        "returns": {
+          "type": "object",
+          "description": "JSON Schema for return value"
+        },
+        "examples": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "description": {"type": "string"},
+              "input": {"type": "object"},
+              "output": {"type": "object"}
+            }
+          }
+        }
+      }
+    },
+    
+    "agent_config": {
+      "type": "object",
+      "required": ["name", "description", "version", "capabilities"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Human-readable agent name"
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of agent's purpose and functionality"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "Semantic version (e.g., 1.0.0)"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/capability"},
+          "minItems": 1,
+          "description": "List of agent capabilities"
+        },
+        "tags": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Tags for categorization"
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Required dependencies (Python packages, services, etc.)"
+        },
+        "model_config": {
+          "type": "object",
+          "description": "ML model configuration",
+          "properties": {
+            "embedding_model": {"type": "string"},
+            "ner_model": {"type": "string"},
+            "classification_model": {"type": "string"},
+            "code_model": {"type": "string"},
+            "max_tokens": {"type": "integer"},
+            "temperature": {"type": "number"}
+          }
+        },
+        "database_config": {
+          "type": "object",
+          "description": "Database connection configuration",
+          "properties": {
+            "postgres_dsn": {"type": "string"},
+            "qdrant_url": {"type": "string"},
+            "qdrant_collection": {"type": "string"},
+            "connection_timeout": {"type": "integer"}
+          }
+        },
+        "processing_config": {
+          "type": "object",
+          "description": "Processing configuration",
+          "properties": {
+            "batch_size": {"type": "integer"},
+            "chunk_size": {"type": "integer"},
+            "chunk_overlap": {"type": "integer"},
+            "max_concurrent_tasks": {"type": "integer"},
+            "timeout_seconds": {"type": "integer"}
+          }
+        },
+        "monitoring_config": {
+          "type": "object",
+          "description": "Monitoring and health check configuration",
+          "properties": {
+            "health_check_interval": {"type": "integer"},
+            "enable_metrics": {"type": "boolean"},
+            "log_level": {
+              "type": "string",
+              "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+            }
+          }
+        },
+        "tools": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/tool_definition"},
+          "description": "Tools provided by this agent"
+        },
+        "mcp_server": {
+          "type": "object",
+          "description": "MCP server configuration if agent exposes MCP interface",
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "host": {"type": "string"},
+            "port": {"type": "integer"},
+            "base_path": {"type": "string"},
+            "auth_required": {"type": "boolean"}
+          }
+        }
+      }
+    }
+  },
+  
+  "type": "object",
+  "required": ["schema_version", "agents"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "2.0.0",
+      "description": "Configuration schema version"
+    },
+    
+    "agents": {
+      "type": "object",
+      "description": "Agent configurations",
+      "patternProperties": {
+        "^[a-z][a-z0-9_]*$": {
+          "$ref": "#/definitions/agent_config"
+        }
+      }
+    },
+    
+    "system_config": {
+      "type": "object",
+      "description": "System-wide configuration",
+      "properties": {
+        "multi_agent_system": {
+          "type": "object",
+          "properties": {
+            "name": {"type": "string"},
+            "version": {"type": "string"},
+            "enable_agent_communication": {"type": "boolean"},
+            "enable_task_delegation": {"type": "boolean"},
+            "enable_result_aggregation": {"type": "boolean"},
+            "coordination_timeout": {"type": "integer"}
+          }
+        },
+        "security": {
+          "type": "object",
+          "properties": {
+            "enable_redaction": {"type": "boolean"},
+            "audit_logging": {"type": "boolean"},
+            "api_key_required": {"type": "boolean"},
+            "encryption": {"type": "string"}
+          }
+        },
+        "monitoring": {
+          "type": "object",
+          "properties": {
+            "enable_metrics": {"type": "boolean"},
+            "metrics_endpoint": {"type": "string"},
+            "log_level": {"type": "string"},
+            "trace_sampling": {"type": "number"}
+          }
+        }
+      }
+    }
+  }
+}

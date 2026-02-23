@@ -1,0 +1,25 @@
+# Epstein Pipeline Pack for rulebook-ai
+# Author: cbwinslow
+# Created: 2025-12-23
+name: epstein-pipeline
+version: "0.1.0"
+description: >
+  Rules + memory + tool-starters for the Epstein Files document analysis pipeline:
+  provenance-safe PDF ingestion, OCR, chunking, NER, Postgres storage, and Qdrant semantic search.
+authors:
+  - "cbwinslow"
+license: "MIT"
+
+# rulebook-ai copies these starters into the target project workspace.
+starters:
+  memory_dir: "memory"
+  tools_dir: "tools"
+  rules_file: "rules/RULES.md"
+
+tags:
+  - "data-pipeline"
+  - "forensics"
+  - "provenance"
+  - "postgres"
+  - "qdrant"
+  - "ocr"

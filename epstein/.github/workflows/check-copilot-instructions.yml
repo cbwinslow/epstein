@@ -1,0 +1,28 @@
+name: Check Copilot Instructions
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+jobs:
+  check-copilot-instructions:
+    name: Validate Copilot instructions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install test deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest
+
+      - name: Run copilot instructions test
+        run: |
+          pytest -q tests/test_copilot_instructions_sync.py

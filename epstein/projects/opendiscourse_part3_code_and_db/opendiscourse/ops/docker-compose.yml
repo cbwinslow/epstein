@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: opendiscourse_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${OPENDISCOURSE_DB_NAME:-opendiscourse}
+      POSTGRES_USER: ${OPENDISCOURSE_DB_USER:-opendiscourse}
+      POSTGRES_PASSWORD: ${OPENDISCOURSE_DB_PASSWORD:-change_me}
+    ports:
+      - "${OPENDISCOURSE_DB_PORT:-5432}:5432"
+    volumes:
+      - opendiscourse_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${OPENDISCOURSE_DB_USER:-opendiscourse} -d ${OPENDISCOURSE_DB_NAME:-opendiscourse}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  opendiscourse_pgdata:

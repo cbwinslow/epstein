@@ -1,0 +1,48 @@
+[build-system]
+requires = ["hatchling>=1.24.2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "opendiscourse"
+version = "0.1.0"
+description = "OpenDiscourse: governance data ingestion, normalization, and analysis platform."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "cbwinslow", email = "blaine.winslow@gmail.com" }]
+dependencies = [
+  "pydantic>=2.7",
+  "pydantic-settings>=2.3",
+  "python-dotenv>=1.0",
+  "requests>=2.32",
+  "tenacity>=8.3",
+  "sqlalchemy>=2.0",
+  "psycopg[binary]>=3.2",
+  "alembic>=1.13",
+  "rich>=13.7",
+  "tqdm>=4.66"
+]
+
+[project.optional-dependencies]
+dev = [
+  "ruff>=0.6",
+  "mypy>=1.11",
+  "pytest>=8.3",
+  "types-requests>=2.32"
+]
+
+[project.scripts]
+opendiscourse-ingest = "opendiscourse.ingestion.cli:main"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = ["E","F","I","UP","B","SIM","C4"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_any_generics = true

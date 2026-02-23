@@ -1,0 +1,165 @@
+name: MCP Server Tests
+
+on:
+  push:
+    paths:
+      - 'mcp_servers/**'
+      - 'tests/test_mcp_server.py'
+      - '.github/workflows/mcp-server-tests.yml'
+  pull_request:
+    paths:
+      - 'mcp_servers/**'
+      - 'tests/test_mcp_server.py'
+  workflow_dispatch:
+
+jobs:
+  test-mcp-server:
+    name: Test MCP Server
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r mcp_servers/epstein_files_downloader/requirements.txt
+          pip install pytest pytest-asyncio pytest-cov requests-mock
+      
+      - name: Start MCP Server
+        run: |
+          cd mcp_servers/epstein_files_downloader
+          python server.py --port 8765 --download-dir /tmp/test_downloads &
+          SERVER_PID=$!
+          echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
+          
+          # Wait for server to start
+          for i in {1..30}; do
+            if curl -s http://localhost:8765/health > /dev/null; then
+              echo "Server started successfully"
+              break
+            fi
+            echo "Waiting for server to start... ($i/30)"
+            sleep 2
+          done
+        timeout-minutes: 2
+      
+      - name: Test Health Endpoint
+        run: |
+          response=$(curl -s http://localhost:8765/health)
+          echo "Health check response: $response"
+          
+          # Verify response contains expected fields
+          echo "$response" | jq -e '.status == "healthy"'
+      
+      - name: Test Collections Endpoint
+        run: |
+          response=$(curl -s http://localhost:8765/collections)
+          echo "Collections response: $response"
+          
+          # Verify response is an array
+          echo "$response" | jq -e 'type == "array"'
+      
+      - name: Test API Documentation
+        run: |
+          # Check OpenAPI docs are available
+          curl -f http://localhost:8765/docs
+          curl -f http://localhost:8765/openapi.json
+      
+      - name: Run Unit Tests
+        run: |
+          pytest tests/test_mcp_server.py -v --cov=mcp_servers --cov-report=xml --cov-report=term
+        env:
+          MCP_SERVER_URL: http://localhost:8765
+      
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: ./coverage.xml
+          flags: mcp-server
+          name: mcp-server-coverage
+      
+      - name: Stop MCP Server
+        if: always()
+        run: |
+          if [ ! -z "$SERVER_PID" ]; then
+            kill $SERVER_PID || true
+          fi
+      
+      - name: Upload Server Logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcp-server-logs
+          path: /tmp/*.log
+          retention-days: 7
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r mcp_servers/epstein_files_downloader/requirements.txt
+          pip install pytest pytest-asyncio requests
+      
+      - name: Start MCP Server
+        run: |
+          cd mcp_servers/epstein_files_downloader
+          python server.py --port 8765 --download-dir /tmp/integration_test &
+          SERVER_PID=$!
+          echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
+          sleep 5
+      
+      - name: Run Integration Tests
+        run: |
+          pytest tests/test_mcp_integration.py -v -m integration
+        env:
+          MCP_SERVER_URL: http://localhost:8765
+      
+      - name: Cleanup
+        if: always()
+        run: |
+          kill $SERVER_PID || true
+          rm -rf /tmp/integration_test
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Run Bandit Security Scanner
+        run: |
+          pip install bandit
+          bandit -r mcp_servers/epstein_files_downloader -f json -o bandit-report.json || true
+      
+      - name: Upload Bandit Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-security-report
+          path: bandit-report.json
+          retention-days: 30

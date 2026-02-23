@@ -1,0 +1,79 @@
+name: Document Request
+description: Request to locate or download specific documents
+title: "[DOCS]: "
+labels: ["document-request", "download"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template to request specific documents that should be added to the corpus.
+
+  - type: dropdown
+    id: source_type
+    attributes:
+      label: Source Type
+      options:
+        - Court Filing
+        - Government Release
+        - FOIA Response
+        - Flight Log
+        - Financial Record
+        - Email/Communication
+        - News Archive
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Document Description
+      description: Describe the document(s) you're looking for
+      placeholder: "Deposition transcript of John Doe from Case 1:15-cv-07433"
+    validations:
+      required: true
+
+  - type: textarea
+    id: known_location
+    attributes:
+      label: Known Location or Source
+      description: Where might these documents be found?
+      placeholder: |
+        - PACER Case Number: 1:15-cv-07433-RWS
+        - DOJ Website: https://...
+        - FBI Vault: https://vault.fbi.gov/...
+        - Court: SDNY
+
+  - type: textarea
+    id: relevance
+    attributes:
+      label: Relevance
+      description: Why are these documents important?
+      placeholder: "These documents may contain information about..."
+
+  - type: input
+    id: date_range
+    attributes:
+      label: Date Range
+      description: What time period do these documents cover?
+      placeholder: "2005-2010"
+
+  - type: textarea
+    id: entities
+    attributes:
+      label: Related Entities
+      description: Which entities are mentioned in these documents?
+      placeholder: |
+        - Jeffrey Epstein
+        - Ghislaine Maxwell
+
+  - type: checkboxes
+    id: access
+    attributes:
+      label: Access Status
+      options:
+        - label: Publicly available
+        - label: Requires authentication
+        - label: Requires payment/PACER fees
+        - label: May require FOIA request
+        - label: Unknown availability

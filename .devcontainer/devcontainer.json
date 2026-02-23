@@ -1,0 +1,12 @@
+{
+  "name": "epstein-dev",
+  "build": {
+    "dockerfile": "../Dockerfile"
+  },
+  "workspaceFolder": "/workspace",
+  "settings": {
+    "python.pythonPath": "/usr/local/bin/python"
+  },
+  "postCreateCommand": "uv install --frozen-lock || true",
+  "extensions": ["ms-python.python", "ms-azuretools.vscode-docker"]
+}

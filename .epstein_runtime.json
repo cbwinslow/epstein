@@ -1,0 +1,5 @@
+{
+  "python": "3.10.15",
+  "package_manager": "uv",
+  "lockfile": "uv.lock"
+}
