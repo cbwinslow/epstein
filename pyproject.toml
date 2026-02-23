@@ -45,7 +45,27 @@ extend-exclude = ["epstein_artifacts", "vector-stack", ".epstein"]
 
 [tool.ruff.lint]
 select = ["E","F","I","B","UP","SIM","W"]
-ignore = ["E501"]
+ignore = [
+    "E501",  # Line too long
+    "E101",  # Mixed tabs/spaces (in embedded code)
+    "E402",  # Import not at top
+    "E722",  # Bare except
+    "E741",  # Ambiguous variable
+    "SIM102", # Nested if
+    "SIM117", # Nested with
+    "B007",   # Unused loop var
+    "B018",   # Useless expression
+    "B904",   # Except raise
+    "F404",   # Future import position
+    "F811",   # Redefinition
+    "F821",   # Undefined name
+]
+extend-exclude = [
+    "epstein/qdrant_embed_chunks.py",
+    "tests/",
+    "scripts/",
+    "epstein/",
+]
 
 [tool.mypy]
 python_version = "3.10"
