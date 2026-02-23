@@ -5,14 +5,13 @@ This module provides the base class that all agents should inherit from,
 ensuring consistent interfaces and common functionality across the system.
 """
 
+import asyncio
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
-import asyncio
-import json
-import logging
+from typing import Any
 
 
 class AgentStatus(Enum):
@@ -44,13 +43,13 @@ class AgentMetadata:
     name: str
     version: str
     description: str
-    capabilities: List[AgentCapability]
+    capabilities: list[AgentCapability]
     author: str = "Epstein Project Team"
     created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
-    tags: List[str] = field(default_factory=list)
-    dependencies: List[str] = field(default_factory=list)
-    
-    def to_dict(self) -> Dict[str, Any]:
+    tags: list[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert metadata to dictionary"""
         return {
             "name": self.name,
@@ -72,17 +71,17 @@ class AgentHealth:
     total_requests: int = 0
     successful_requests: int = 0
     failed_requests: int = 0
-    last_error: Optional[str] = None
-    last_error_timestamp: Optional[str] = None
-    
+    last_error: str | None = None
+    last_error_timestamp: str | None = None
+
     @property
     def success_rate(self) -> float:
         """Calculate success rate"""
         if self.total_requests == 0:
             return 1.0
         return self.successful_requests / self.total_requests
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert health status to dictionary"""
         return {
             "status": self.status.value,
@@ -99,19 +98,19 @@ class AgentHealth:
 class BaseAgent(ABC):
     """
     Base class for all Epstein agents.
-    
+
     All agents should inherit from this class and implement the required methods.
     This ensures consistent interfaces and common functionality across the system.
     """
-    
+
     def __init__(
         self,
         agent_id: str,
-        config: Optional[Dict[str, Any]] = None
+        config: dict[str, Any] | None = None
     ):
         """
         Initialize the base agent.
-        
+
         Args:
             agent_id: Unique identifier for this agent instance
             config: Optional configuration dictionary
@@ -119,50 +118,50 @@ class BaseAgent(ABC):
         self.agent_id = agent_id
         self.config = config or {}
         self.logger = logging.getLogger(f"{self.__class__.__name__}.{agent_id}")
-        
+
         # Initialize tracking
         self._start_time = datetime.utcnow()
         self._health = AgentHealth(status=AgentStatus.INITIALIZING)
-        self._metadata: Optional[AgentMetadata] = None
-        
+        self._metadata: AgentMetadata | None = None
+
         # Initialize state
         self._is_initialized = False
         self._lock = asyncio.Lock()
-        
+
     @abstractmethod
     def get_metadata(self) -> AgentMetadata:
         """
         Get agent metadata.
-        
+
         Returns:
             AgentMetadata describing this agent
         """
         pass
-    
+
     @abstractmethod
     async def initialize(self) -> bool:
         """
         Initialize the agent.
-        
+
         Returns:
             True if initialization successful, False otherwise
         """
         pass
-    
+
     @abstractmethod
     async def shutdown(self) -> bool:
         """
         Shutdown the agent gracefully.
-        
+
         Returns:
             True if shutdown successful, False otherwise
         """
         pass
-    
+
     async def health_check(self) -> AgentHealth:
         """
         Perform a health check.
-        
+
         Returns:
             AgentHealth object with current health status
         """
@@ -170,31 +169,31 @@ class BaseAgent(ABC):
             datetime.utcnow() - self._start_time
         ).total_seconds()
         return self._health
-    
-    async def get_capabilities(self) -> List[AgentCapability]:
+
+    async def get_capabilities(self) -> list[AgentCapability]:
         """
         Get list of agent capabilities.
-        
+
         Returns:
             List of AgentCapability enums
         """
         metadata = self.get_metadata()
         return metadata.capabilities
-    
+
     def get_config(self, key: str, default: Any = None) -> Any:
         """
         Get a configuration value.
-        
+
         Args:
             key: Configuration key (supports dot notation for nested dicts)
             default: Default value if key not found
-            
+
         Returns:
             Configuration value or default
         """
         keys = key.split('.')
         value = self.config
-        
+
         for k in keys:
             if isinstance(value, dict):
                 value = value.get(k)
@@ -202,13 +201,13 @@ class BaseAgent(ABC):
                     return default
             else:
                 return default
-        
+
         return value
-    
-    async def _track_request(self, success: bool, error: Optional[str] = None):
+
+    async def _track_request(self, success: bool, error: str | None = None):
         """
         Track a request for health monitoring.
-        
+
         Args:
             success: Whether the request was successful
             error: Error message if request failed
@@ -223,11 +222,11 @@ class BaseAgent(ABC):
                 self._health.last_error = error
                 self._health.last_error_timestamp = datetime.utcnow().isoformat()
                 self._health.status = AgentStatus.ERROR
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert agent to dictionary representation.
-        
+
         Returns:
             Dictionary with agent information
         """
@@ -238,7 +237,7 @@ class BaseAgent(ABC):
             "health": self._health.to_dict(),
             "config": self.config
         }
-    
+
     def __repr__(self) -> str:
         """String representation of agent"""
         metadata = self.get_metadata()
@@ -248,20 +247,20 @@ class BaseAgent(ABC):
 class AgentRegistry:
     """
     Registry for discovering and managing agents.
-    
+
     Provides a centralized way to register, discover, and retrieve agent instances.
     """
-    
+
     def __init__(self):
         """Initialize the agent registry"""
-        self._agents: Dict[str, BaseAgent] = {}
-        self._agent_classes: Dict[str, type] = {}
+        self._agents: dict[str, BaseAgent] = {}
+        self._agent_classes: dict[str, type] = {}
         self.logger = logging.getLogger("AgentRegistry")
-    
-    def register_agent_class(self, agent_class: type, name: Optional[str] = None):
+
+    def register_agent_class(self, agent_class: type, name: str | None = None):
         """
         Register an agent class for discovery.
-        
+
         Args:
             agent_class: Agent class to register
             name: Optional name (defaults to class name)
@@ -269,45 +268,45 @@ class AgentRegistry:
         class_name = name or agent_class.__name__
         self._agent_classes[class_name] = agent_class
         self.logger.info(f"Registered agent class: {class_name}")
-    
+
     def register_agent_instance(self, agent: BaseAgent):
         """
         Register an agent instance.
-        
+
         Args:
             agent: Agent instance to register
         """
         self._agents[agent.agent_id] = agent
         self.logger.info(f"Registered agent instance: {agent.agent_id}")
-    
-    def get_agent(self, agent_id: str) -> Optional[BaseAgent]:
+
+    def get_agent(self, agent_id: str) -> BaseAgent | None:
         """
         Get an agent instance by ID.
-        
+
         Args:
             agent_id: Agent ID to retrieve
-            
+
         Returns:
             Agent instance or None if not found
         """
         return self._agents.get(agent_id)
-    
-    def get_all_agents(self) -> List[BaseAgent]:
+
+    def get_all_agents(self) -> list[BaseAgent]:
         """
         Get all registered agent instances.
-        
+
         Returns:
             List of all agent instances
         """
         return list(self._agents.values())
-    
-    def get_agents_by_capability(self, capability: AgentCapability) -> List[BaseAgent]:
+
+    def get_agents_by_capability(self, capability: AgentCapability) -> list[BaseAgent]:
         """
         Get all agents with a specific capability.
-        
+
         Args:
             capability: Capability to search for
-            
+
         Returns:
             List of agents with the specified capability
         """
@@ -317,14 +316,14 @@ class AgentRegistry:
             if capability in metadata.capabilities:
                 agents.append(agent)
         return agents
-    
+
     def unregister_agent(self, agent_id: str) -> bool:
         """
         Unregister an agent instance.
-        
+
         Args:
             agent_id: Agent ID to unregister
-            
+
         Returns:
             True if agent was unregistered, False if not found
         """
@@ -333,20 +332,20 @@ class AgentRegistry:
             self.logger.info(f"Unregistered agent: {agent_id}")
             return True
         return False
-    
-    def list_agent_classes(self) -> List[str]:
+
+    def list_agent_classes(self) -> list[str]:
         """
         List all registered agent classes.
-        
+
         Returns:
             List of agent class names
         """
         return list(self._agent_classes.keys())
-    
-    def get_registry_info(self) -> Dict[str, Any]:
+
+    def get_registry_info(self) -> dict[str, Any]:
         """
         Get information about the registry.
-        
+
         Returns:
             Dictionary with registry information
         """
@@ -365,7 +364,7 @@ _global_registry = AgentRegistry()
 def get_global_registry() -> AgentRegistry:
     """
     Get the global agent registry.
-    
+
     Returns:
         Global AgentRegistry instance
     """
@@ -375,20 +374,20 @@ def get_global_registry() -> AgentRegistry:
 def register_agent(agent: BaseAgent):
     """
     Register an agent with the global registry.
-    
+
     Args:
         agent: Agent instance to register
     """
     _global_registry.register_agent_instance(agent)
 
 
-def get_agent(agent_id: str) -> Optional[BaseAgent]:
+def get_agent(agent_id: str) -> BaseAgent | None:
     """
     Get an agent from the global registry.
-    
+
     Args:
         agent_id: Agent ID to retrieve
-        
+
     Returns:
         Agent instance or None if not found
     """

@@ -1,8 +1,8 @@
-import pytest
 import os
-import asyncio
 
-from agents.codex_agent import CodexAgent, OPENAI_FUNCTIONS
+import pytest
+
+from agents.codex_agent import CodexAgent
 
 
 @pytest.mark.asyncio

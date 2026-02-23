@@ -3,11 +3,11 @@ from __future__ import annotations
 
 import json
 import os
+import socket
 import subprocess
 import sys
-import urllib.request
-import socket
 import urllib.parse
+import urllib.request
 
 
 def run(cmd: list[str]) -> tuple[int, str]:

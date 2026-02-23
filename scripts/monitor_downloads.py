@@ -16,11 +16,11 @@ download rate, and estimated time remaining (if total size known).
 import argparse
 import time
 from pathlib import Path
-from typing import Dict, Optional
 
 import tqdm
 
-def get_file_sizes(directory: Path) -> Dict[str, int]:
+
+def get_file_sizes(directory: Path) -> dict[str, int]:
     """Get current sizes of all ZIP files in directory."""
     sizes = {}
     for zip_file in directory.glob("*.zip"):
@@ -32,7 +32,7 @@ def get_file_sizes(directory: Path) -> Dict[str, int]:
 
 def format_size(size_bytes: int) -> str:
     """Format bytes to human readable."""
-    for unit in ['B', 'KB', 'MB', 'GB']:
+    for _unit in ['B', 'KB', 'MB', 'GB']:
         if size_bytes < 1024.0:
             return ".1f"
         size_bytes /= 1024.0
@@ -47,9 +47,9 @@ def monitor_downloads(output_dir: Path, interval: float = 2.0) -> None:
     print("Press Ctrl+C to stop monitoring\n")
 
     # Track previous sizes for rate calculation
-    prev_sizes: Dict[str, int] = {}
+    prev_sizes: dict[str, int] = {}
     prev_time = time.time()
-    progress_bars: Dict[str, tqdm.tqdm] = {}
+    progress_bars: dict[str, tqdm.tqdm] = {}
 
     try:
         while True:

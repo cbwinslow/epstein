@@ -18,7 +18,6 @@ import logging
 import os
 from collections import defaultdict
 from pathlib import Path
-from typing import DefaultDict, Dict, List, Set, Tuple
 
 from neo4j import GraphDatabase
 
@@ -44,9 +43,9 @@ class GraphPopulationPipeline:
     def __init__(self, uri: str, user: str, password: str, entities_dir: str = "entities"):
         self.driver = GraphDatabase.driver(uri, auth=(user, password))
         self.entities_dir = Path(entities_dir)
-        self.documents: Dict[str, dict] = {}  # doc_id -> document data
-        self.entities: DefaultDict[Tuple[str, str], List[dict]] = defaultdict(list)  # (label, text) -> list of mentions
-        self.mention_counts: DefaultDict[Tuple[str, str], DefaultDict[str, int]] = defaultdict(lambda: defaultdict(int))  # (entity_key, doc_id) -> count
+        self.documents: dict[str, dict] = {}  # doc_id -> document data
+        self.entities: defaultdict[tuple[str, str], list[dict]] = defaultdict(list)  # (label, text) -> list of mentions
+        self.mention_counts: defaultdict[tuple[str, str], defaultdict[str, int]] = defaultdict(lambda: defaultdict(int))  # (entity_key, doc_id) -> count
 
     def close(self):
         self.driver.close()
@@ -66,7 +65,7 @@ class GraphPopulationPipeline:
         for file_path in jsonl_files:
             logger.info(f"Processing {file_path}")
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, encoding='utf-8') as f:
                     for line_num, line in enumerate(f, 1):
                         line = line.strip()
                         if not line:
@@ -121,7 +120,7 @@ class GraphPopulationPipeline:
         # Count mentions per entity per document
         self.mention_counts[entity_key][doc_id] += 1
 
-    def aggregate_entities(self) -> Dict[Tuple[str, str], dict]:
+    def aggregate_entities(self) -> dict[tuple[str, str], dict]:
         """Aggregate entity data across all mentions."""
         aggregated = {}
 
@@ -186,7 +185,7 @@ class GraphPopulationPipeline:
                     logger.error(f"Error creating document batch: {e}")
 
     @staticmethod
-    def _create_documents_tx(tx, documents: List[dict]):
+    def _create_documents_tx(tx, documents: list[dict]):
         """Transaction function to create Document nodes."""
         query = """
         UNWIND $documents AS doc
@@ -199,7 +198,7 @@ class GraphPopulationPipeline:
         """
         tx.run(query, documents=documents)
 
-    def _batch_create_entities(self, aggregated_entities: Dict[Tuple[str, str], dict]) -> None:
+    def _batch_create_entities(self, aggregated_entities: dict[tuple[str, str], dict]) -> None:
         """Create Entity nodes in batches."""
         batch_size = 100
         entities_list = list(aggregated_entities.values())
@@ -214,7 +213,7 @@ class GraphPopulationPipeline:
                     logger.error(f"Error creating entity batch: {e}")
 
     @staticmethod
-    def _create_entities_tx(tx, entities: List[dict]):
+    def _create_entities_tx(tx, entities: list[dict]):
         """Transaction function to create Entity nodes."""
         for entity in entities:
             node_type = entity['type']
@@ -226,7 +225,7 @@ class GraphPopulationPipeline:
             """
             tx.run(query, **entity)
 
-    def _batch_create_relationships(self, aggregated_entities: Dict[Tuple[str, str], dict]) -> None:
+    def _batch_create_relationships(self, aggregated_entities: dict[tuple[str, str], dict]) -> None:
         """Create MENTIONED_IN relationships in batches."""
         batch_size = 500
         relationships = []
@@ -254,7 +253,7 @@ class GraphPopulationPipeline:
                     logger.error(f"Error creating relationship batch: {e}")
 
     @staticmethod
-    def _create_relationships_tx(tx, relationships: List[dict]):
+    def _create_relationships_tx(tx, relationships: list[dict]):
         """Transaction function to create MENTIONED_IN relationships."""
         query = """
         UNWIND $relationships AS rel

@@ -20,9 +20,10 @@ import json
 import os
 import sys
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, List, Optional
+from typing import Any
 
 import psycopg
 from psycopg.rows import dict_row
@@ -48,7 +49,7 @@ class ChunkRow:
     end_char: int
     chunk_index: int
     chunk_text: str
-    source_url: Optional[str]
+    source_url: str | None
 
 def eprint(msg: str) -> None:
     print(msg, file=sys.stderr)
@@ -86,14 +87,14 @@ def ensure_collection(client: QdrantClient, collection: str, dim: int) -> None:
         vectors_config=qm.VectorParams(size=dim, distance=qm.Distance.COSINE),
     )
 
-def fetch_chunks(conn: psycopg.Connection, resume_after: Optional[int], limit: Optional[int]) -> Iterable[ChunkRow]:
+def fetch_chunks(conn: psycopg.Connection, resume_after: int | None, limit: int | None) -> Iterable[ChunkRow]:
     base = """
     SELECT c.id AS chunk_id, c.doc_id, c.start_char, c.end_char, c.chunk_index, c.chunk_text,
            d.source_url
     FROM doc_analysis.chunks c
     JOIN doc_analysis.documents d ON d.doc_id = c.doc_id
     """
-    params: List[Any] = []
+    params: list[Any] = []
     where = ""
     if resume_after is not None:
         where = "WHERE c.id > %s"
@@ -117,8 +118,8 @@ def fetch_chunks(conn: psycopg.Connection, resume_after: Optional[int], limit: O
                 source_url=(str(row.get("source_url")) if row.get("source_url") is not None else None),
             )
 
-def batched(it: Iterable[ChunkRow], n: int) -> Iterable[List[ChunkRow]]:
-    batch: List[ChunkRow] = []
+def batched(it: Iterable[ChunkRow], n: int) -> Iterable[list[ChunkRow]]:
+    batch: list[ChunkRow] = []
     for x in it:
         batch.append(x)
         if len(batch) >= n:
@@ -167,8 +168,8 @@ def main() -> int:
             dim = len(vecs[0])
             ensure_collection(qclient, args.collection, dim)
 
-            points: List[qm.PointStruct] = []
-            for c, v in zip(batch, vecs):
+            points: list[qm.PointStruct] = []
+            for c, v in zip(batch, vecs, strict=False):
                 payload = {
                     "doc_id": c.doc_id,
                     "chunk_id": c.chunk_id,

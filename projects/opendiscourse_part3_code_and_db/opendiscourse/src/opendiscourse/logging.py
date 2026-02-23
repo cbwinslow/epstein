@@ -13,7 +13,7 @@ import json
 import logging
 import os
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 from rich.logging import RichHandler
 
@@ -36,7 +36,7 @@ def setup_logger(name: str, log_dir: str, level: str = "INFO") -> logging.Logger
 
     class JsonFormatter(logging.Formatter):
         def format(self, record: logging.LogRecord) -> str:
-            payload: Dict[str, Any] = {
+            payload: dict[str, Any] = {
                 "ts": datetime.utcnow().isoformat() + "Z",
                 "level": record.levelname,
                 "logger": record.name,

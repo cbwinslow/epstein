@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Script Name: cbw_epstein_doctor.py
 Date: 2025-12-23
@@ -73,8 +72,7 @@ import textwrap
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
-
+from typing import Any
 
 # ------------------------------
 # Constants (edit me)
@@ -136,7 +134,7 @@ class CheckResult:
     ok: bool
     severity: str  # INFO | WARN | ERROR
     summary: str
-    details: Dict[str, Any] = dataclasses.field(default_factory=dict)
+    details: dict[str, Any] = dataclasses.field(default_factory=dict)
     remediation: str = ""
 
 
@@ -147,9 +145,9 @@ class DoctorReport:
     elapsed_seconds: float
     project_root: str
     mode: str
-    checks: List[CheckResult]
+    checks: list[CheckResult]
 
-    def to_jsonable(self) -> Dict[str, Any]:
+    def to_jsonable(self) -> dict[str, Any]:
         return {
             "started_at": self.started_at,
             "finished_at": self.finished_at,
@@ -200,12 +198,12 @@ class Logger:
 
 def run_cmd(
     logger: Logger,
-    cmd: List[str],
+    cmd: list[str],
     timeout: int,
-    cwd: Optional[Path] = None,
-    env: Optional[Dict[str, str]] = None,
+    cwd: Path | None = None,
+    env: dict[str, str] | None = None,
     allow_fail: bool = True,
-) -> Tuple[int, str, str]:
+) -> tuple[int, str, str]:
     """Run a command with robust capture. Never raises unless allow_fail=False."""
     logger.info(f"Running: {' '.join(cmd)} (cwd={cwd or Path.cwd()})")
     try:
@@ -232,11 +230,11 @@ def run_cmd(
         return 1, "", f"Exception: {e}"
 
 
-def which(cmd: str) -> Optional[str]:
+def which(cmd: str) -> str | None:
     return shutil.which(cmd)
 
 
-def detect_package_manager() -> Optional[str]:
+def detect_package_manager() -> str | None:
     """Return one of: apt, dnf, yum, pacman, zypper, brew, apk."""
     for pm in ["apt-get", "dnf", "yum", "pacman", "zypper", "brew", "apk"]:
         if shutil.which(pm):
@@ -272,7 +270,7 @@ def now_iso() -> str:
     return _dt.datetime.now(tz=_dt.timezone.utc).isoformat()
 
 
-def format_table(rows: List[Tuple[str, str, str]]) -> str:
+def format_table(rows: list[tuple[str, str, str]]) -> str:
     """Very small table formatter (no external deps)."""
     if not rows:
         return "(no rows)"
@@ -376,7 +374,7 @@ def check_venv(logger: Logger, project_root: Path, venv_path: Path, timeout: int
 
     exists = py.exists() and pip.exists()
 
-    details: Dict[str, Any] = {
+    details: dict[str, Any] = {
         "venv_path": str(venv_path),
         "venv_exists": exists,
         "active_virtual_env": os.environ.get("VIRTUAL_ENV"),
@@ -407,7 +405,7 @@ def check_requirements_installability(
     logger: Logger,
     project_root: Path,
     venv_path: Path,
-    requirements_path: Optional[Path],
+    requirements_path: Path | None,
     timeout: int,
 ) -> CheckResult:
     if not requirements_path or not requirements_path.exists():
@@ -433,7 +431,7 @@ def check_requirements_installability(
 
     # Use --dry-run with pip when available; if not, we do a conservative "pip download" into temp.
     # We do NOT want to mutate your env in validate/doctor mode.
-    details: Dict[str, Any] = {
+    details: dict[str, Any] = {
         "requirements_path": str(requirements_path),
         "method": None,
         "result": None,
@@ -494,7 +492,7 @@ def check_requirements_installability(
     )
 
 
-def parse_db_env() -> Dict[str, Optional[str]]:
+def parse_db_env() -> dict[str, str | None]:
     return {
         "DATABASE_URL": os.environ.get("DATABASE_URL"),
         "PGHOST": os.environ.get("PGHOST"),
@@ -556,7 +554,7 @@ def check_postgres(logger: Logger, timeout: int) -> CheckResult:
     )
 
 
-def check_docker_compose(logger: Logger, project_root: Path, compose_path: Optional[Path], timeout: int) -> CheckResult:
+def check_docker_compose(logger: Logger, project_root: Path, compose_path: Path | None, timeout: int) -> CheckResult:
     # Find compose file if not provided.
     if compose_path is None:
         for cand in [project_root / "docker-compose.yml", project_root / "compose.yml"]:
@@ -585,7 +583,7 @@ def check_docker_compose(logger: Logger, project_root: Path, compose_path: Optio
         )
 
     # Prefer docker compose (plugin). Fallback to docker-compose.
-    compose_cmd: Optional[List[str]] = None
+    compose_cmd: list[str] | None = None
     if shutil.which("docker"):
         # Test whether `docker compose` works.
         rc, _, _ = run_cmd(logger, ["docker", "compose", "version"], timeout=timeout)
@@ -635,7 +633,7 @@ def check_network(logger: Logger, timeout: int) -> CheckResult:
         ("https_github", "github.com", 443),
     ]
 
-    details: Dict[str, Any] = {"probes": []}
+    details: dict[str, Any] = {"probes": []}
     all_ok = True
 
     for name, host, port in targets:
@@ -674,7 +672,7 @@ def check_network(logger: Logger, timeout: int) -> CheckResult:
 # ------------------------------
 
 
-def fix_install_tools(logger: Logger, apply: bool, tools: List[str], timeout: int) -> CheckResult:
+def fix_install_tools(logger: Logger, apply: bool, tools: list[str], timeout: int) -> CheckResult:
     pm = detect_package_manager()
     if pm is None:
         return CheckResult(
@@ -697,7 +695,7 @@ def fix_install_tools(logger: Logger, apply: bool, tools: List[str], timeout: in
         )
 
     # Build install command (DRY-RUN by default).
-    cmds: List[List[str]] = []
+    cmds: list[list[str]] = []
     if pm == "apt":
         cmds.append(["sudo", "apt-get", "update"])
         cmds.append(["sudo", "apt-get", "install", "-y"] + tools)
@@ -723,7 +721,7 @@ def fix_install_tools(logger: Logger, apply: bool, tools: List[str], timeout: in
             remediation="Install tools manually.",
         )
 
-    details: Dict[str, Any] = {"pm": pm, "commands": cmds, "applied": False}
+    details: dict[str, Any] = {"pm": pm, "commands": cmds, "applied": False}
 
     if not apply:
         return CheckResult(
@@ -815,7 +813,7 @@ def init_install_requirements(
     logger: Logger,
     project_root: Path,
     venv_path: Path,
-    requirements_path: Optional[Path],
+    requirements_path: Path | None,
     apply: bool,
     timeout: int,
 ) -> CheckResult:
@@ -879,15 +877,15 @@ def build_report(
     mode: str,
     project_root: Path,
     venv_path: Path,
-    requirements_path: Optional[Path],
-    compose_path: Optional[Path],
+    requirements_path: Path | None,
+    compose_path: Path | None,
     timeout: int,
     apply: bool,
 ) -> DoctorReport:
     started = time.time()
     started_at = now_iso()
 
-    checks: List[CheckResult] = []
+    checks: list[CheckResult] = []
 
     # Always run baseline checks.
     checks.append(check_runtime(logger))
@@ -924,7 +922,7 @@ def build_report(
 
 def print_report(report: DoctorReport) -> None:
     # Summarize in a clean table.
-    rows: List[Tuple[str, str, str]] = []
+    rows: list[tuple[str, str, str]] = []
     for c in report.checks:
         status = "OK" if c.ok else c.severity
         rows.append((c.name, status, c.summary))
@@ -1029,7 +1027,7 @@ def main() -> int:
     venv_path = Path(args.venv).expanduser().resolve() if args.venv else (project_root / ".venv")
 
     # Determine requirements.
-    requirements_path: Optional[Path]
+    requirements_path: Path | None
     if args.requirements:
         requirements_path = Path(args.requirements).expanduser().resolve()
     else:
@@ -1037,11 +1035,8 @@ def main() -> int:
         requirements_path = rp if rp.exists() else None
 
     # Determine compose.
-    compose_path: Optional[Path]
-    if args.compose:
-        compose_path = Path(args.compose).expanduser().resolve()
-    else:
-        compose_path = None
+    compose_path: Path | None
+    compose_path = Path(args.compose).expanduser().resolve() if args.compose else None
 
     logger.info(f"Starting {SCRIPT_NAME} mode={args.mode} apply={args.apply}")
     logger.info(f"Project root: {project_root}")

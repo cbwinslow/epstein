@@ -45,13 +45,13 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, Iterator, Optional
+from typing import Any
 
 import psycopg
 from psycopg.rows import dict_row
-
 
 # ------------------------------
 # Logging
@@ -68,7 +68,7 @@ def setup_logging(verbose: bool) -> None:
 # IO helpers
 # ------------------------------
 
-def iter_jsonl(path: Path) -> Iterator[Dict[str, Any]]:
+def iter_jsonl(path: Path) -> Iterator[dict[str, Any]]:
     if not path.exists():
         return
     with path.open("r", encoding="utf-8", errors="replace") as f:
@@ -111,7 +111,7 @@ def ensure_schema_exists(conn: psycopg.Connection) -> None:
     conn.execute("CREATE SCHEMA IF NOT EXISTS doc_analysis")
 
 
-def upsert_document(conn: psycopg.Connection, obj: Dict[str, Any]) -> None:
+def upsert_document(conn: psycopg.Connection, obj: dict[str, Any]) -> None:
     doc_id = str(obj.get("sha256") or "").strip()
     if not doc_id:
         return
@@ -142,7 +142,7 @@ def upsert_document(conn: psycopg.Connection, obj: Dict[str, Any]) -> None:
     )
 
 
-def upsert_run(conn: psycopg.Connection, obj: Dict[str, Any]) -> None:
+def upsert_run(conn: psycopg.Connection, obj: dict[str, Any]) -> None:
     run_id = str(obj.get("run_id") or "").strip()
     if not run_id:
         return
@@ -175,7 +175,7 @@ def upsert_run(conn: psycopg.Connection, obj: Dict[str, Any]) -> None:
     )
 
 
-def insert_failure(conn: psycopg.Connection, obj: Dict[str, Any]) -> None:
+def insert_failure(conn: psycopg.Connection, obj: dict[str, Any]) -> None:
     # Append-only; de-dupe is not critical here.
     conn.execute(
         """
@@ -215,7 +215,7 @@ def upsert_document_text(conn: psycopg.Connection, doc_id: str, text: str) -> No
     )
 
 
-def upsert_chunk(conn: psycopg.Connection, obj: Dict[str, Any]) -> None:
+def upsert_chunk(conn: psycopg.Connection, obj: dict[str, Any]) -> None:
     doc_id = str(obj.get("doc_id") or "").strip()
     if not doc_id:
         return
@@ -244,7 +244,7 @@ def upsert_chunk(conn: psycopg.Connection, obj: Dict[str, Any]) -> None:
     )
 
 
-def insert_entity(conn: psycopg.Connection, obj: Dict[str, Any]) -> None:
+def insert_entity(conn: psycopg.Connection, obj: dict[str, Any]) -> None:
     doc_id = str(obj.get("doc_id") or "").strip()
     if not doc_id:
         return

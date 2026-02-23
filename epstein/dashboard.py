@@ -23,24 +23,16 @@ Version: 1.0.0
 """
 
 import asyncio
-import json
 import logging
-import os
-import sqlite3
 import threading
-import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
 
 # Configure logging
 logging.basicConfig(
@@ -82,11 +74,11 @@ class BatchJob:
     job_id: str
     name: str
     description: str
-    tasks: List[Dict[str, Any]]
+    tasks: list[dict[str, Any]]
     status: str = "pending"
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    started_at: Optional[str] = None
-    completed_at: Optional[str] = None
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    started_at: str | None = None
+    completed_at: str | None = None
     progress: float = 0.0
     completed_tasks: int = 0
     failed_tasks: int = 0
@@ -98,10 +90,10 @@ class WorkerStatus:
 
     worker_id: str
     status: str  # idle, busy, paused
-    current_task: Optional[str] = None
+    current_task: str | None = None
     progress: float = 0.0
-    started_at: Optional[str] = None
-    messages: List[str] = field(default_factory=list)
+    started_at: str | None = None
+    messages: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -112,7 +104,7 @@ class LogEntry:
     level: str
     source: str
     message: str
-    details: Optional[Dict[str, Any]] = None
+    details: dict[str, Any] | None = None
 
 
 # =============================================================================
@@ -133,10 +125,10 @@ class DashboardState:
     """
 
     def __init__(self):
-        self.batches: Dict[str, BatchJob] = {}
-        self.workers: Dict[str, WorkerStatus] = {}
-        self.logs: List[LogEntry] = []
-        self.downloads: Dict[str, Dict[str, Any]] = {}
+        self.batches: dict[str, BatchJob] = {}
+        self.workers: dict[str, WorkerStatus] = {}
+        self.logs: list[LogEntry] = []
+        self.downloads: dict[str, dict[str, Any]] = {}
         self.metrics = {
             "total_tasks": 0,
             "completed_tasks": 0,
@@ -150,11 +142,11 @@ class DashboardState:
         for i in range(5):
             self.workers[f"worker-{i}"] = WorkerStatus(worker_id=f"worker-{i}", status="idle")
 
-    def add_log(self, level: str, source: str, message: str, details: Optional[Dict] = None):
+    def add_log(self, level: str, source: str, message: str, details: dict | None = None):
         """Add a log entry."""
         with self._lock:
             entry = LogEntry(
-                timestamp=datetime.now(timezone.utc).isoformat(),
+                timestamp=datetime.now(UTC).isoformat(),
                 level=level,
                 source=source,
                 message=message,
@@ -166,7 +158,7 @@ class DashboardState:
             if len(self.logs) > self._max_logs:
                 self.logs = self.logs[-self._max_logs :]
 
-    def create_batch(self, name: str, description: str, tasks: List[Dict[str, Any]]) -> str:
+    def create_batch(self, name: str, description: str, tasks: list[dict[str, Any]]) -> str:
         """Create a new batch job."""
         job_id = str(uuid4())[:8]
         batch = BatchJob(
@@ -180,7 +172,7 @@ class DashboardState:
             self.add_log("INFO", "batch", f"Created batch: {name} ({job_id})")
         return job_id
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get overall system status."""
         with self._lock:
             return {
@@ -207,13 +199,13 @@ class DashboardState:
                 "active_downloads": len(self.downloads),
             }
 
-    def update_download(self, download_id: str, data: Dict[str, Any]):
+    def update_download(self, download_id: str, data: dict[str, Any]):
         """Update download progress."""
         with self._lock:
             if download_id not in self.downloads:
                 self.downloads[download_id] = {}
             self.downloads[download_id].update(data)
-            self.downloads[download_id]["updated_at"] = datetime.now(timezone.utc).isoformat()
+            self.downloads[download_id]["updated_at"] = datetime.now(UTC).isoformat()
 
 
 # Create global state
@@ -253,7 +245,7 @@ DASHBOARD_HTML = """
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100" x-data="dashboard()" x-init="init()">
-    
+
     <!-- Header -->
     <header class="bg-gray-800 border-b border-gray-700 px-6 py-4">
         <div class="flex items-center justify-between">
@@ -262,7 +254,7 @@ DASHBOARD_HTML = """
                     <i class="fas fa-layer-group text-blue-500"></i>
                     Epstein Files Pipeline
                 </h1>
-                <span class="px-3 py-1 text-sm rounded-full" 
+                <span class="px-3 py-1 text-sm rounded-full"
                       :class="status.workers['worker-0']?.status === 'busy' ? 'bg-green-900 text-green-300' : 'bg-gray-700 text-gray-400'">
                     <span class="w-2 h-2 inline-block rounded-full mr-2"
                           :class="status.workers['worker-0']?.status === 'busy' ? 'bg-green-500' : 'bg-gray-500'"></span>
@@ -282,7 +274,7 @@ DASHBOARD_HTML = """
 
     <!-- Main Content -->
     <main class="p-6">
-        
+
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
@@ -333,7 +325,7 @@ DASHBOARD_HTML = """
 
         <!-- Workers & Batches Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            
+
             <!-- Workers Panel -->
             <div class="bg-gray-800 rounded-lg border border-gray-700">
                 <div class="px-4 py-3 border-b border-gray-700 flex justify-between items-center">
@@ -348,14 +340,14 @@ DASHBOARD_HTML = """
                             <div class="flex items-center justify-between mb-2">
                                 <span class="font-mono text-sm" x-text="id"></span>
                                 <span class="px-2 py-1 text-xs rounded"
-                                      :class="worker.status === 'busy' ? 'bg-green-900 text-green-300' : 
-                                             worker.status === 'paused' ? 'bg-yellow-900 text-yellow-300' : 
-                                             'bg-gray-600 text-gray-300'" 
+                                      :class="worker.status === 'busy' ? 'bg-green-900 text-green-300' :
+                                             worker.status === 'paused' ? 'bg-yellow-900 text-yellow-300' :
+                                             'bg-gray-600 text-gray-300'"
                                       x-text="worker.status">
                                 </span>
                             </div>
                             <div class="w-full bg-gray-600 rounded-full h-2">
-                                <div class="bg-blue-500 h-2 rounded-full progress-bar" 
+                                <div class="bg-blue-500 h-2 rounded-full progress-bar"
                                      :style="'width: ' + (worker.progress || 0) + '%'"></div>
                             </div>
                             <p class="text-xs text-gray-400 mt-2" x-text="worker.current_task || 'Idle'"></p>
@@ -378,15 +370,15 @@ DASHBOARD_HTML = """
                             <div class="flex items-center justify-between mb-2">
                                 <span class="font-semibold" x-text="batch.name"></span>
                                 <span class="px-2 py-1 text-xs rounded"
-                                      :class="batch.status === 'completed' ? 'bg-green-900 text-green-300' : 
+                                      :class="batch.status === 'completed' ? 'bg-green-900 text-green-300' :
                                              batch.status === 'failed' ? 'bg-red-900 text-red-300' :
-                                             batch.status === 'running' ? 'bg-blue-900 text-blue-300' : 
-                                             'bg-gray-600 text-gray-300'" 
+                                             batch.status === 'running' ? 'bg-blue-900 text-blue-300' :
+                                             'bg-gray-600 text-gray-300'"
                                       x-text="batch.status">
                                 </span>
                             </div>
                             <div class="w-full bg-gray-600 rounded-full h-2 mb-2">
-                                <div class="bg-blue-500 h-2 rounded-full progress-bar" 
+                                <div class="bg-blue-500 h-2 rounded-full progress-bar"
                                      :style="'width: ' + (batch.progress || 0) + '%'"></div>
                             </div>
                             <div class="flex justify-between text-xs text-gray-400">
@@ -405,7 +397,7 @@ DASHBOARD_HTML = """
 
         <!-- Downloads & Logs Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
+
             <!-- Active Downloads -->
             <div class="bg-gray-800 rounded-lg border border-gray-700">
                 <div class="px-4 py-3 border-b border-gray-700">
@@ -421,7 +413,7 @@ DASHBOARD_HTML = """
                                 <span class="text-xs text-gray-400" x-text="dl.progress + '%'"></span>
                             </div>
                             <div class="w-full bg-gray-600 rounded-full h-1.5">
-                                <div class="bg-green-500 h-1.5 rounded-full" 
+                                <div class="bg-green-500 h-1.5 rounded-full"
                                      :style="'width: ' + (dl.progress || 0) + '%'"></div>
                             </div>
                         </div>
@@ -446,8 +438,8 @@ DASHBOARD_HTML = """
                     <template x-for="(log, i) in logs" :key="i">
                         <div class="py-1 border-b border-gray-700 last:border-0">
                             <span class="text-gray-500" x-text="log.timestamp.split('T')[1].split('.')[0]"></span>
-                            <span class="mx-2" :class="log.level === 'ERROR' ? 'text-red-400' : 
-                                                          log.level === 'WARNING' ? 'text-yellow-400' : 
+                            <span class="mx-2" :class="log.level === 'ERROR' ? 'text-red-400' :
+                                                          log.level === 'WARNING' ? 'text-yellow-400' :
                                                           log.level === 'INFO' ? 'text-blue-400' : 'text-gray-400'"
                                   x-text="log.level"></span>
                             <span class="text-purple-400" x-text="log.source"></span>
@@ -466,7 +458,7 @@ DASHBOARD_HTML = """
     <div x-show="showNewBatch" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-gray-800 rounded-lg p-6 w-full max-w-md" @click.outside="showNewBatch = false">
             <h2 class="text-xl font-bold mb-4">Create New Batch</h2>
-            
+
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm text-gray-400 mb-1">Batch Name</label>
@@ -500,7 +492,7 @@ DASHBOARD_HTML = """
                     description: '',
                     urls: ''
                 },
-                
+
                 init() {
                     this.refresh();
                     // Auto-refresh every 2 seconds
@@ -508,7 +500,7 @@ DASHBOARD_HTML = """
                     // WebSocket for real-time logs
                     this.connectWebSocket();
                 },
-                
+
                 async refresh() {
                     try {
                         const res = await fetch('/api/status');
@@ -517,7 +509,7 @@ DASHBOARD_HTML = """
                         console.error('Failed to refresh:', e);
                     }
                 },
-                
+
                 connectWebSocket() {
                     const ws = new WebSocket(`ws://${window.location.host}/ws`);
                     ws.onmessage = (event) => {
@@ -533,14 +525,14 @@ DASHBOARD_HTML = """
                         setTimeout(() => this.connectWebSocket(), 3000);
                     };
                 },
-                
+
                 async createBatch() {
                     const urls = this.newBatch.urls.split('\\n').filter(u => u.trim());
                     const tasks = urls.map(url => ({
                         url: url.trim(),
                         command: 'download'
                     }));
-                    
+
                     await fetch('/api/batches', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
@@ -550,7 +542,7 @@ DASHBOARD_HTML = """
                             tasks: tasks
                         })
                     });
-                    
+
                     this.showNewBatch = false;
                     this.newBatch = {name: '', description: '', urls: ''};
                     this.refresh();
@@ -620,7 +612,7 @@ async def start_batch(job_id: str):
 
     batch = state.batches[job_id]
     batch.status = "running"
-    batch.started_at = datetime.now(timezone.utc).isoformat()
+    batch.started_at = datetime.now(UTC).isoformat()
 
     state.add_log("INFO", "batch", f"Started batch: {batch.name}")
 
@@ -642,7 +634,7 @@ async def cancel_batch(job_id: str):
 
 
 @app.get("/api/logs")
-async def get_logs(level: Optional[str] = None, limit: int = 100):
+async def get_logs(level: str | None = None, limit: int = 100):
     """Get system logs."""
     logs = state.logs
 

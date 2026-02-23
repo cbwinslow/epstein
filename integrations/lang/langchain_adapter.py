@@ -1,6 +1,7 @@
 """Minimal LangChain adapter (lazy import) for Mission Control PoC."""
 from __future__ import annotations
-from typing import Any, Dict
+
+from typing import Any
 
 
 class LangChainAdapter:
@@ -18,7 +19,7 @@ class LangChainAdapter:
         except Exception as e:
             raise RuntimeError("langchain not installed") from e
 
-    def run(self, prompt: str, context: Dict[str, Any] | None = None) -> Dict[str, Any]:
+    def run(self, prompt: str, context: dict[str, Any] | None = None) -> dict[str, Any]:
         """Run a prompt and return a structured response (PoC)."""
         self._ensure_client()
         # PoC: return echo of prompt with metadata

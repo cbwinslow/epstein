@@ -14,7 +14,6 @@ import tempfile
 import traceback
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 # Setup logging
 logging.basicConfig(
@@ -40,7 +39,7 @@ validation_results = {
 }
 
 
-def log_test(name: str, status: str, message: str = "", details: Dict = None):
+def log_test(name: str, status: str, message: str = "", details: dict = None):
     """Log a test result"""
     result = {
         "name": name,
@@ -50,7 +49,7 @@ def log_test(name: str, status: str, message: str = "", details: Dict = None):
     }
     validation_results["tests"].append(result)
     validation_results["summary"]["total"] += 1
-    
+
     if status == "PASS":
         validation_results["summary"]["passed"] += 1
         logger.info(f"✓ {name}: {message}")
@@ -67,24 +66,24 @@ def test_module_imports():
     logger.info("\n" + "="*70)
     logger.info("TEST 1: Module Import Validation")
     logger.info("="*70)
-    
+
     modules = [
         ('epstein.download_manager', ['DownloadManager', 'DownloadTask', 'DownloadSource']),
         ('epstein.file_organizer', ['FileOrganizer', 'FileType', 'FileCategory']),
         ('epstein.ocr_processor', ['OCRProcessor', 'OCRStatus', 'OCRQuality']),
         ('epstein.operation_monitor', ['OperationMonitor', 'OperationType', 'AlertLevel']),
     ]
-    
+
     for module_name, expected_classes in modules:
         try:
             module = __import__(module_name, fromlist=expected_classes)
-            
+
             # Check classes exist
             missing = []
             for cls_name in expected_classes:
                 if not hasattr(module, cls_name):
                     missing.append(cls_name)
-            
+
             if missing:
                 log_test(
                     f"Import {module_name}",
@@ -110,12 +109,15 @@ def test_download_manager():
     logger.info("\n" + "="*70)
     logger.info("TEST 2: Download Manager Validation")
     logger.info("="*70)
-    
+
     try:
         from epstein.download_manager import (
-            DownloadManager, DownloadTask, DownloadSource, SessionConfig
+            DownloadManager,
+            DownloadSource,
+            DownloadTask,
+            SessionConfig,
         )
-        
+
         # Test initialization
         with tempfile.TemporaryDirectory() as tmpdir:
             dm = DownloadManager(output_dir=Path(tmpdir))
@@ -124,13 +126,13 @@ def test_download_manager():
                 "PASS",
                 f"Initialized with output_dir={tmpdir}"
             )
-            
+
             # Test session config
             session_config = SessionConfig(
                 user_agent="Test/1.0",
                 cookies={"test": "value"}
             )
-            dm_with_auth = DownloadManager(
+            DownloadManager(
                 output_dir=Path(tmpdir),
                 session_config=session_config
             )
@@ -139,7 +141,7 @@ def test_download_manager():
                 "PASS",
                 "Session config applied successfully"
             )
-            
+
             # Test task creation
             task = DownloadTask(
                 url="https://example.com/test.pdf",
@@ -153,7 +155,7 @@ def test_download_manager():
                 "PASS",
                 f"Task added with ID: {task_id[:8]}..."
             )
-            
+
             # Test statistics
             stats = dm.get_statistics()
             if stats["total_tasks"] == 1:
@@ -168,7 +170,7 @@ def test_download_manager():
                     "FAIL",
                     f"Expected 1 task, got {stats['total_tasks']}"
                 )
-                
+
     except Exception as e:
         log_test(
             "DownloadManager tests",
@@ -183,14 +185,14 @@ def test_file_organizer():
     logger.info("\n" + "="*70)
     logger.info("TEST 3: File Organizer Validation")
     logger.info("="*70)
-    
+
     try:
         from epstein.file_organizer import FileOrganizer, FileType
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             base_dir = Path(tmpdir) / "base"
             org_dir = Path(tmpdir) / "organized"
-            
+
             # Test initialization
             organizer = FileOrganizer(
                 base_dir=base_dir,
@@ -202,14 +204,14 @@ def test_file_organizer():
                 "PASS",
                 "Initialized with deduplication enabled"
             )
-            
+
             # Test file type detection
             test_cases = [
                 ("file.pdf", FileType.PDF),
                 ("file.zip", FileType.ZIP),
                 ("file.jpg", FileType.IMAGE),
             ]
-            
+
             for filename, expected_type in test_cases:
                 detected = organizer.detect_file_type(Path(filename))
                 if detected == expected_type:
@@ -224,7 +226,7 @@ def test_file_organizer():
                         "FAIL",
                         f"Expected {expected_type.value}, got {detected.value}"
                     )
-            
+
             # Test statistics
             stats = organizer.get_statistics()
             log_test(
@@ -232,7 +234,7 @@ def test_file_organizer():
                 "PASS",
                 f"Retrieved statistics: {stats['total_files']} files"
             )
-            
+
     except Exception as e:
         log_test(
             "FileOrganizer tests",
@@ -247,10 +249,10 @@ def test_ocr_processor():
     logger.info("\n" + "="*70)
     logger.info("TEST 4: OCR Processor Validation")
     logger.info("="*70)
-    
+
     try:
         from epstein.ocr_processor import OCRProcessor, OCRQuality
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             # Test initialization
             processor = OCRProcessor(
@@ -263,14 +265,14 @@ def test_ocr_processor():
                 "PASS",
                 f"Initialized with quality threshold: {OCRQuality.ACCEPTABLE.value}"
             )
-            
+
             # Test quality assessment
             test_texts = [
                 ("This is a well-formatted document. " * 20, "good quality"),
                 ("@@##$$%%", "poor quality"),
                 ("", "empty text"),
             ]
-            
+
             for text, description in test_texts:
                 quality, confidence = processor.assess_text_quality(text)
                 log_test(
@@ -278,7 +280,7 @@ def test_ocr_processor():
                     "PASS",
                     f"Quality={quality.value}, Confidence={confidence:.1f}%"
                 )
-            
+
             # Test statistics
             stats = processor.get_statistics()
             log_test(
@@ -286,7 +288,7 @@ def test_ocr_processor():
                 "PASS",
                 f"Retrieved statistics: {stats['total_tasks']} tasks"
             )
-            
+
     except Exception as e:
         log_test(
             "OCRProcessor tests",
@@ -301,12 +303,10 @@ def test_operation_monitor():
     logger.info("\n" + "="*70)
     logger.info("TEST 5: Operation Monitor Validation")
     logger.info("="*70)
-    
+
     try:
-        from epstein.operation_monitor import (
-            OperationMonitor, OperationType, AlertLevel
-        )
-        
+        from epstein.operation_monitor import OperationMonitor, OperationType
+
         with tempfile.TemporaryDirectory() as tmpdir:
             # Test initialization
             monitor = OperationMonitor(
@@ -319,7 +319,7 @@ def test_operation_monitor():
                 "PASS",
                 "Initialized with alerts enabled"
             )
-            
+
             # Test operation tracking
             monitor.start_operation(
                 OperationType.DOWNLOAD,
@@ -331,7 +331,7 @@ def test_operation_monitor():
                 "PASS",
                 "Operation started successfully"
             )
-            
+
             # Test progress update
             monitor.update_progress(
                 OperationType.DOWNLOAD,
@@ -343,7 +343,7 @@ def test_operation_monitor():
                 "PASS",
                 "Progress updated: 10 completed, 2 failed"
             )
-            
+
             # Test metrics retrieval
             metrics = monitor.get_metrics(OperationType.DOWNLOAD)
             if metrics['completed_count'] == 10:
@@ -358,7 +358,7 @@ def test_operation_monitor():
                     "FAIL",
                     f"Expected 10 completed, got {metrics['completed_count']}"
                 )
-            
+
             # Test alert generation
             monitor.report_error(
                 OperationType.DOWNLOAD,
@@ -377,9 +377,9 @@ def test_operation_monitor():
                     "WARN",
                     "No alerts generated"
                 )
-            
+
             monitor.complete_operation(OperationType.DOWNLOAD)
-            
+
     except Exception as e:
         log_test(
             "OperationMonitor tests",
@@ -394,7 +394,7 @@ def test_pipeline_orchestrator():
     logger.info("\n" + "="*70)
     logger.info("TEST 6: Pipeline Orchestrator Validation")
     logger.info("="*70)
-    
+
     try:
         # Check if file exists
         orchestrator_path = Path("scripts/pipeline_orchestrator.py")
@@ -404,20 +404,20 @@ def test_pipeline_orchestrator():
                 "PASS",
                 f"Found at {orchestrator_path}"
             )
-            
+
             # Try to import the module
             sys.path.insert(0, str(Path.cwd()))
             from scripts.pipeline_orchestrator import PipelineConfig
-            
+
             log_test(
                 "Pipeline Orchestrator import",
                 "PASS",
                 "PipelineConfig imported successfully"
             )
-            
+
             # Test config creation
             with tempfile.TemporaryDirectory() as tmpdir:
-                config = PipelineConfig(
+                PipelineConfig(
                     base_dir=Path(tmpdir),
                     download_dir=Path(tmpdir) / "downloads",
                     organized_dir=Path(tmpdir) / "organized",
@@ -435,7 +435,7 @@ def test_pipeline_orchestrator():
                 "FAIL",
                 f"Not found at {orchestrator_path}"
             )
-            
+
     except Exception as e:
         log_test(
             "Pipeline Orchestrator tests",
@@ -450,18 +450,18 @@ def test_integration():
     logger.info("\n" + "="*70)
     logger.info("TEST 7: Integration Testing")
     logger.info("="*70)
-    
+
     try:
         from epstein.download_manager import DownloadManager
         from epstein.file_organizer import FileOrganizer
         from epstein.operation_monitor import OperationMonitor, OperationType
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             tmppath = Path(tmpdir)
-            
+
             # Create components
-            dm = DownloadManager(output_dir=tmppath / "downloads")
-            organizer = FileOrganizer(
+            DownloadManager(output_dir=tmppath / "downloads")
+            FileOrganizer(
                 base_dir=tmppath / "downloads",
                 organized_dir=tmppath / "organized"
             )
@@ -469,22 +469,22 @@ def test_integration():
                 log_dir=tmppath / "logs",
                 enable_dashboard=False
             )
-            
+
             log_test(
                 "Integration: Component creation",
                 "PASS",
                 "All components created successfully"
             )
-            
+
             # Test workflow simulation
             monitor.start_operation(OperationType.DOWNLOAD, total_count=5)
-            
+
             # Simulate some work
-            for i in range(5):
+            for _i in range(5):
                 monitor.update_progress(OperationType.DOWNLOAD, completed=1)
-            
+
             monitor.complete_operation(OperationType.DOWNLOAD)
-            
+
             metrics = monitor.get_metrics(OperationType.DOWNLOAD)
             if metrics['completed_count'] == 5:
                 log_test(
@@ -498,7 +498,7 @@ def test_integration():
                     "FAIL",
                     f"Expected 5 completed, got {metrics['completed_count']}"
                 )
-                
+
     except Exception as e:
         log_test(
             "Integration tests",
@@ -513,22 +513,22 @@ def generate_report():
     logger.info("\n" + "="*70)
     logger.info("VALIDATION SUMMARY")
     logger.info("="*70)
-    
+
     summary = validation_results["summary"]
     logger.info(f"\nTotal Tests: {summary['total']}")
     logger.info(f"Passed: {summary['passed']} ✓")
     logger.info(f"Failed: {summary['failed']} ✗")
     logger.info(f"Warnings: {summary['warnings']} ⚠")
-    
+
     success_rate = (summary['passed'] / summary['total'] * 100) if summary['total'] > 0 else 0
     logger.info(f"\nSuccess Rate: {success_rate:.1f}%")
-    
+
     # Save detailed report
     report_path = Path("/tmp/validation_report.json")
     with open(report_path, "w") as f:
         json.dump(validation_results, f, indent=2)
     logger.info(f"\nDetailed report saved to: {report_path}")
-    
+
     # Determine overall status
     if summary['failed'] == 0:
         logger.info("\n✓ ALL TESTS PASSED")
@@ -544,8 +544,8 @@ def main():
     logger.info("EPSTEIN AUTOMATION SYSTEM VALIDATION")
     logger.info("="*70)
     logger.info(f"Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    logger.info(f"Log file: /tmp/validation_report.log")
-    
+    logger.info("Log file: /tmp/validation_report.log")
+
     # Run all tests
     test_module_imports()
     test_download_manager()
@@ -554,7 +554,7 @@ def main():
     test_operation_monitor()
     test_pipeline_orchestrator()
     test_integration()
-    
+
     # Generate report
     return generate_report()
 

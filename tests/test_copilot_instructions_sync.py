@@ -1,7 +1,6 @@
 import re
 from pathlib import Path
 
-
 REQUIRED_HEADERS = [
     "Project Overview",
     "Key Technologies & Stack",

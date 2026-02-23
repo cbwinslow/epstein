@@ -1,8 +1,8 @@
 import os
-import re
+
 
 def extract_files_from_md(md_path):
-    with open(md_path, 'r') as f:
+    with open(md_path) as f:
         lines = f.readlines()
 
     i = 0
@@ -33,7 +33,7 @@ if __name__ == '__main__':
         extract_files_from_md(sys.argv[1])
     else:
         # process all .md
-        for root, dirs, files in os.walk('.'):
+        for root, _dirs, files in os.walk('.'):
             for file in files:
                 if file.endswith('.md'):
                     md_path = os.path.join(root, file)

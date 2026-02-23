@@ -13,7 +13,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-from typing import Any, Optional
+from typing import Any
 
 import psycopg
 from psycopg.rows import dict_row
@@ -33,7 +33,7 @@ DEFAULT_MODEL = "BAAI/bge-small-en-v1.5"
 def eprint(msg: str) -> None:
     print(msg, file=sys.stderr)
 
-def fetch_chunk(conn: psycopg.Connection, chunk_id: int) -> Optional[dict[str, Any]]:
+def fetch_chunk(conn: psycopg.Connection, chunk_id: int) -> dict[str, Any] | None:
     q = """
     SELECT c.id AS chunk_id, c.doc_id, c.start_char, c.end_char, c.chunk_index, c.chunk_text, d.source_url
     FROM doc_analysis.chunks c

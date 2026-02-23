@@ -4,13 +4,14 @@ Coordinates multiple specialized agents for comprehensive vector database analys
 """
 from __future__ import annotations
 
-from typing import List, Dict, Any, Optional, Union
 import asyncio
+import contextlib
 import json
 import logging
+from dataclasses import dataclass
 from datetime import datetime
-from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 # Import all our specialized agents. These are optional at import time - wrap imports
 # so tests that only need enums/dataclasses don't fail when heavy optional deps
@@ -31,8 +32,7 @@ except Exception:  # pragma: no cover
     DatabaseTroubleshooter = None
 
 try:
-    from agents.pipeline_monitor import PipelineMonitor
-    from agents.pipeline_monitor import Task, TaskPriority, TaskStatus
+    from agents.pipeline_monitor import PipelineMonitor, Task, TaskPriority, TaskStatus
 except Exception:  # pragma: no cover
     PipelineMonitor = None
     Task = None
@@ -42,7 +42,7 @@ except Exception:  # pragma: no cover
 
 class _MissingAgent:
     """Placeholder for agents that failed to import due to missing optional deps."""
-    def __init__(self, name: str, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, name: str, config: dict[str, Any] | None = None):
         self.name = name
         self.config = config
 
@@ -74,9 +74,9 @@ class AgentResult:
     """Result from agent execution"""
     agent_name: str
     status: AgentStatus
-    result: Dict[str, Any]
+    result: dict[str, Any]
     execution_time: float
-    error_message: Optional[str] = None
+    error_message: str | None = None
     timestamp: datetime = None
 
 
@@ -85,23 +85,21 @@ class OrchestrationTask:
     """Orchestration task definition"""
     task_id: str
     task_name: str
-    required_agents: List[str]
-    parameters: Dict[str, Any]
+    required_agents: list[str]
+    parameters: dict[str, Any]
     mode: OrchestrationMode
     priority: int = 1
     timeout: int = 300  # 5 minutes
     retry_count: int = 3
-    status: Optional[AgentStatus] = None
+    status: AgentStatus | None = None
 
     def __post_init__(self):
         # Ensure status is an AgentStatus enum; default to PENDING
         if self.status is None:
             self.status = AgentStatus.PENDING
         elif not isinstance(self.status, AgentStatus):
-            try:
+            with contextlib.suppress(Exception):
                 self.status = AgentStatus(self.status)
-            except Exception:
-                pass
 
 
 class MultiAgentOrchestrator:
@@ -109,11 +107,11 @@ class MultiAgentOrchestrator:
     Orchestrates multiple specialized agents for comprehensive vector database analysis
     and troubleshooting with A2A (Agent-to-Agent) communication capabilities.
     """
-    
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+
+    def __init__(self, config: dict[str, Any] | None = None):
         self.config = config or {}
         self.logger = logging.getLogger(__name__)
-        
+
         # Initialize all specialized agents
         self.agents = {
             "epstein_data_processor": (EpsteinDataProcessor(config)
@@ -129,20 +127,20 @@ class MultiAgentOrchestrator:
                                  if PipelineMonitor is not None
                                  else _MissingAgent('pipeline_monitor', config))
         }
-        
+
         # Orchestration state
         self.tasks = {}
         self.results = {}
-        self.agent_status = {name: AgentStatus.IDLE for name in self.agents.keys()}
+        self.agent_status = {name: AgentStatus.IDLE for name in self.agents}
         self.communication_history = []
-        
+
         # Configuration
         self.default_mode = self.config.get('default_mode', OrchestrationMode.ADAPTIVE)
         self.max_concurrent_tasks = self.config.get('max_concurrent_tasks', 4)
         self.enable_a2a_communication = self.config.get('enable_a2a_communication', True)
         self.enable_error_recovery = self.config.get('enable_error_recovery', True)
         self.communication_timeout = self.config.get('communication_timeout', 30)
-        
+
         # Performance tracking
         self.execution_metrics = {
             "total_tasks": 0,
@@ -151,11 +149,11 @@ class MultiAgentOrchestrator:
             "average_execution_time": 0.0,
             "agent_utilization": {}
         }
-        
-    async def run_comprehensive_analysis(self) -> Dict[str, Any]:
+
+    async def run_comprehensive_analysis(self) -> dict[str, Any]:
         """
         Run comprehensive analysis using all specialized agents.
-        
+
         Returns:
             Dictionary with comprehensive analysis results
         """
@@ -173,16 +171,16 @@ class MultiAgentOrchestrator:
                     mode=self.default_mode,
                     priority=1
                 )
-                
+
                 # Execute the task
                 results = await self._execute_task(task)
-                
+
                 # Consolidate and analyze results
                 consolidated_result = self._consolidate_results(results)
-                
+
                 # Generate comprehensive report
                 report = self._generate_comprehensive_report(consolidated_result)
-                
+
                 return {
                     "task_id": task.task_id,
                     "status": "completed",
@@ -201,7 +199,7 @@ class MultiAgentOrchestrator:
                     "timestamp": datetime.now().isoformat()
                 }
 
-    def get_agent_status(self) -> Dict[str, Dict[str, Any]]:
+    def get_agent_status(self) -> dict[str, dict[str, Any]]:
         """Return the current status for all agents as structured dictionaries.
 
         Each agent entry includes keys like `status`, and optionally `capabilities` or `tools`
@@ -219,27 +217,27 @@ class MultiAgentOrchestrator:
                 "tools": tools if tools is not None else [],
             }
         return statuses
-    
-    async def run_troubleshooting_workflow(self, issue_type: str) -> Dict[str, Any]:
+
+    async def run_troubleshooting_workflow(self, issue_type: str) -> dict[str, Any]:
         """
         Run troubleshooting workflow for specific issue types.
-        
+
         Args:
             issue_type: Type of issue to troubleshoot ('vector_db', 'database', 'pipeline', 'performance')
-            
+
         Returns:
             Dictionary with troubleshooting results
         """
         try:
             # Define troubleshooting workflow based on issue type
             workflow = self._define_troubleshooting_workflow(issue_type)
-            
+
             # Execute workflow
             results = await self._execute_workflow(workflow)
-            
+
             # Generate troubleshooting report
-            report = self._generate_troubleshooting_report(results, issue_type)
-            
+            self._generate_troubleshooting_report(results, issue_type)
+
             return {
                 "workflow_id": workflow.get('workflow_id', f"troubleshooting_{issue_type}"),
                 "issue_type": issue_type,
@@ -255,16 +253,16 @@ class MultiAgentOrchestrator:
                 "results": {}
             }
 
-    
-    async def coordinate_pipeline_optimization(self) -> Dict[str, Any]:
+
+    async def coordinate_pipeline_optimization(self) -> dict[str, Any]:
         """
         Coordinate pipeline optimization across monitoring and analysis agents.
-        
+
         Returns:
             Dictionary with optimization results
         """
         task_id = f"pipeline_optimization_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        
+
         # Create coordinated task
         task = Task(
             task_id=task_id,
@@ -282,15 +280,15 @@ class MultiAgentOrchestrator:
                 "enable_recommendations": True
             }
         )
-        
+
         # Add task to queue
         await self.task_queue.put(task)
         self.tasks[task_id] = task
-        
+
         # Wait for completion
         while task.status not in [TaskStatus.COMPLETED, TaskStatus.FAILED]:
             await asyncio.sleep(1)
-        
+
         return {
             "task_id": task_id,
             "status": task.status.value,
@@ -298,19 +296,19 @@ class MultiAgentOrchestrator:
             "error": task.error,
             "completed_at": task.completed_at
         }
-    
-    async def coordinate_document_analysis(self, document_path: str) -> Dict[str, Any]:
+
+    async def coordinate_document_analysis(self, document_path: str) -> dict[str, Any]:
         """
         Coordinate document analysis across relevant agents.
-        
+
         Args:
             document_path: Path to the document to analyze
-            
+
         Returns:
             Dictionary with document analysis results
         """
         task_id = f"document_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        
+
         # Create coordinated task
         task = Task(
             task_id=task_id,
@@ -329,15 +327,15 @@ class MultiAgentOrchestrator:
                 "enable_semantic_analysis": True
             }
         )
-        
+
         # Add task to queue
         await self.task_queue.put(task)
         self.tasks[task_id] = task
-        
+
         # Wait for completion
         while task.status not in [TaskStatus.COMPLETED, TaskStatus.FAILED]:
             await asyncio.sleep(1)
-        
+
         return {
             "task_id": task_id,
             "status": task.status.value,
@@ -345,11 +343,11 @@ class MultiAgentOrchestrator:
             "error": task.error,
             "completed_at": task.completed_at
         }
-    
-    async def get_system_status(self) -> Dict[str, Any]:
+
+    async def get_system_status(self) -> dict[str, Any]:
         """
         Get overall system status across all agents.
-        
+
         Returns:
             Dictionary with system status information
         """
@@ -368,7 +366,7 @@ class MultiAgentOrchestrator:
                 },
                 "queue_size": self.task_queue.qsize()
             }
-        
+
         # Get individual agent status
         for agent_name, agent in self.agents.items():
             try:
@@ -376,34 +374,34 @@ class MultiAgentOrchestrator:
                     agent_status = await agent.get_status()
                 else:
                     agent_status = {"status": "active", "last_check": datetime.now().isoformat()}
-                
+
                 status["agents"][agent_name] = agent_status
-                
+
             except Exception as e:
                 status["agents"][agent_name] = {
                     "status": "error",
                     "error": str(e),
                     "last_check": datetime.now().isoformat()
                 }
-        
+
         return status
-    
+
     async def _process_task_queue(self):
         """Process tasks from the queue"""
         while True:
             try:
                 task = await self.task_queue.get()
-                
+
                 # Update task status
                 task.status = TaskStatus.RUNNING
                 task.started_at = datetime.now().isoformat()
-                
+
                 # Process task
                 await self._process_task(task)
-                
+
             except Exception as e:
                 self.logger.error(f"Error processing task: {e}")
-    
+
     async def _process_task(self, task: Any):
         """Process a single task"""
         try:
@@ -418,165 +416,165 @@ class MultiAgentOrchestrator:
                 result = await self._execute_document_analysis(task)
             else:
                 raise ValueError(f"Unknown task type: {task.task_type}")
-            
+
             # Update task with result
             task.result = result
             task.status = TaskStatus.COMPLETED
             task.completed_at = datetime.now().isoformat()
-            
+
         except Exception as e:
             task.status = TaskStatus.FAILED
             task.error = str(e)
             task.completed_at = datetime.now().isoformat()
             self.logger.error(f"Task {task.task_id} failed: {e}")
-    
-    async def _execute_comprehensive_analysis(self, task: Any) -> Dict[str, Any]:
+
+    async def _execute_comprehensive_analysis(self, task: Any) -> dict[str, Any]:
         """Execute comprehensive analysis task"""
         collection_name = task.parameters["collection_name"]
         query_text = task.parameters.get("query_text")
-        
+
         results = {}
-        
+
         # Vector database analysis
         if 'vector_db_analyzer' in task.assigned_agents:
             vector_result = await self.agents['vector_db_analyzer'].analyze_all_collections()
             results['vector_analysis'] = vector_result
-        
+
         # Database troubleshooting
         if 'db_troubleshooter' in task.assigned_agents:
             db_result = await self.agents['db_troubleshooter'].optimize_database()
             results['database_analysis'] = db_result
-        
+
         # Pipeline monitoring
         if 'pipeline_monitor' in task.assigned_agents:
             monitor_result = await self.agents['pipeline_monitor'].monitor_pipeline_health()
             results['pipeline_monitoring'] = monitor_result
-        
+
         # Document analysis
         if 'document_analysis_agent' in task.assigned_agents:
             doc_result = await self.agents['document_analysis_agent'].analyze_document_structure(
                 f"Collection: {collection_name}"
             )
             results['document_analysis'] = doc_result
-        
+
         # Entity extraction
         if 'entity_extraction_agent' in task.assigned_agents:
             entity_result = await self.agents['entity_extraction_agent'].extract_entities(
                 f"Collection: {collection_name}"
             )
             results['entity_extraction'] = entity_result
-        
+
         # Query performance testing
         if query_text and 'vector_db_analyzer' in task.assigned_agents:
             perf_result = await self.agents['vector_db_analyzer'].benchmark_query_performance(
                 collection_name, query_text
             )
             results['performance_benchmark'] = perf_result
-        
+
         return {
             "collection_name": collection_name,
             "analysis_timestamp": datetime.now().isoformat(),
             "components": results,
             "summary": self._generate_analysis_summary(results)
         }
-    
-    async def _execute_database_troubleshooting(self, task: Any) -> Dict[str, Any]:
+
+    async def _execute_database_troubleshooting(self, task: Any) -> dict[str, Any]:
         """Execute database troubleshooting task"""
         results = {}
-        
+
         # Database health check
         if 'db_troubleshooter' in task.assigned_agents:
             health_result = await self.agents['db_troubleshooter'].check_database_health()
             results['health_check'] = health_result
-        
+
         # Index analysis
         if 'db_troubleshooter' in task.assigned_agents:
             index_result = await self.agents['db_troubleshooter'].check_indexes()
             results['index_analysis'] = index_result
-        
+
         # Table statistics
         if 'db_troubleshooter' in task.assigned_agents:
             table_result = await self.agents['db_troubleshooter'].check_table_statistics()
             results['table_statistics'] = table_result
-        
+
         # Pipeline monitoring
         if 'pipeline_monitor' in task.assigned_agents:
             monitor_result = await self.agents['pipeline_monitor'].monitor_pipeline_health()
             results['pipeline_monitoring'] = monitor_result
-        
+
         return {
             "troubleshooting_timestamp": datetime.now().isoformat(),
             "components": results,
             "recommendations": self._generate_troubleshooting_recommendations(results)
         }
-    
-    async def _execute_pipeline_optimization(self, task: Any) -> Dict[str, Any]:
+
+    async def _execute_pipeline_optimization(self, task: Any) -> dict[str, Any]:
         """Execute pipeline optimization task"""
         results = {}
-        
+
         # Pipeline monitoring
         if 'pipeline_monitor' in task.assigned_agents:
             monitor_result = await self.agents['pipeline_monitor'].monitor_pipeline_health()
             results['health_monitoring'] = monitor_result
-        
+
         # Performance trends
         if 'pipeline_monitor' in task.assigned_agents:
             trends_result = await self.agents['pipeline_monitor'].analyze_performance_trends()
             results['performance_trends'] = trends_result
-        
+
         # Anomaly detection
         if 'pipeline_monitor' in task.assigned_agents:
             anomaly_result = await self.agents['pipeline_monitor'].detect_anomalies()
             results['anomaly_detection'] = anomaly_result
-        
+
         # Vector database optimization
         if 'vector_db_analyzer' in task.assigned_agents:
             # Get all collections and optimize them
             collections_result = await self.agents['vector_db_analyzer'].analyze_all_collections()
             if 'collections' in collections_result:
                 optimizations = {}
-                for collection_name in collections_result['collections'].keys():
+                for collection_name in collections_result['collections']:
                     opt_result = await self.agents['vector_db_analyzer'].optimize_collection(collection_name)
                     optimizations[collection_name] = opt_result
                 results['vector_optimizations'] = optimizations
-        
+
         return {
             "optimization_timestamp": datetime.now().isoformat(),
             "components": results,
             "optimization_plan": self._generate_optimization_plan(results)
         }
-    
-    async def _execute_document_analysis(self, task: Any) -> Dict[str, Any]:
+
+    async def _execute_document_analysis(self, task: Any) -> dict[str, Any]:
         """Execute document analysis task"""
         document_path = task.parameters["document_path"]
-        
+
         results = {}
-        
+
         # Document processing
         if 'epstein_data_processor' in task.assigned_agents:
             processor_result = await self.agents['epstein_data_processor'].process_document(
                 document_path, ["ocr", "extract_text", "ner", "embeddings"]
             )
             results['document_processing'] = processor_result
-        
+
         # Document analysis
         if 'document_analysis_agent' in task.assigned_agents:
             analysis_result = await self.agents['document_analysis_agent'].analyze_document_structure(document_path)
             results['document_analysis'] = analysis_result
-        
+
         # Entity extraction
         if 'entity_extraction_agent' in task.assigned_agents:
             entity_result = await self.agents['entity_extraction_agent'].extract_entities(document_path)
             results['entity_extraction'] = entity_result
-        
+
         return {
             "document_path": document_path,
             "analysis_timestamp": datetime.now().isoformat(),
             "components": results,
             "summary": self._generate_document_summary(results)
         }
-    
-    def _generate_analysis_summary(self, results: Dict[str, Any]) -> Dict[str, Any]:
+
+    def _generate_analysis_summary(self, results: dict[str, Any]) -> dict[str, Any]:
         """Generate summary of comprehensive analysis"""
         summary = {
             "overall_status": "healthy",
@@ -584,7 +582,7 @@ class MultiAgentOrchestrator:
             "recommendations": [],
             "priority_actions": []
         }
-        
+
         # Analyze results and generate insights
         for component_name, component_result in results.items():
             if "error" not in component_result:
@@ -592,19 +590,19 @@ class MultiAgentOrchestrator:
             else:
                 summary["key_findings"].append(f"{component_name}: {component_result['error']}")
                 summary["overall_status"] = "needs_attention"
-        
+
         return summary
-    
-    def _generate_troubleshooting_recommendations(self, results: Dict[str, Any]) -> List[Dict[str, Any]]:
+
+    def _generate_troubleshooting_recommendations(self, results: dict[str, Any]) -> list[dict[str, Any]]:
         """Generate troubleshooting recommendations"""
         recommendations = []
-        
+
         # Analyze health check results
         if 'health_check' in results:
             health_data = results['health_check']
             if 'database_health' in health_data:
                 db_health = health_data['database_health']
-                
+
                 if db_health.get('connection_status') == 'slow':
                     recommendations.append({
                         "type": "performance",
@@ -612,7 +610,7 @@ class MultiAgentOrchestrator:
                         "action": "Optimize database configuration",
                         "description": "Database response time is slow"
                     })
-                
+
                 if db_health.get('blocked_queries', 0) > 0:
                     recommendations.append({
                         "type": "blocking",
@@ -620,10 +618,10 @@ class MultiAgentOrchestrator:
                         "action": "Investigate blocked queries",
                         "description": f"Found {db_health['blocked_queries']} blocked queries"
                     })
-        
+
         return recommendations
-    
-    def _generate_optimization_plan(self, results: Dict[str, Any]) -> Dict[str, Any]:
+
+    def _generate_optimization_plan(self, results: dict[str, Any]) -> dict[str, Any]:
         """Generate optimization plan based on analysis results"""
         plan = {
             "immediate_actions": [],
@@ -631,24 +629,23 @@ class MultiAgentOrchestrator:
             "long_term_actions": [],
             "estimated_impact": {}
         }
-        
+
         # Analyze performance trends
         if 'performance_trends' in results:
             trends = results['performance_trends']
-            if 'throughput_trend' in trends:
-                if trends['throughput_trend'] < 0:
-                    plan["immediate_actions"].append("Optimize pipeline throughput")
-        
+            if 'throughput_trend' in trends and trends['throughput_trend'] < 0:
+                plan["immediate_actions"].append("Optimize pipeline throughput")
+
         # Analyze anomaly detection
         if 'anomaly_detection' in results:
             anomalies = results['anomaly_detection']
             for anomaly in anomalies:
                 if anomaly['severity'] == 'high':
                     plan["immediate_actions"].append(anomaly['recommendation'])
-        
+
         return plan
-    
-    def _generate_document_summary(self, results: Dict[str, Any]) -> Dict[str, Any]:
+
+    def _generate_document_summary(self, results: dict[str, Any]) -> dict[str, Any]:
         """Generate summary of document analysis"""
         summary = {
             "document_type": "unknown",
@@ -657,19 +654,19 @@ class MultiAgentOrchestrator:
             "sentiment": "unknown",
             "quality_score": 0.0
         }
-        
+
         # Extract information from results
         if 'document_processing' in results:
             processing = results['document_processing']
             if 'results' in processing:
                 if 'entities' in processing['results']:
                     summary['key_entities'] = [entity['text'] for entity in processing['results']['entities']]
-        
+
         if 'document_analysis' in results:
             analysis = results['document_analysis']
             if 'complexity_score' in analysis:
                 summary['complexity'] = "high" if analysis['complexity_score'] > 0.7 else "medium" if analysis['complexity_score'] > 0.4 else "low"
-        
+
         return summary
 
 
@@ -771,22 +768,22 @@ AGENT_INFO = {
 if __name__ == "__main__":
     # Example usage
     orchestrator = MultiAgentOrchestrator()
-    
+
     async def main():
         # Get system status
         status = await orchestrator.get_system_status()
         print("System status:", json.dumps(status, indent=2))
-        
+
         # Coordinate comprehensive analysis
         analysis_result = await orchestrator.coordinate_comprehensive_analysis("test_collection")
         print("Comprehensive analysis:", json.dumps(analysis_result, indent=2))
-        
+
         # Coordinate database troubleshooting
         troubleshooting_result = await orchestrator.coordinate_database_troubleshooting()
         print("Database troubleshooting:", json.dumps(troubleshooting_result, indent=2))
-        
+
         # Coordinate pipeline optimization
         optimization_result = await orchestrator.coordinate_pipeline_optimization()
         print("Pipeline optimization:", json.dumps(optimization_result, indent=2))
-    
+
     asyncio.run(main())

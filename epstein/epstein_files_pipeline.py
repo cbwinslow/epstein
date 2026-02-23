@@ -74,7 +74,6 @@ import concurrent.futures
 import hashlib
 import json
 import logging
-import os
 import random
 import re
 import shutil
@@ -83,15 +82,12 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 import requests
 from bs4 import BeautifulSoup
+from pdfminer.high_level import extract_text as pdfminer_extract_text
 from pydantic import BaseModel, Field
 from tqdm import tqdm
-
-from pdfminer.high_level import extract_text as pdfminer_extract_text
-
 
 # =============================================================================
 # Configuration
@@ -105,9 +101,9 @@ class PipelineConfig(BaseModel):
       - allow_domains prevents accidental crawling of mirrors.
     """
 
-    seed_urls: List[str] = Field(default_factory=list)
+    seed_urls: list[str] = Field(default_factory=list)
     output_dir: str = "./epstein_artifacts"
-    allow_domains: List[str] = Field(
+    allow_domains: list[str] = Field(
         default_factory=lambda: [
             "www.justice.gov",
             "justice.gov",
@@ -132,7 +128,7 @@ class PipelineConfig(BaseModel):
     enable_ocr: bool = True
     ocrmypdf_lang: str = "eng"
     # Conservative defaults; tweak per corpus if needed.
-    ocrmypdf_extra_args: List[str] = Field(default_factory=lambda: ["--skip-text", "--rotate-pages"])
+    ocrmypdf_extra_args: list[str] = Field(default_factory=lambda: ["--skip-text", "--rotate-pages"])
 
     # Chunking behavior
     chunk_chars: int = 10_000
@@ -197,12 +193,12 @@ def url_domain(url: str) -> str:
     return (m.group(1).lower() if m else "")
 
 
-def is_allowed(url: str, allow_domains: List[str]) -> bool:
+def is_allowed(url: str, allow_domains: list[str]) -> bool:
     d = url_domain(url)
     return any(d == ad.lower() or d.endswith("." + ad.lower()) for ad in allow_domains)
 
 
-def ensure_dirs(base: Path) -> Dict[str, Path]:
+def ensure_dirs(base: Path) -> dict[str, Path]:
     paths = {
         "base": base,
         "downloads": base / "downloads",
@@ -250,12 +246,12 @@ def append_jsonl(path: Path, obj: dict) -> None:
         f.write(json.dumps(obj, ensure_ascii=False) + "\n")
 
 
-def load_manifest_index(manifest_path: Path) -> Dict[str, dict]:
+def load_manifest_index(manifest_path: Path) -> dict[str, dict]:
     """Index manifest by sha256/doc_id.
 
     If duplicates exist, the last one wins.
     """
-    idx: Dict[str, dict] = {}
+    idx: dict[str, dict] = {}
     if not manifest_path.exists():
         return idx
     with manifest_path.open("r", encoding="utf-8", errors="replace") as f:
@@ -273,7 +269,7 @@ def load_manifest_index(manifest_path: Path) -> Dict[str, dict]:
     return idx
 
 
-def doc_source_url(doc_id: str, downloads: List[DownloadResult], manifest_idx: Dict[str, dict]) -> str:
+def doc_source_url(doc_id: str, downloads: list[DownloadResult], manifest_idx: dict[str, dict]) -> str:
     for d in downloads:
         if d.sha256 == doc_id:
             return d.url
@@ -289,7 +285,7 @@ def doc_source_url(doc_id: str, downloads: List[DownloadResult], manifest_idx: D
 PDF_HINTS = (".pdf", "/dl?inline=", "/dl?")
 
 
-def discover_pdf_links(session: requests.Session, seed_url: str, allow_domains: List[str], timeout: int, verify_tls: bool) -> Set[str]:
+def discover_pdf_links(session: requests.Session, seed_url: str, allow_domains: list[str], timeout: int, verify_tls: bool) -> set[str]:
     """Fetch a seed URL and extract PDF-ish links.
 
     Only returns links permitted by allow_domains.
@@ -305,7 +301,7 @@ def discover_pdf_links(session: requests.Session, seed_url: str, allow_domains: 
 
     soup = BeautifulSoup(resp.text, "lxml")
 
-    links: Set[str] = set()
+    links: set[str] = set()
     for a in soup.find_all("a", href=True):
         href = a["href"].strip()
 
@@ -404,7 +400,7 @@ def download_one(
     return DownloadResult(url=url, path=out_path, sha256=digest, bytes=total)
 
 
-def download_all(cfg: PipelineConfig, downloads_dir: Path, pdf_urls: List[str]) -> Tuple[List[DownloadResult], List[dict]]:
+def download_all(cfg: PipelineConfig, downloads_dir: Path, pdf_urls: list[str]) -> tuple[list[DownloadResult], list[dict]]:
     """Download all URLs concurrently.
 
     Returns:
@@ -412,8 +408,8 @@ def download_all(cfg: PipelineConfig, downloads_dir: Path, pdf_urls: List[str]) 
       - failures: list[dict]
     """
 
-    successes: List[DownloadResult] = []
-    failures: List[dict] = []
+    successes: list[DownloadResult] = []
+    failures: list[dict] = []
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=cfg.max_workers) as ex:
         futures = {ex.submit(download_one, cfg, url, downloads_dir): url for url in pdf_urls}
@@ -431,7 +427,7 @@ def download_all(cfg: PipelineConfig, downloads_dir: Path, pdf_urls: List[str]) 
     return successes, failures
 
 
-def append_manifest(manifest_path: Path, downloads: List[DownloadResult]) -> None:
+def append_manifest(manifest_path: Path, downloads: list[DownloadResult]) -> None:
     for d in downloads:
         append_jsonl(
             manifest_path,
@@ -453,7 +449,7 @@ def has_tool(name: str) -> bool:
     return shutil.which(name) is not None
 
 
-def ocr_pdf(in_pdf: Path, out_pdf: Path, cfg: PipelineConfig) -> Tuple[bool, str]:
+def ocr_pdf(in_pdf: Path, out_pdf: Path, cfg: PipelineConfig) -> tuple[bool, str]:
     """Run OCRmyPDF if available. Returns (success, message)."""
 
     if not has_tool("ocrmypdf"):
@@ -522,7 +518,7 @@ class Chunk:
     text: str
 
 
-def chunk_text_with_offsets(text: str, chunk_chars: int, overlap_chars: int) -> List[Chunk]:
+def chunk_text_with_offsets(text: str, chunk_chars: int, overlap_chars: int) -> list[Chunk]:
     """Character-based chunking with overlap and offsets."""
 
     if chunk_chars <= 0:
@@ -530,7 +526,7 @@ def chunk_text_with_offsets(text: str, chunk_chars: int, overlap_chars: int) -> 
     if overlap_chars < 0:
         raise ValueError("overlap_chars must be >= 0")
 
-    chunks: List[Chunk] = []
+    chunks: list[Chunk] = []
     i = 0
     n = len(text)
     cid = 0
@@ -547,7 +543,7 @@ def chunk_text_with_offsets(text: str, chunk_chars: int, overlap_chars: int) -> 
     return chunks
 
 
-def write_chunks_jsonl(out_jsonl: Path, doc_id: str, source_url: str, chunks: List[Chunk]) -> None:
+def write_chunks_jsonl(out_jsonl: Path, doc_id: str, source_url: str, chunks: list[Chunk]) -> None:
     out_jsonl.parent.mkdir(parents=True, exist_ok=True)
     with out_jsonl.open("w", encoding="utf-8") as f:
         for ch in chunks:
@@ -586,12 +582,12 @@ def load_spacy(model_name: str):
         )
 
 
-def ner_on_chunks(nlp, chunks: List[Chunk]) -> List[dict]:
+def ner_on_chunks(nlp, chunks: list[Chunk]) -> list[dict]:
     """Run NER over chunks and emit per-entity mention records.
 
     Output records are more useful than just counts because they retain provenance.
     """
-    out: List[dict] = []
+    out: list[dict] = []
     for ch in chunks:
         doc = nlp(ch.text)
         for ent in doc.ents:
@@ -610,7 +606,7 @@ def ner_on_chunks(nlp, chunks: List[Chunk]) -> List[dict]:
     return out
 
 
-def write_entities_jsonl(out_jsonl: Path, doc_id: str, source_url: str, pdf_path: str, ent_mentions: List[dict]) -> None:
+def write_entities_jsonl(out_jsonl: Path, doc_id: str, source_url: str, pdf_path: str, ent_mentions: list[dict]) -> None:
     out_jsonl.parent.mkdir(parents=True, exist_ok=True)
     with out_jsonl.open("w", encoding="utf-8") as f:
         for m in ent_mentions:
@@ -632,10 +628,10 @@ def write_entities_jsonl(out_jsonl: Path, doc_id: str, source_url: str, pdf_path
 # Safe exports (publishable-ish aggregates)
 # =============================================================================
 
-def aggregate_entities(entities_dir: Path, topn: int) -> Dict[str, List[dict]]:
+def aggregate_entities(entities_dir: Path, topn: int) -> dict[str, list[dict]]:
     """Aggregate entity mentions across all docs into top-N lists per label."""
 
-    counts: Dict[str, Dict[str, int]] = {}
+    counts: dict[str, dict[str, int]] = {}
 
     for p in entities_dir.glob("*.entities.jsonl"):
         with p.open("r", encoding="utf-8", errors="replace") as f:
@@ -653,14 +649,14 @@ def aggregate_entities(entities_dir: Path, topn: int) -> Dict[str, List[dict]]:
                     continue
                 counts.setdefault(label, {})[text] = counts[label].get(text, 0) + 1
 
-    out: Dict[str, List[dict]] = {}
+    out: dict[str, list[dict]] = {}
     for label, mp in counts.items():
         items = sorted(mp.items(), key=lambda x: (-x[1], x[0]))[:topn]
         out[label] = [{"text": t, "count": c} for t, c in items]
     return out
 
 
-def write_safe_exports(paths: Dict[str, Path], cfg: PipelineConfig, manifest_path: Path) -> None:
+def write_safe_exports(paths: dict[str, Path], cfg: PipelineConfig, manifest_path: Path) -> None:
     safe_dir = paths["safe_exports"]
     safe_dir.mkdir(parents=True, exist_ok=True)
 
@@ -669,7 +665,7 @@ def write_safe_exports(paths: Dict[str, Path], cfg: PipelineConfig, manifest_pat
     (safe_dir / "top_entities_by_label.json").write_text(json.dumps(agg, indent=2, ensure_ascii=False), encoding="utf-8")
 
     # Emit a sources list derived from manifest (publishable)
-    sources: List[dict] = []
+    sources: list[dict] = []
     if manifest_path.exists():
         with manifest_path.open("r", encoding="utf-8", errors="replace") as f:
             for line in f:
@@ -723,11 +719,11 @@ def run_pipeline(cfg: PipelineConfig, verbose: bool = False) -> None:
         },
     }
 
-    failures: List[dict] = []
+    failures: list[dict] = []
 
     # 1) Discover
     session = build_session(cfg)
-    all_links: Set[str] = set()
+    all_links: set[str] = set()
     for seed in cfg.seed_urls:
         try:
             all_links |= discover_pdf_links(session, seed, cfg.allow_domains, cfg.timeout_seconds, cfg.verify_tls)
@@ -761,7 +757,7 @@ def run_pipeline(cfg: PipelineConfig, verbose: bool = False) -> None:
     append_manifest(manifest_path, downloads)
 
     # Load manifest index (for provenance lookups)
-    manifest_idx = load_manifest_index(manifest_path)
+    load_manifest_index(manifest_path)
 
     # 3) OCR + 4) text + 5) chunk + 6) NER
     nlp = load_spacy(cfg.spacy_model)

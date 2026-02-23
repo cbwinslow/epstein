@@ -1,9 +1,6 @@
-import os
 import importlib.util
-import types
-import pytest
 import os
-
+import types
 
 spec = importlib.util.spec_from_file_location("doctor", os.path.join(os.path.dirname(__file__), "..", "scripts", "doctor.py"))
 doctor = importlib.util.module_from_spec(spec)

@@ -61,11 +61,9 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
-import dataclasses
 import hashlib
 import json
 import logging
-import os
 import re
 import shutil
 import subprocess
@@ -73,16 +71,14 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 import requests
 from bs4 import BeautifulSoup
-from pydantic import BaseModel, Field
-from tqdm import tqdm
 
 # pdf text extraction (lightweight; works even without OCR, but OCR improves)
 from pdfminer.high_level import extract_text as pdfminer_extract_text
-
+from pydantic import BaseModel, Field
+from tqdm import tqdm
 
 # -----------------------------
 # Configuration / Models
@@ -96,9 +92,9 @@ class PipelineConfig(BaseModel):
       - allow_domains prevents accidental crawling of random mirrors.
     """
 
-    seed_urls: List[str] = Field(default_factory=list)
+    seed_urls: list[str] = Field(default_factory=list)
     output_dir: str = "./epstein_artifacts"
-    allow_domains: List[str] = Field(
+    allow_domains: list[str] = Field(
         default_factory=lambda: [
             "www.justice.gov",
             "justice.gov",
@@ -121,7 +117,7 @@ class PipelineConfig(BaseModel):
     # OCR behavior
     enable_ocr: bool = True
     ocrmypdf_lang: str = "eng"
-    ocrmypdf_extra_args: List[str] = Field(default_factory=lambda: ["--skip-text", "--rotate-pages"])
+    ocrmypdf_extra_args: list[str] = Field(default_factory=lambda: ["--skip-text", "--rotate-pages"])
 
     # NER behavior
     spacy_model: str = "en_core_web_sm"
@@ -178,12 +174,12 @@ def url_domain(url: str) -> str:
     return (m.group(1).lower() if m else "")
 
 
-def is_allowed(url: str, allow_domains: List[str]) -> bool:
+def is_allowed(url: str, allow_domains: list[str]) -> bool:
     d = url_domain(url)
     return any(d == ad.lower() or d.endswith("." + ad.lower()) for ad in allow_domains)
 
 
-def ensure_dirs(base: Path) -> Dict[str, Path]:
+def ensure_dirs(base: Path) -> dict[str, Path]:
     paths = {
         "base": base,
         "downloads": base / "downloads",
@@ -200,7 +196,7 @@ def ensure_dirs(base: Path) -> Dict[str, Path]:
 # Link discovery
 # -----------------------------
 
-def discover_pdf_links(session: requests.Session, seed_url: str, allow_domains: List[str], timeout: int) -> Set[str]:
+def discover_pdf_links(session: requests.Session, seed_url: str, allow_domains: list[str], timeout: int) -> set[str]:
     """Fetch a seed URL and extract direct PDF links.
 
     Handles:
@@ -220,7 +216,7 @@ def discover_pdf_links(session: requests.Session, seed_url: str, allow_domains: 
 
     soup = BeautifulSoup(resp.text, "lxml")
 
-    links: Set[str] = set()
+    links: set[str] = set()
     for a in soup.find_all("a", href=True):
         href = a["href"].strip()
         # Resolve relative links
@@ -296,11 +292,11 @@ def download_one(
     return DownloadResult(url=url, path=out_path, sha256=digest, bytes=total)
 
 
-def download_all(cfg: PipelineConfig, paths: Dict[str, Path], pdf_urls: List[str]) -> List[DownloadResult]:
+def download_all(cfg: PipelineConfig, paths: dict[str, Path], pdf_urls: list[str]) -> list[DownloadResult]:
     session = requests.Session()
     session.headers.update({"User-Agent": cfg.user_agent})
 
-    results: List[DownloadResult] = []
+    results: list[DownloadResult] = []
 
     # Threaded download with progress bar
     with concurrent.futures.ThreadPoolExecutor(max_workers=cfg.max_workers) as ex:
@@ -328,7 +324,7 @@ def download_all(cfg: PipelineConfig, paths: Dict[str, Path], pdf_urls: List[str
     return results
 
 
-def append_manifest(manifest_path: Path, downloads: List[DownloadResult]) -> None:
+def append_manifest(manifest_path: Path, downloads: list[DownloadResult]) -> None:
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
     with manifest_path.open("a", encoding="utf-8") as f:
         for d in downloads:
@@ -355,7 +351,7 @@ def has_tool(name: str) -> bool:
     return shutil.which(name) is not None
 
 
-def ocr_pdf(in_pdf: Path, out_pdf: Path, cfg: PipelineConfig) -> Tuple[bool, str]:
+def ocr_pdf(in_pdf: Path, out_pdf: Path, cfg: PipelineConfig) -> tuple[bool, str]:
     """Run OCRmyPDF if available. Returns (success, message)."""
 
     if not has_tool("ocrmypdf"):
@@ -397,7 +393,7 @@ def write_text(out_path: Path, text: str) -> None:
 # Chunking (overlap)
 # -----------------------------
 
-def chunk_text(text: str, chunk_chars: int, overlap_chars: int) -> List[str]:
+def chunk_text(text: str, chunk_chars: int, overlap_chars: int) -> list[str]:
     """Simple character-based chunking with overlap.
 
     Why chars?
@@ -412,7 +408,7 @@ def chunk_text(text: str, chunk_chars: int, overlap_chars: int) -> List[str]:
     if overlap_chars < 0:
         raise ValueError("overlap_chars must be >= 0")
 
-    chunks: List[str] = []
+    chunks: list[str] = []
     i = 0
     n = len(text)
 
@@ -460,10 +456,10 @@ def load_spacy(model_name: str):
         )
 
 
-def ner_on_chunks(nlp, chunks: List[str]) -> Dict[str, int]:
+def ner_on_chunks(nlp, chunks: list[str]) -> dict[str, int]:
     """Run NER over chunks and return entity counts by 'LABEL:TEXT'."""
 
-    counts: Dict[str, int] = {}
+    counts: dict[str, int] = {}
     for ch in chunks:
         doc = nlp(ch)
         for ent in doc.ents:
@@ -472,7 +468,7 @@ def ner_on_chunks(nlp, chunks: List[str]) -> Dict[str, int]:
     return counts
 
 
-def write_entities_jsonl(out_jsonl: Path, pdf_name: str, entity_counts: Dict[str, int]) -> None:
+def write_entities_jsonl(out_jsonl: Path, pdf_name: str, entity_counts: dict[str, int]) -> None:
     out_jsonl.parent.mkdir(parents=True, exist_ok=True)
     with out_jsonl.open("w", encoding="utf-8") as f:
         for k, c in sorted(entity_counts.items(), key=lambda x: (-x[1], x[0])):
@@ -495,7 +491,7 @@ def run_pipeline(cfg: PipelineConfig, verbose: bool = False) -> None:
     session = requests.Session()
     session.headers.update({"User-Agent": cfg.user_agent})
 
-    all_links: Set[str] = set()
+    all_links: set[str] = set()
     for seed in cfg.seed_urls:
         try:
             all_links |= discover_pdf_links(session, seed, cfg.allow_domains, cfg.timeout_seconds)
@@ -673,4 +669,4 @@ if __name__ == "__main__":
 #
 # // Minimal CLI glue omitted for brevity — if you want, I’ll convert this into a
 # // full standalone TS script with args, allowlist, hashing, and resume.
-# 
+#

@@ -14,14 +14,13 @@ import asyncio
 import logging
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Any
 from uuid import uuid4
 
 from agents.base_agent import BaseAgent
 from epstein.epstein_files_pipeline import EpsteinIngestionPipeline, PipelineConfig
-from lib.resource_manager import get_resource_manager, WorkerType
 from lib.observability_stack import get_observability_stack, trace_function, track_llm_call
-
+from lib.resource_manager import WorkerType, get_resource_manager
 
 # Configure logging
 logger = logging.getLogger("epstein_document_processor")
@@ -30,7 +29,7 @@ logger = logging.getLogger("epstein_document_processor")
 class DocumentProcessorAgent(BaseAgent):
     """Consolidated document processing agent"""
 
-    def __init__(self, agent_id: str, config: Dict[str, Any]):
+    def __init__(self, agent_id: str, config: dict[str, Any]):
         super().__init__(agent_id, config)
 
         # Initialize consolidated pipeline
@@ -78,8 +77,8 @@ class DocumentProcessorAgent(BaseAgent):
 
     @trace_function
     async def process_document(
-        self, document_path: str, metadata: Dict[str, Any] = None
-    ) -> Dict[str, Any]:
+        self, document_path: str, metadata: dict[str, Any] = None
+    ) -> dict[str, Any]:
         """Process a single document through the pipeline"""
         document_id = str(uuid4())
 
@@ -112,8 +111,8 @@ class DocumentProcessorAgent(BaseAgent):
             raise
 
     async def _process_document_task(
-        self, document_path: str, document_id: str, metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, document_path: str, document_id: str, metadata: dict[str, Any]
+    ) -> dict[str, Any]:
         """Internal task for processing documents"""
         start_time = time.time()
 
@@ -141,7 +140,7 @@ class DocumentProcessorAgent(BaseAgent):
                 "result": result,
             }
 
-        except Exception as e:
+        except Exception:
             processing_time = time.time() - start_time
 
             # Update metrics for failed processing
@@ -157,8 +156,8 @@ class DocumentProcessorAgent(BaseAgent):
 
     @trace_function
     async def process_batch(
-        self, document_paths: List[str], batch_metadata: Dict[str, Any] = None
-    ) -> Dict[str, Any]:
+        self, document_paths: list[str], batch_metadata: dict[str, Any] = None
+    ) -> dict[str, Any]:
         """Process a batch of documents"""
         batch_id = str(uuid4())
         results = []
@@ -215,7 +214,7 @@ class DocumentProcessorAgent(BaseAgent):
     @trace_function
     async def extract_text(
         self, document_path: str, extraction_method: str = "auto"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Extract text from document"""
         try:
             # Use pipeline's text extraction
@@ -239,7 +238,7 @@ class DocumentProcessorAgent(BaseAgent):
     @track_llm_call(model="gpt-3.5-turbo", provider="openrouter")
     async def analyze_document(
         self, document_text: str, analysis_type: str = "summary"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Analyze document content using AI"""
         try:
             # Use pipeline's AI analysis
@@ -254,7 +253,7 @@ class DocumentProcessorAgent(BaseAgent):
             raise
 
     @trace_function
-    async def extract_entities(self, document_text: str, page_number: int = 1) -> Dict[str, Any]:
+    async def extract_entities(self, document_text: str, page_number: int = 1) -> dict[str, Any]:
         """Extract entities from document text"""
         try:
             # Use pipeline's NER
@@ -267,7 +266,7 @@ class DocumentProcessorAgent(BaseAgent):
             raise
 
     @trace_function
-    async def get_status(self) -> Dict[str, Any]:
+    async def get_status(self) -> dict[str, Any]:
         """Get agent status and statistics"""
         try:
             # Get pipeline status
@@ -299,7 +298,7 @@ class DocumentProcessorAgent(BaseAgent):
             logger.error(f"❌ Status retrieval failed: {e}")
             raise
 
-    async def handle_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+    async def handle_task(self, task: dict[str, Any]) -> dict[str, Any]:
         """Handle agent tasks"""
         task_type = task.get("type")
         payload = task.get("payload", {})
@@ -372,7 +371,7 @@ class DocumentProcessorAgent(BaseAgent):
 class EpsteinDataProcessorAgent(DocumentProcessorAgent):
     """Backward compatibility wrapper for existing epstein_data_processor.py"""
 
-    def __init__(self, agent_id: str, config: Dict[str, Any]):
+    def __init__(self, agent_id: str, config: dict[str, Any]):
         logger.warning(
             "⚠️  EpsteinDataProcessorAgent is deprecated. Use DocumentProcessorAgent instead."
         )
@@ -381,7 +380,7 @@ class EpsteinDataProcessorAgent(DocumentProcessorAgent):
 
 # Factory function for easy agent creation
 def create_document_processor_agent(
-    agent_id: str, config: Dict[str, Any] = None
+    agent_id: str, config: dict[str, Any] = None
 ) -> DocumentProcessorAgent:
     """Create a document processor agent with default configuration"""
     default_config = {

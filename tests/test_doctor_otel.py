@@ -1,4 +1,3 @@
-import os
 import scripts.doctor as doctor
 
 

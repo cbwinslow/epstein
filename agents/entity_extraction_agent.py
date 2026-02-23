@@ -3,11 +3,11 @@ Entity Extraction Agent
 Specialized agent for advanced entity extraction, relationship mapping, and knowledge graph construction.
 """
 
-from typing import List, Dict, Any, Optional
-import json
 import asyncio
-from datetime import datetime
+import json
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
 
 
 @dataclass
@@ -38,33 +38,33 @@ class EntityExtractionAgent:
     OpenAI-compatible agent for advanced entity extraction, relationship mapping,
     and knowledge graph construction.
     """
-    
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+
+    def __init__(self, config: dict[str, Any] | None = None):
         self.config = config or {}
         self.extracted_entities = {}
         self.entity_relationships = {}
         self.knowledge_graph = {}
-        
-    async def extract_entities(self, text: str, entity_types: List[str]) -> Dict[str, Any]:
+
+    async def extract_entities(self, text: str, entity_types: list[str]) -> dict[str, Any]:
         """
         Extract entities of specified types from text.
-        
+
         Args:
             text: Text content to analyze
             entity_types: List of entity types to extract
-            
+
         Returns:
             Dictionary containing extracted entities
         """
         extraction_id = f"entities_{datetime.now().timestamp()}"
-        
+
         try:
             # Simulate entity extraction
             await asyncio.sleep(2)  # Simulate processing time
-            
+
             extracted_entities = []
             entity_map = {}
-            
+
             # Mock entity extraction based on entity types
             for entity_type in entity_types:
                 if entity_type == "PERSON":
@@ -77,7 +77,7 @@ class EntityExtractionAgent:
                     entities = ["2024-01-15", "2024-02-20", "2024-03-10"]
                 else:
                     entities = [f"{entity_type}_1", f"{entity_type}_2"]
-                
+
                 for entity_text in entities:
                     entity_id = f"{entity_type.lower()}_{len(extracted_entities)}"
                     entity = ExtractedEntity(
@@ -91,9 +91,9 @@ class EntityExtractionAgent:
                     )
                     extracted_entities.append(entity)
                     entity_map[entity_id] = entity
-            
+
             self.extracted_entities[extraction_id] = entity_map
-            
+
             result = {
                 "extraction_id": extraction_id,
                 "text_length": len(text),
@@ -102,9 +102,9 @@ class EntityExtractionAgent:
                 "total_entities": len(extracted_entities),
                 "timestamp": datetime.now().isoformat()
             }
-            
+
             return result
-            
+
         except Exception as e:
             return {
                 "extraction_id": extraction_id,
@@ -112,38 +112,38 @@ class EntityExtractionAgent:
                 "error": str(e),
                 "timestamp": datetime.now().isoformat()
             }
-     
-    async def extract_entity_relationships(self, text: str, entity_types: List[str]) -> Dict[str, Any]:
+
+    async def extract_entity_relationships(self, text: str, entity_types: list[str]) -> dict[str, Any]:
         """
         Extract relationships between entities in text.
-        
+
         Args:
             text: Text content to analyze
             entity_types: List of entity types to consider for relationships
-            
+
         Returns:
             Dictionary containing extracted entity relationships
         """
         extraction_id = f"relationships_{datetime.now().timestamp()}"
-        
+
         try:
             # Simulate relationship extraction
             await asyncio.sleep(3)  # Simulate processing time
-            
+
             # First extract entities if not already done
             entity_result = await self.extract_entities(text, entity_types)
             entities = entity_result.get("entities", [])
-            
+
             relationships = []
             relationship_map = {}
-            
+
             # Mock relationship extraction
             if len(entities) >= 2:
                 for i in range(min(3, len(entities))):
                     for j in range(i+1, min(i+3, len(entities))):
                         source_entity = entities[i]["text"]
                         target_entity = entities[j]["text"]
-                        
+
                         relationship_id = f"rel_{len(relationships)}"
                         relationship = EntityRelationship(
                             relationship_id=relationship_id,
@@ -155,9 +155,9 @@ class EntityExtractionAgent:
                         )
                         relationships.append(relationship)
                         relationship_map[relationship_id] = relationship
-            
+
             self.entity_relationships[extraction_id] = relationship_map
-            
+
             result = {
                 "extraction_id": extraction_id,
                 "text_length": len(text),
@@ -166,9 +166,9 @@ class EntityExtractionAgent:
                 "total_relationships": len(relationships),
                 "timestamp": datetime.now().isoformat()
             }
-            
+
             return result
-            
+
         except Exception as e:
             return {
                 "extraction_id": extraction_id,
@@ -176,32 +176,32 @@ class EntityExtractionAgent:
                 "error": str(e),
                 "timestamp": datetime.now().isoformat()
             }
-     
-    async def build_knowledge_graph(self, text: str, entity_types: List[str]) -> Dict[str, Any]:
+
+    async def build_knowledge_graph(self, text: str, entity_types: list[str]) -> dict[str, Any]:
         """
         Build a knowledge graph from extracted entities and relationships.
-        
+
         Args:
             text: Text content to analyze
             entity_types: List of entity types to include in the graph
-            
+
         Returns:
             Dictionary containing knowledge graph structure
         """
         graph_id = f"kg_{datetime.now().timestamp()}"
-        
+
         try:
             # Extract entities and relationships
             entity_result = await self.extract_entities(text, entity_types)
             relationship_result = await self.extract_entity_relationships(text, entity_types)
-            
+
             entities = entity_result.get("entities", [])
             relationships = relationship_result.get("relationships", [])
-            
+
             # Build knowledge graph structure
             nodes = []
             edges = []
-            
+
             for entity in entities:
                 nodes.append({
                     "id": entity["entity_id"],
@@ -209,7 +209,7 @@ class EntityExtractionAgent:
                     "type": entity["entity_type"],
                     "confidence": entity["confidence"]
                 })
-            
+
             for relationship in relationships:
                 edges.append({
                     "id": relationship["relationship_id"],
@@ -219,7 +219,7 @@ class EntityExtractionAgent:
                     "confidence": relationship["confidence"],
                     "evidence": relationship["evidence"]
                 })
-            
+
             knowledge_graph = {
                 "nodes": nodes,
                 "edges": edges,
@@ -230,9 +230,9 @@ class EntityExtractionAgent:
                     "average_confidence": round(sum(r["confidence"] for r in relationships) / len(relationships) if relationships else 0, 2)
                 }
             }
-            
+
             self.knowledge_graph[graph_id] = knowledge_graph
-            
+
             result = {
                 "graph_id": graph_id,
                 "text_length": len(text),
@@ -240,9 +240,9 @@ class EntityExtractionAgent:
                 "knowledge_graph": knowledge_graph,
                 "timestamp": datetime.now().isoformat()
             }
-            
+
             return result
-            
+
         except Exception as e:
             return {
                 "graph_id": graph_id,
@@ -250,23 +250,23 @@ class EntityExtractionAgent:
                 "error": str(e),
                 "timestamp": datetime.now().isoformat()
             }
-     
-    def get_extraction_result(self, extraction_id: str) -> Dict[str, Any]:
+
+    def get_extraction_result(self, extraction_id: str) -> dict[str, Any]:
         """Get the result of a specific entity extraction."""
         result = self.extracted_entities.get(extraction_id)
         if not result:
             return {"error": "Extraction not found", "extraction_id": extraction_id}
-        
+
         return {"entities": [entity.__dict__ for entity in result.values()]}
-     
-    def get_knowledge_graph(self, graph_id: str) -> Dict[str, Any]:
+
+    def get_knowledge_graph(self, graph_id: str) -> dict[str, Any]:
         """Get a specific knowledge graph."""
         graph = self.knowledge_graph.get(graph_id)
         if not graph:
             return {"error": "Knowledge graph not found", "graph_id": graph_id}
-        
+
         return graph
- 
+
 
 # OpenAI-compatible function definitions
 TOOLS = [
@@ -374,7 +374,7 @@ TOOLS = [
         }
     }
 ]
- 
+
 
 # Agent metadata
 AGENT_INFO = {
@@ -390,34 +390,34 @@ AGENT_INFO = {
     ],
     "tools": TOOLS
 }
- 
+
 
 if __name__ == "__main__":
     # Example usage
     agent = EntityExtractionAgent()
-    
+
     async def main():
         sample_text = "John Doe works at Acme Corporation in New York. Jane Smith is the CEO of Global Tech based in San Francisco."
-        
+
         # Test entity extraction
         entities_result = await agent.extract_entities(
             sample_text,
             ["PERSON", "ORG", "LOC"]
         )
         print("Entity extraction:", json.dumps(entities_result, indent=2))
-        
+
         # Test relationship extraction
         relationships_result = await agent.extract_entity_relationships(
             sample_text,
             ["PERSON", "ORG"]
         )
         print("Relationship extraction:", json.dumps(relationships_result, indent=2))
-        
+
         # Test knowledge graph construction
         kg_result = await agent.build_knowledge_graph(
             sample_text,
             ["PERSON", "ORG", "LOC"]
         )
         print("Knowledge graph:", json.dumps(kg_result, indent=2))
-    
+
     asyncio.run(main())

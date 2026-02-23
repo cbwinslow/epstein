@@ -3,15 +3,13 @@
 Simple Mission Control - Terminal Interface for Epstein Files Pipeline
 """
 
-import sys
 import os
-import time
-from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
-from rich.live import Live
-from rich.align import Align
+import sys
+
 from rich import box
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
 from rich.text import Text
 
 # Add current directory to Python path
@@ -30,46 +28,46 @@ def print_header():
 
 def check_system_status():
     """Check system status and display status table"""
-    
+
     # Create status table
     table = Table(title="System Status", box=box.ROUNDED)
     table.add_column("Component", style="cyan", no_wrap=True)
     table.add_column("Status", style="green")
     table.add_column("Details", style="yellow")
-    
+
     # Check Python environment
     python_version = sys.version.split()[0]
     table.add_row("Python Environment", "✅ Ready", f"Version {python_version}")
-    
+
     # Check dependencies
     try:
         import textual
         table.add_row("Textual", "✅ Available", f"v{textual.__version__}")
     except ImportError:
         table.add_row("Textual", "❌ Missing", "Install with: uv add textual")
-    
+
     # Check project structure
     if os.path.exists("epstein/epstein_files_pipeline.py"):
         table.add_row("Pipeline Script", "✅ Found", "Core processing available")
     else:
         table.add_row("Pipeline Script", "❌ Missing", "Pipeline not found")
-    
+
     # Check agents
     if os.path.exists("agents/multi_agent_orchestrator.py"):
         table.add_row("Agent System", "✅ Found", "Multi-agent orchestration")
     else:
         table.add_row("Agent System", "❌ Missing", "Agents not found")
-    
+
     # Check databases
     table.add_row("PostgreSQL", "⚠️ Unknown", "Check with: python scripts/doctor.py")
     table.add_row("Qdrant", "⚠️ Unknown", "Vector database status")
-    
+
     console.print(table)
     console.print()
 
 def show_agent_status():
     """Display agent status information"""
-    
+
     agents_panel = Panel(
         "[bold yellow]Agent System Status[/bold yellow]\n\n"
         "• Document Analysis Agent: [green]Ready[/green]\n"
@@ -81,13 +79,13 @@ def show_agent_status():
         border_style="yellow",
         padding=(1, 2)
     )
-    
+
     console.print(agents_panel)
     console.print()
 
 def show_quick_commands():
     """Show quick command reference"""
-    
+
     commands_panel = Panel(
         "[bold magenta]Quick Commands[/bold magenta]\n\n"
         "[cyan]Pipeline Commands:[/cyan]\n"
@@ -107,25 +105,25 @@ def show_quick_commands():
         border_style="magenta",
         padding=(1, 2)
     )
-    
+
     console.print(commands_panel)
     console.print()
 
 def interactive_menu():
     """Interactive command menu"""
-    
+
     while True:
         console.print("\n[bold]Mission Control Menu[/bold]")
         console.print("1. System Status")
-        console.print("2. Agent Status") 
+        console.print("2. Agent Status")
         console.print("3. Quick Commands")
         console.print("4. Run Health Check")
         console.print("5. Launch Pipeline")
         console.print("6. Start Agents")
         console.print("0. Exit")
-        
+
         choice = console.input("\n[bold cyan]Select option (0-6): [/bold cyan] ").strip()
-        
+
         if choice == "0":
             console.print("\n👋 Exiting Mission Control...")
             break
@@ -147,28 +145,28 @@ def interactive_menu():
             os.system("uv run python agents/multi_agent_orchestrator.py")
         else:
             console.print(f"\n[red]Invalid option: {choice}[/red]")
-        
+
         console.input("\nPress Enter to continue...")
 
 def main():
     """Main application entry point"""
-    
+
     try:
         print_header()
         check_system_status()
-        
+
         # Show quick commands reference
         show_quick_commands()
-        
+
         # Interactive menu
         interactive_menu()
-        
+
     except KeyboardInterrupt:
         console.print("\n\n[yellow]Mission Control interrupted by user[/yellow]")
     except Exception as e:
         console.print(f"\n[red]Error in Mission Control: {e}[/red]")
         return 1
-    
+
     return 0
 
 if __name__ == "__main__":

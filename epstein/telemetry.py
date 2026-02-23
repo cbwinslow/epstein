@@ -6,20 +6,19 @@ and an OTLP exporter if OTEL_ENABLED/OTEL_EXPORTER_OTLP_ENDPOINT is set.
 from __future__ import annotations
 
 import os
-from typing import Optional
 
 try:
     from opentelemetry import trace
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
-    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 except Exception:
     # If opentelemetry packages are not installed, provide a stubbed init
     trace = None
 
 
-def init_tracer(service_name: Optional[str] = None) -> None:
+def init_tracer(service_name: str | None = None) -> None:
     if trace is None:
         # No-op if opentelemetry not installed
         return
@@ -46,7 +45,7 @@ def init_tracer(service_name: Optional[str] = None) -> None:
     trace.set_tracer_provider(provider)
 
 
-def get_tracer(name: Optional[str] = None):
+def get_tracer(name: str | None = None):
     if trace is None:
         class NoopTracer:
             def start_as_current_span(self, *a, **k):

@@ -4,22 +4,20 @@ Integration tests for MCP Server with PydanticAI agents
 Tests the integration between PydanticAI agents and the MCP server
 """
 
-import pytest
-import asyncio
-import os
 from unittest.mock import Mock, patch
 
+import pytest
 
 # Only run if pydantic-ai is installed
 pydantic_ai = pytest.importorskip("pydantic_ai", reason="pydantic-ai not installed")
 
-from pydantic_ai import Agent
 from pydantic import BaseModel
+from pydantic_ai import Agent
 
 
 class TestPydanticAIIntegration:
     """Test PydanticAI integration with MCP server"""
-    
+
     @pytest.mark.asyncio
     async def test_agent_creation(self):
         """Test creating a basic agent"""
@@ -28,7 +26,7 @@ class TestPydanticAIIntegration:
             system_prompt='You are a test agent'
         )
         assert agent is not None
-    
+
     @pytest.mark.asyncio
     async def test_agent_with_tools(self):
         """Test agent with custom tools"""
@@ -36,15 +34,15 @@ class TestPydanticAIIntegration:
             model='test',
             system_prompt='You are a document retrieval agent'
         )
-        
+
         @agent.tool
         def list_collections() -> list:
             """List available collections"""
             return ['collection1', 'collection2']
-        
+
         # Verify tool is registered
         assert len(agent._tools) > 0
-    
+
     @pytest.mark.asyncio
     @patch('requests.get')
     async def test_agent_mcp_integration(self, mock_get):
@@ -56,19 +54,19 @@ class TestPydanticAIIntegration:
         ]
         mock_response.status_code = 200
         mock_get.return_value = mock_response
-        
+
         agent = Agent(
             model='test',
             system_prompt='You are a document retrieval agent'
         )
-        
+
         @agent.tool
         def list_collections() -> list:
             """List available document collections"""
             import requests
             response = requests.get('http://localhost:8765/collections')
             return response.json()
-        
+
         # Test tool works
         result = list_collections()
         assert isinstance(result, list)
@@ -77,21 +75,21 @@ class TestPydanticAIIntegration:
 
 class TestDownloadAgent:
     """Test document download agent"""
-    
+
     def test_download_request_model(self):
         """Test DownloadRequest Pydantic model"""
         class DownloadRequest(BaseModel):
             collection_id: str
             destination: str
-        
+
         request = DownloadRequest(
             collection_id='test_collection',
             destination='/tmp/downloads'
         )
-        
+
         assert request.collection_id == 'test_collection'
         assert request.destination == '/tmp/downloads'
-    
+
     @pytest.mark.asyncio
     @patch('requests.post')
     async def test_download_agent_tool(self, mock_post):
@@ -104,16 +102,16 @@ class TestDownloadAgent:
         }
         mock_response.status_code = 200
         mock_post.return_value = mock_response
-        
+
         class DownloadRequest(BaseModel):
             collection_id: str
             destination: str
-        
+
         agent = Agent(
             model='test',
             system_prompt='Download agent'
         )
-        
+
         @agent.tool
         def download_collection(request: DownloadRequest) -> dict:
             """Download a collection"""
@@ -123,21 +121,21 @@ class TestDownloadAgent:
                 json=request.model_dump()
             )
             return response.json()
-        
+
         # Test download tool
         request = DownloadRequest(
             collection_id='test',
             destination='/tmp/test'
         )
         result = download_collection(request)
-        
+
         assert 'task_id' in result
         assert result['status'] == 'queued'
 
 
 class TestAgentWorkflows:
     """Test complete agent workflows"""
-    
+
     @pytest.mark.asyncio
     @patch('requests.get')
     @patch('requests.post')
@@ -154,7 +152,7 @@ class TestAgentWorkflows:
         ]
         mock_get_resp.status_code = 200
         mock_get.return_value = mock_get_resp
-        
+
         # Mock download response
         mock_post_resp = Mock()
         mock_post_resp.json.return_value = {
@@ -163,19 +161,19 @@ class TestAgentWorkflows:
         }
         mock_post_resp.status_code = 200
         mock_post.return_value = mock_post_resp
-        
+
         # Create workflow agent
         agent = Agent(
             model='test',
             system_prompt='Workflow agent'
         )
-        
+
         @agent.tool
         def discover_collections() -> list:
             """Discover collections"""
             import requests
             return requests.get('http://localhost:8765/collections').json()
-        
+
         @agent.tool
         def initiate_download(collection_id: str) -> dict:
             """Start download"""
@@ -184,11 +182,11 @@ class TestAgentWorkflows:
                 'http://localhost:8765/download/bulk',
                 json={'collection_id': collection_id}
             ).json()
-        
+
         # Execute workflow
         collections = discover_collections()
         assert len(collections) > 0
-        
+
         result = initiate_download(collections[0]['collection_id'])
         assert 'task_id' in result
 

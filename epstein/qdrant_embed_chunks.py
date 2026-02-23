@@ -1,4 +1,7 @@
-import pathlib, zipfile, shutil, os, re
+import os
+import pathlib
+import shutil
+import zipfile
 
 src_zip = pathlib.Path("/mnt/data/epstein_files_project_final.zip")
 work = pathlib.Path("/mnt/data/epstein_files_project_final_v2")

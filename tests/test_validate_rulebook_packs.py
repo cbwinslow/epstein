@@ -1,7 +1,6 @@
-import tempfile
+import os
+import sys
 from pathlib import Path
-import shutil
-import sys, os
 
 # Ensure repo root is on sys.path so we can import the scripts module
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -13,22 +12,13 @@ def make_pack(tmpdir: Path, name: str, with_files: bool = True) -> Path:
     p = tmpdir / name
     p.mkdir()
     py = p / "pack.yaml"
-    content = {
-        "name": name,
-        "version": "0.1",
-        "starters": {
-            "memory_dir": "memory",
-            "tools_dir": "tools",
-            "rules_file": "rules/RULES.md",
-        },
-    }
-    py.write_text("""name: %s
+    py.write_text(f"""name: {name}
 version: 0.1
 starters:
   memory_dir: memory
   tools_dir: tools
   rules_file: rules/RULES.md
-""" % name, encoding="utf-8")
+""", encoding="utf-8")
     if with_files:
         (p / "memory").mkdir()
         (p / "tools").mkdir()

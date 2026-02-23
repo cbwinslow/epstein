@@ -1,17 +1,17 @@
 """Comprehensive tests for multi-agent system with OpenTelemetry instrumentation."""
 
-import pytest
 import asyncio
-import json
-from unittest.mock import Mock, patch, AsyncMock
-from datetime import datetime
+from unittest.mock import Mock, patch
+
+import pytest
+
+from agents.db_troubleshooter import DatabaseTroubleshooter
+from agents.multi_agent_orchestrator import MultiAgentOrchestrator
+from agents.pipeline_monitor import PipelineMonitor
+from agents.telemetry import AgentTelemetry, get_telemetry
 
 # Import agents
 from agents.vector_db_analyzer import VectorDBAnalyzer
-from agents.db_troubleshooter import DatabaseTroubleshooter
-from agents.pipeline_monitor import PipelineMonitor
-from agents.multi_agent_orchestrator import MultiAgentOrchestrator
-from agents.telemetry import get_telemetry, AgentTelemetry
 
 
 class TestVectorDBAnalyzer:
@@ -274,7 +274,7 @@ class TestPipelineMonitor:
     async def test_analyze_performance_trends(self, monitor, telemetry):
         """Test performance trend analysis"""
         # Add some health history first
-        for i in range(10):
+        for _i in range(10):
             await monitor.monitor_pipeline_health()
 
         # Execute with telemetry
@@ -314,27 +314,25 @@ class TestMultiAgentOrchestrator:
         # Mock agent methods
         with patch.object(
             orchestrator.agents["vector_db_analyzer"], "analyze_all_collections"
-        ) as mock_vector:
-            with patch.object(
-                orchestrator.agents["db_troubleshooter"], "optimize_database"
-            ) as mock_db:
-                with patch.object(
-                    orchestrator.agents["pipeline_monitor"], "monitor_pipeline_health"
-                ) as mock_pipeline:
-                    # Setup mock results
-                    mock_vector.return_value = {"qdrant_status": "healthy", "collections": {}}
-                    mock_db.return_value = {"database_health": {"connection_status": "healthy"}}
-                    mock_pipeline.return_value = {"health_status": "healthy"}
+        ) as mock_vector, patch.object(
+            orchestrator.agents["db_troubleshooter"], "optimize_database"
+        ) as mock_db, patch.object(
+            orchestrator.agents["pipeline_monitor"], "monitor_pipeline_health"
+        ) as mock_pipeline:
+            # Setup mock results
+            mock_vector.return_value = {"qdrant_status": "healthy", "collections": {}}
+            mock_db.return_value = {"database_health": {"connection_status": "healthy"}}
+            mock_pipeline.return_value = {"health_status": "healthy"}
 
-                    # Execute with telemetry
-                    with telemetry.create_span("test_comprehensive_analysis"):
-                        result = await orchestrator.run_comprehensive_analysis()
+            # Execute with telemetry
+            with telemetry.create_span("test_comprehensive_analysis"):
+                result = await orchestrator.run_comprehensive_analysis()
 
-                    # Assertions
-                    assert "task_id" in result
-                    assert "status" in result
-                    assert "results" in result
-                    assert "report" in result
+            # Assertions
+            assert "task_id" in result
+            assert "status" in result
+            assert "results" in result
+            assert "report" in result
 
     @pytest.mark.asyncio
     async def test_run_troubleshooting_workflow(self, orchestrator, telemetry):
@@ -362,28 +360,26 @@ class TestMultiAgentOrchestrator:
         # Mock agent methods
         with patch.object(
             orchestrator.agents["pipeline_monitor"], "monitor_pipeline_health"
-        ) as mock_pipeline:
-            with patch.object(
-                orchestrator.agents["vector_db_analyzer"], "analyze_all_collections"
-            ) as mock_vector:
-                with patch.object(
-                    orchestrator.agents["db_troubleshooter"], "check_database_health"
-                ) as mock_db:
-                    # Setup mock results
-                    mock_pipeline.return_value = {"health_status": "healthy"}
-                    mock_vector.return_value = {"qdrant_status": "healthy"}
-                    mock_db.return_value = {"database_health": {"connection_status": "healthy"}}
+        ) as mock_pipeline, patch.object(
+            orchestrator.agents["vector_db_analyzer"], "analyze_all_collections"
+        ) as mock_vector, patch.object(
+            orchestrator.agents["db_troubleshooter"], "check_database_health"
+        ) as mock_db:
+            # Setup mock results
+            mock_pipeline.return_value = {"health_status": "healthy"}
+            mock_vector.return_value = {"qdrant_status": "healthy"}
+            mock_db.return_value = {"database_health": {"connection_status": "healthy"}}
 
-                    # Execute with telemetry
-                    with telemetry.create_span("test_health_check"):
-                        result = await orchestrator.run_health_check()
+            # Execute with telemetry
+            with telemetry.create_span("test_health_check"):
+                result = await orchestrator.run_health_check()
 
-                    # Assertions
-                    assert "workflow_id" in result
-                    assert "status" in result
-                    assert "results" in result
-                    assert "health_assessment" in result
-                    assert "overall_status" in result
+            # Assertions
+            assert "workflow_id" in result
+            assert "status" in result
+            assert "results" in result
+            assert "health_assessment" in result
+            assert "overall_status" in result
 
     def test_get_agent_status(self, orchestrator, telemetry):
         """Test agent status retrieval"""
@@ -394,7 +390,7 @@ class TestMultiAgentOrchestrator:
         # Assertions
         assert isinstance(result, dict)
         assert len(result) > 0
-        for agent_name, status in result.items():
+        for _agent_name, status in result.items():
             assert "status" in status
             assert "capabilities" in status or "tools" in status
 
@@ -497,38 +493,36 @@ class TestIntegration:
         # Mock all agent methods
         with patch.object(
             orchestrator.agents["vector_db_analyzer"], "analyze_all_collections"
-        ) as mock_vector:
-            with patch.object(
-                orchestrator.agents["db_troubleshooter"], "optimize_database"
-            ) as mock_db:
-                with patch.object(
-                    orchestrator.agents["pipeline_monitor"], "monitor_pipeline_health"
-                ) as mock_pipeline:
-                    # Setup mock results
-                    mock_vector.return_value = {
-                        "qdrant_status": "healthy",
-                        "total_collections": 1,
-                        "total_vectors": 1000,
-                        "collections": {"test_collection": {"status": "green"}},
-                    }
-                    mock_db.return_value = {
-                        "database_health": {"connection_status": "healthy"},
-                        "optimization_plan": {"immediate_actions": []},
-                    }
-                    mock_pipeline.return_value = {"health_status": "healthy", "health_score": 95.0}
+        ) as mock_vector, patch.object(
+            orchestrator.agents["db_troubleshooter"], "optimize_database"
+        ) as mock_db, patch.object(
+            orchestrator.agents["pipeline_monitor"], "monitor_pipeline_health"
+        ) as mock_pipeline:
+            # Setup mock results
+            mock_vector.return_value = {
+                "qdrant_status": "healthy",
+                "total_collections": 1,
+                "total_vectors": 1000,
+                "collections": {"test_collection": {"status": "green"}},
+            }
+            mock_db.return_value = {
+                "database_health": {"connection_status": "healthy"},
+                "optimization_plan": {"immediate_actions": []},
+            }
+            mock_pipeline.return_value = {"health_status": "healthy", "health_score": 95.0}
 
-                    # Execute workflow with telemetry
-                    with telemetry.create_span("test_end_to_end_workflow"):
-                        result = await orchestrator.run_comprehensive_analysis()
+            # Execute workflow with telemetry
+            with telemetry.create_span("test_end_to_end_workflow"):
+                result = await orchestrator.run_comprehensive_analysis()
 
-                    # Verify results
-                    assert result["status"] == "completed"
-                    assert "results" in result
-                    assert "report" in result
+            # Verify results
+            assert result["status"] == "completed"
+            assert "results" in result
+            assert "report" in result
 
-                    # Verify telemetry captured metrics
-                    metrics = telemetry.get_agent_metrics()
-                    assert len(metrics["agents"]) > 0
+            # Verify telemetry captured metrics
+            metrics = telemetry.get_agent_metrics()
+            assert len(metrics["agents"]) > 0
 
 
 # Pytest configuration

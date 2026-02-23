@@ -10,15 +10,12 @@ Date: 2026-02-13
 import sys
 import tempfile
 from pathlib import Path
-from datetime import datetime
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from epstein.download_manager import (
     DownloadManager,
-    DownloadTask,
-    DownloadSource,
     SessionConfig,
 )
 from epstein.file_organizer import FileOrganizer
@@ -41,7 +38,7 @@ log_dir = workspace / "logs"
 for d in [download_dir, organized_dir, log_dir]:
     d.mkdir(parents=True, exist_ok=True)
 
-print(f"✓ Created directory structure")
+print("✓ Created directory structure")
 print()
 
 # ============================================================================
@@ -64,9 +61,9 @@ download_mgr = DownloadManager(
     session_config=session_config,
 )
 
-print(f"✓ Download manager initialized")
+print("✓ Download manager initialized")
 print(f"  - Output directory: {download_dir}")
-print(f"  - Max concurrent: 2")
+print("  - Max concurrent: 2")
 print(f"  - User agent: {session_config.user_agent}")
 
 # Create demo files (simulating downloads)
@@ -76,12 +73,12 @@ demo_files = []
 for i in range(5):
     filename = f"demo_document_{i+1}.pdf"
     file_path = download_dir / filename
-    
+
     # Create demo content
     content = f"Demo PDF Document {i+1}\n" + ("Sample content. " * 100)
     file_path.write_text(content)
     demo_files.append(file_path)
-    
+
     print(f"  ✓ Created: {filename} ({len(content)} bytes)")
 
 print(f"\n✓ Downloaded {len(demo_files)} files")
@@ -101,9 +98,9 @@ monitor = OperationMonitor(
     enable_alerts=False,  # Disabled for demo to simplify
 )
 
-print(f"✓ Monitor initialized")
+print("✓ Monitor initialized")
 print(f"  - Log directory: {log_dir}")
-print(f"  - Alerts enabled: True")
+print("  - Alerts enabled: True")
 print()
 
 # Track download operation
@@ -127,7 +124,7 @@ monitor.complete_operation(OperationType.DOWNLOAD)
 
 # Get and display metrics
 download_metrics = monitor.get_metrics(OperationType.DOWNLOAD)
-print(f"\n✓ Download metrics:")
+print("\n✓ Download metrics:")
 print(f"  - Total files: {download_metrics['total_count']}")
 print(f"  - Completed: {download_metrics['completed_count']}")
 print(f"  - Success rate: {download_metrics['success_rate']:.1f}%")
@@ -149,10 +146,10 @@ organizer = FileOrganizer(
     auto_extract_zips=False,
 )
 
-print(f"✓ File organizer initialized")
+print("✓ File organizer initialized")
 print(f"  - Base directory: {download_dir}")
 print(f"  - Organized directory: {organized_dir}")
-print(f"  - Deduplication: Enabled")
+print("  - Deduplication: Enabled")
 print()
 
 # Track organization operation
@@ -170,7 +167,7 @@ for file in demo_files:
         source="demo_files",
         dataset_number=1
     )
-    
+
     if success:
         organized_count += 1
         monitor.update_progress(OperationType.ORGANIZE, completed=1)
@@ -184,7 +181,7 @@ monitor.complete_operation(OperationType.ORGANIZE)
 
 # Get organization stats
 org_stats = organizer.get_statistics()
-print(f"\n✓ Organization complete:")
+print("\n✓ Organization complete:")
 print(f"  - Total files organized: {org_stats['total_files']}")
 print(f"  - Total size: {org_stats['total_size_bytes']:,} bytes")
 print(f"  - Categories: {len([k for k, v in org_stats['by_category'].items() if v['count'] > 0])}")

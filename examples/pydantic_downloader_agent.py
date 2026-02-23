@@ -12,10 +12,9 @@ Usage:
 import asyncio
 import os
 import sys
-from typing import List, Dict
+
 import requests
 from pydantic import BaseModel, Field
-
 
 # Check if pydantic-ai is installed
 try:
@@ -46,7 +45,7 @@ class DownloadRequest(BaseModel):
     """Request to download documents"""
     collection_id: str
     destination: str = Field(default=DOWNLOAD_DIR)
-    filter_criteria: Dict = Field(default_factory=dict)
+    filter_criteria: dict = Field(default_factory=dict)
 
 
 class DownloadStatus(BaseModel):
@@ -62,7 +61,7 @@ class DownloadStatus(BaseModel):
 class DocumentDownloaderAgent:
     """
     PydanticAI agent for downloading Epstein documents
-    
+
     This agent can:
     - Discover available document collections
     - List documents in collections
@@ -70,7 +69,7 @@ class DocumentDownloaderAgent:
     - Monitor download progress
     - Report completion status
     """
-    
+
     def __init__(
         self,
         model: str = 'openai:gpt-4',
@@ -82,7 +81,7 @@ class DocumentDownloaderAgent:
             system_prompt=self._get_system_prompt()
         )
         self._register_tools()
-    
+
     def _get_system_prompt(self) -> str:
         """Get the system prompt for the agent"""
         return """You are a specialized document retrieval agent for the Epstein Files project.
@@ -113,12 +112,12 @@ Never:
 - Ignore errors or failures
 - Make up information about unavailable documents
 """
-    
+
     def _register_tools(self):
         """Register all tools with the agent"""
-        
+
         @self.agent.tool
-        def list_collections() -> List[CollectionInfo]:
+        def list_collections() -> list[CollectionInfo]:
             """List all available document collections from government sources"""
             try:
                 response = requests.get(f'{self.mcp_url}/collections')
@@ -127,7 +126,7 @@ Never:
                 return [CollectionInfo(**c) for c in collections]
             except Exception as e:
                 return [{"error": f"Failed to list collections: {e}"}]
-        
+
         @self.agent.tool
         def get_collection_info(collection_id: str) -> CollectionInfo:
             """Get detailed information about a specific collection"""
@@ -139,9 +138,9 @@ Never:
                 return CollectionInfo(**response.json())
             except Exception as e:
                 return {"error": f"Failed to get collection info: {e}"}
-        
+
         @self.agent.tool
-        def list_documents(collection_id: str, limit: int = 10) -> List[Dict]:
+        def list_documents(collection_id: str, limit: int = 10) -> list[dict]:
             """List documents in a collection"""
             try:
                 response = requests.get(
@@ -152,9 +151,9 @@ Never:
                 return response.json()
             except Exception as e:
                 return [{"error": f"Failed to list documents: {e}"}]
-        
+
         @self.agent.tool
-        def download_collection(request: DownloadRequest) -> List[DownloadStatus]:
+        def download_collection(request: DownloadRequest) -> list[DownloadStatus]:
             """
             Download all documents from a collection.
             Returns list of download tasks.
@@ -169,7 +168,7 @@ Never:
                 return [DownloadStatus(**t) for t in tasks]
             except Exception as e:
                 return [{"error": f"Failed to start download: {e}"}]
-        
+
         @self.agent.tool
         def download_document(url: str, destination: str = DOWNLOAD_DIR) -> DownloadStatus:
             """Download a single document"""
@@ -182,7 +181,7 @@ Never:
                 return DownloadStatus(**response.json())
             except Exception as e:
                 return {"error": f"Failed to download document: {e}"}
-        
+
         @self.agent.tool
         def check_download_status(task_id: str) -> DownloadStatus:
             """Check the status of a download task"""
@@ -194,9 +193,9 @@ Never:
                 return DownloadStatus(**response.json())
             except Exception as e:
                 return {"error": f"Failed to check status: {e}"}
-        
+
         @self.agent.tool
-        def get_all_download_status() -> List[DownloadStatus]:
+        def get_all_download_status() -> list[DownloadStatus]:
             """Get status of all active downloads"""
             try:
                 response = requests.get(f'{self.mcp_url}/download/status')
@@ -205,9 +204,9 @@ Never:
                 return [DownloadStatus(**s) for s in statuses]
             except Exception as e:
                 return [{"error": f"Failed to get statuses: {e}"}]
-        
+
         @self.agent.tool
-        def get_server_health() -> Dict:
+        def get_server_health() -> dict:
             """Check if the MCP server is healthy and responding"""
             try:
                 response = requests.get(f'{self.mcp_url}/health')
@@ -215,20 +214,20 @@ Never:
                 return response.json()
             except Exception as e:
                 return {"error": f"Server health check failed: {e}"}
-    
+
     async def run(self, user_request: str) -> str:
         """
         Run the agent with a user request
-        
+
         Args:
             user_request: Natural language request from user
-            
+
         Returns:
             Agent's response as string
         """
         result = await self.agent.run(user_request)
         return result.data
-    
+
     async def chat(self):
         """
         Interactive chat mode
@@ -236,23 +235,23 @@ Never:
         print("=== Epstein Document Downloader Agent ===")
         print("Type 'quit' or 'exit' to end the session")
         print()
-        
+
         while True:
             try:
                 user_input = input("You: ").strip()
-                
+
                 if user_input.lower() in ['quit', 'exit']:
                     print("Goodbye!")
                     break
-                
+
                 if not user_input:
                     continue
-                
+
                 print("\nAgent: ", end="", flush=True)
                 response = await self.run(user_input)
                 print(response)
                 print()
-                
+
             except KeyboardInterrupt:
                 print("\nGoodbye!")
                 break
@@ -265,7 +264,7 @@ Never:
 async def main():
     """Main entry point"""
     import argparse
-    
+
     parser = argparse.ArgumentParser(
         description='PydanticAI Document Downloader Agent'
     )
@@ -284,15 +283,15 @@ async def main():
         default=MCP_SERVER_URL,
         help=f'MCP server URL (default: {MCP_SERVER_URL})'
     )
-    
+
     args = parser.parse_args()
-    
+
     # Create agent
     agent = DocumentDownloaderAgent(
         model=args.model,
         mcp_server_url=args.server
     )
-    
+
     # Check server health
     health_response = requests.get(f'{args.server}/health')
     if health_response.status_code != 200:
@@ -301,9 +300,9 @@ async def main():
         print("  cd mcp_servers/epstein_files_downloader")
         print("  python server.py")
         sys.exit(1)
-    
+
     print(f"✓ Connected to MCP server at {args.server}")
-    
+
     # Run agent
     if args.request:
         # Single request mode

@@ -15,15 +15,13 @@ This server provides tools for:
 
 import argparse
 import asyncio
-import json
 import logging
-import os
 import signal
 import sys
 import time
-from dataclasses import dataclass, asdict, field
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any
 from uuid import uuid4
 
 try:
@@ -31,7 +29,7 @@ try:
 except Exception:  # pragma: no cover - optional dependency
     aiohttp = None
 try:
-    from fastapi import FastAPI, HTTPException, BackgroundTasks
+    from fastapi import BackgroundTasks, FastAPI, HTTPException
 except Exception:  # pragma: no cover - optional dependency
     FastAPI = None
     HTTPException = Exception
@@ -44,7 +42,6 @@ from bs4 import BeautifulSoup
 if FastAPI is not None:
     from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, HttpUrl
-from tqdm import tqdm
 
 # Configure logging
 logging.basicConfig(
@@ -80,7 +77,7 @@ class ServerConfig:
     retry_delay: int = 5
     user_agent: str = "MCP-EpsteinFilesDownloader/1.0"
     timeout_seconds: int = 60
-    
+
     # GovInfo.gov specific settings
     govinfo_base_url: str = "https://www.govinfo.gov"
     govinfo_bulk_api: str = "https://www.govinfo.gov/bulkdata/bulkdata"
@@ -95,8 +92,8 @@ class DownloadTask:
     destination: str
     status: str = "pending"
     progress: float = 0.0
-    error: Optional[str] = None
-    metadata: Dict[str, Any] = None
+    error: str | None = None
+    metadata: dict[str, Any] = None
     created_at: float = field(default_factory=time.time)
     updated_at: float = field(default_factory=time.time)
 
@@ -110,7 +107,7 @@ class CollectionInfo:
     url: str
     document_count: int = 0
     source: str = "govinfo.gov"
-    last_updated: Optional[str] = None
+    last_updated: str | None = None
 
 
 @dataclass
@@ -120,11 +117,11 @@ class DocumentInfo:
     collection_id: str
     title: str
     url: str
-    file_size: Optional[int] = None
-    publish_date: Optional[str] = None
-    mime_type: Optional[str] = None
-    file_name: Optional[str] = None
-    metadata: Dict[str, Any] = None
+    file_size: int | None = None
+    publish_date: str | None = None
+    mime_type: str | None = None
+    file_name: str | None = None
+    metadata: dict[str, Any] = None
 
 
 # Pydantic models for API
@@ -136,7 +133,7 @@ class CollectionResponse(BaseModel):
     document_count: int
     url: HttpUrl
     source: str
-    last_updated: Optional[str] = None
+    last_updated: str | None = None
 
 
 class DocumentResponse(BaseModel):
@@ -145,11 +142,11 @@ class DocumentResponse(BaseModel):
     collection_id: str
     title: str
     url: HttpUrl
-    file_size: Optional[int] = None
-    publish_date: Optional[str] = None
-    mime_type: Optional[str] = None
-    file_name: Optional[str] = None
-    metadata: Dict[str, Any] = None
+    file_size: int | None = None
+    publish_date: str | None = None
+    mime_type: str | None = None
+    file_name: str | None = None
+    metadata: dict[str, Any] = None
 
 
 class DownloadStatus(BaseModel):
@@ -159,8 +156,8 @@ class DownloadStatus(BaseModel):
     destination: str
     status: str
     progress: float
-    error: Optional[str] = None
-    metadata: Dict[str, Any] = None
+    error: str | None = None
+    metadata: dict[str, Any] = None
     created_at: float
     updated_at: float
 
@@ -168,15 +165,15 @@ class DownloadStatus(BaseModel):
 class DownloadRequest(BaseModel):
     """API request for download"""
     url: HttpUrl
-    destination: Optional[str] = None
-    metadata: Dict[str, Any] = None
+    destination: str | None = None
+    metadata: dict[str, Any] = None
 
 
 class BulkDownloadRequest(BaseModel):
     """API request for bulk download"""
     collection_id: str
-    destination: Optional[str] = None
-    filter_criteria: Dict[str, Any] = None
+    destination: str | None = None
+    filter_criteria: dict[str, Any] = None
 
 
 # ============================================================================
@@ -185,17 +182,17 @@ class BulkDownloadRequest(BaseModel):
 
 class EpsteinFilesDownloader:
     """Main MCP server for downloading Epstein files"""
-    
+
     def __init__(self, config: ServerConfig):
         self.config = config
         self.session = None
         self.download_queue = asyncio.Queue()
-        self.active_tasks: Dict[str, DownloadTask] = {}
-        self.completed_tasks: Dict[str, DownloadTask] = {}
-        
+        self.active_tasks: dict[str, DownloadTask] = {}
+        self.completed_tasks: dict[str, DownloadTask] = {}
+
         # Initialize download directory
         Path(config.download_dir).mkdir(parents=True, exist_ok=True)
-        
+
         # Initialize FastAPI app
         self.app = FastAPI(
             title="Epstein Files Downloader MCP Server",
@@ -204,7 +201,7 @@ class EpsteinFilesDownloader:
             docs_url="/docs",
             redoc_url="/redoc"
         )
-        
+
         # Configure CORS
         self.app.add_middleware(
             CORSMiddleware,
@@ -213,13 +210,13 @@ class EpsteinFilesDownloader:
             allow_methods=["*"],
             allow_headers=["*"],
         )
-        
+
         # Register API endpoints
         self._register_endpoints()
-        
+
         # Initialize HTTP session
         self._init_http_session()
-    
+
     def _init_http_session(self):
         """Initialize HTTP session with retry configuration"""
         self.session = requests.Session()
@@ -227,10 +224,10 @@ class EpsteinFilesDownloader:
             'User-Agent': self.config.user_agent,
             'Accept': 'application/json',
         })
-    
+
     def _register_endpoints(self):
         """Register all API endpoints"""
-        
+
         @self.app.get("/")
         async def root():
             """Root endpoint"""
@@ -250,7 +247,7 @@ class EpsteinFilesDownloader:
                     "/health": "Health check endpoint"
                 }
             }
-        
+
         @self.app.get("/health")
         async def health():
             """Health check endpoint"""
@@ -261,8 +258,8 @@ class EpsteinFilesDownloader:
                 "completed_downloads": len(self.completed_tasks),
                 "queue_size": self.download_queue.qsize()
             }
-        
-        @self.app.get("/collections", response_model=List[CollectionResponse])
+
+        @self.app.get("/collections", response_model=list[CollectionResponse])
         async def list_collections():
             """List all available document collections"""
             try:
@@ -282,7 +279,7 @@ class EpsteinFilesDownloader:
             except Exception as e:
                 logger.error(f"Failed to list collections: {e}")
                 raise HTTPException(status_code=500, detail=str(e))
-        
+
         @self.app.get("/collections/{collection_id}", response_model=CollectionResponse)
         async def get_collection(collection_id: str):
             """Get details about a specific collection"""
@@ -303,8 +300,8 @@ class EpsteinFilesDownloader:
             except Exception as e:
                 logger.error(f"Failed to get collection {collection_id}: {e}")
                 raise HTTPException(status_code=500, detail=str(e))
-        
-        @self.app.get("/collections/{collection_id}/documents", response_model=List[DocumentResponse])
+
+        @self.app.get("/collections/{collection_id}/documents", response_model=list[DocumentResponse])
         async def list_collection_documents(collection_id: str, limit: int = 100, offset: int = 0):
             """List documents in a collection"""
             try:
@@ -326,14 +323,14 @@ class EpsteinFilesDownloader:
             except Exception as e:
                 logger.error(f"Failed to list documents for collection {collection_id}: {e}")
                 raise HTTPException(status_code=500, detail=str(e))
-        
+
         @self.app.post("/download", response_model=DownloadStatus)
         async def download_document(request: DownloadRequest, background_tasks: BackgroundTasks):
             """Download a single document"""
             try:
                 task_id = str(uuid4())
                 destination = request.destination or self.config.download_dir
-                
+
                 task = DownloadTask(
                     task_id=task_id,
                     url=str(request.url),
@@ -341,25 +338,25 @@ class EpsteinFilesDownloader:
                     status="queued",
                     metadata=request.metadata or {}
                 )
-                
+
                 self.active_tasks[task_id] = task
                 await self.download_queue.put(task)
-                
+
                 # Start download in background
                 background_tasks.add_task(self._process_download_queue)
-                
+
                 return DownloadStatus(**asdict(task))
             except Exception as e:
                 logger.error(f"Failed to start download: {e}")
                 raise HTTPException(status_code=500, detail=str(e))
-        
-        @self.app.post("/download/bulk", response_model=List[DownloadStatus])
+
+        @self.app.post("/download/bulk", response_model=list[DownloadStatus])
         async def bulk_download(request: BulkDownloadRequest, background_tasks: BackgroundTasks):
             """Bulk download documents from a collection"""
             try:
                 # Get documents from collection
                 documents = await self.get_collection_documents(request.collection_id)
-                
+
                 # Filter documents if criteria provided
                 if request.filter_criteria:
                     filtered_docs = []
@@ -375,13 +372,13 @@ class EpsteinFilesDownloader:
                         if match:
                             filtered_docs.append(doc)
                     documents = filtered_docs
-                
+
                 # Create download tasks
                 tasks = []
                 for doc in documents:
                     task_id = str(uuid4())
                     destination = request.destination or self.config.download_dir
-                    
+
                     task = DownloadTask(
                         task_id=task_id,
                         url=doc.url,
@@ -394,24 +391,24 @@ class EpsteinFilesDownloader:
                             **(request.metadata or {})
                         }
                     )
-                    
+
                     self.active_tasks[task_id] = task
                     await self.download_queue.put(task)
                     tasks.append(task)
-                
+
                 # Start processing queue in background
                 background_tasks.add_task(self._process_download_queue)
-                
+
                 return [DownloadStatus(**asdict(task)) for task in tasks]
             except Exception as e:
                 logger.error(f"Failed to start bulk download: {e}")
                 raise HTTPException(status_code=500, detail=str(e))
-        
-        @self.app.get("/download/status", response_model=List[DownloadStatus])
+
+        @self.app.get("/download/status", response_model=list[DownloadStatus])
         async def get_all_download_status():
             """Get status of all active downloads"""
             return [DownloadStatus(**asdict(task)) for task in self.active_tasks.values()]
-        
+
         @self.app.get("/download/status/{task_id}", response_model=DownloadStatus)
         async def get_download_status(task_id: str):
             """Get status of a specific download"""
@@ -421,14 +418,14 @@ class EpsteinFilesDownloader:
                 return DownloadStatus(**asdict(self.completed_tasks[task_id]))
             else:
                 raise HTTPException(status_code=404, detail="Task not found")
-        
-        @self.app.get("/download/history", response_model=List[DownloadStatus])
+
+        @self.app.get("/download/history", response_model=list[DownloadStatus])
         async def get_download_history(limit: int = 100):
             """Get download history"""
             # Return most recent completed tasks
             completed = sorted(self.completed_tasks.values(), key=lambda x: x.updated_at, reverse=True)
             return [DownloadStatus(**asdict(task)) for task in completed[:limit]]
-    
+
     async def _process_download_queue(self):
         """Process download queue with concurrency control"""
         while not self.download_queue.empty():
@@ -437,23 +434,23 @@ class EpsteinFilesDownloader:
             for _ in range(min(self.config.max_concurrent_downloads, self.download_queue.qsize())):
                 task = await self.download_queue.get()
                 tasks.append(task)
-            
+
             # Process tasks concurrently
             await asyncio.gather(*[self._download_single(task) for task in tasks])
-    
+
     async def _download_single(self, task: DownloadTask):
         """Download a single file with retry logic"""
         task.status = "downloading"
         task.progress = 0.0
         task.updated_at = time.time()
-        
+
         destination_path = Path(task.destination)
         destination_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # Generate safe filename
         safe_filename = self._generate_safe_filename(task.url, task.metadata)
         final_path = destination_path / safe_filename
-        
+
         # Skip if already exists
         if final_path.exists() and final_path.stat().st_size > 1000:
             task.status = "completed"
@@ -461,7 +458,7 @@ class EpsteinFilesDownloader:
             task.destination = str(final_path)
             self._complete_task(task)
             return
-        
+
         # Download with retry
         for attempt in range(self.config.retry_attempts):
             try:
@@ -471,21 +468,21 @@ class EpsteinFilesDownloader:
                     async with session.get(task.url, timeout=self.config.timeout_seconds) as response:
                         if response.status != 200:
                             raise HTTPException(status_code=response.status, detail=f"HTTP {response.status}")
-                        
+
                         total_size = int(response.headers.get('content-length', 0))
                         downloaded = 0
-                        
+
                         with open(final_path, 'wb') as f:
                             async for chunk in response.content.iter_chunked(8192):
                                 f.write(chunk)
                                 downloaded += len(chunk)
                                 task.progress = (downloaded / total_size * 100) if total_size > 0 else 0
                                 task.updated_at = time.time()
-                                
+
                                 # Update progress periodically
                                 if downloaded % (1024 * 1024) < 8192:  # Every ~1MB
                                     logger.debug(f"Download {task.task_id}: {task.progress:.1f}% ({downloaded}/{total_size} bytes)")
-                        
+
                         # Complete task
                         task.status = "completed"
                         task.progress = 100.0
@@ -494,13 +491,13 @@ class EpsteinFilesDownloader:
                         self._complete_task(task)
                         logger.info(f"✅ Completed download {task.task_id}: {task.url}")
                         return
-                        
+
             except Exception as e:
                 task.status = "retrying"
                 task.error = str(e)
                 task.updated_at = time.time()
                 logger.warning(f"⚠️  Download attempt {attempt + 1} failed for {task.task_id}: {e}")
-                
+
                 if attempt < self.config.retry_attempts - 1:
                     await asyncio.sleep(self.config.retry_delay)
                 else:
@@ -510,29 +507,29 @@ class EpsteinFilesDownloader:
                     self._complete_task(task)
                     logger.error(f"❌ Failed download {task.task_id}: {e}")
                     return
-    
+
     def _complete_task(self, task: DownloadTask):
         """Move task from active to completed"""
         if task.task_id in self.active_tasks:
             del self.active_tasks[task.task_id]
         self.completed_tasks[task.task_id] = task
-        
+
         # Keep completed tasks manageable
         if len(self.completed_tasks) > 1000:
             # Remove oldest tasks
             sorted_tasks = sorted(self.completed_tasks.items(), key=lambda x: x[1].updated_at)
             for task_id, _ in sorted_tasks[:-500]:
                 del self.completed_tasks[task_id]
-    
-    def _generate_safe_filename(self, url: str, metadata: Optional[Dict] = None) -> str:
+
+    def _generate_safe_filename(self, url: str, metadata: dict | None = None) -> str:
         """Generate safe filename from URL and metadata"""
         import re
         from urllib.parse import urlparse
-        
+
         # Extract filename from URL
         parsed = urlparse(url)
         filename = Path(parsed.path).name
-        
+
         # Use metadata title if available
         if metadata and metadata.get('title'):
             title = metadata['title']
@@ -541,23 +538,23 @@ class EpsteinFilesDownloader:
             filename = f"{safe_title}_{filename}"
         elif metadata and metadata.get('document_id'):
             filename = f"{metadata['document_id']}_{filename}"
-        
+
         # Ensure unique filename
         counter = 1
         base_name = Path(filename).stem
         extension = Path(filename).suffix
         final_filename = filename
-        
+
         while (Path(self.config.download_dir) / final_filename).exists():
             final_filename = f"{base_name}_{counter}{extension}"
             counter += 1
-        
+
         return final_filename
-    
-    async def discover_collections(self) -> List[CollectionInfo]:
+
+    async def discover_collections(self) -> list[CollectionInfo]:
         """Discover available collections from multiple government sources"""
         collections = []
-        
+
         # Add predefined Epstein-related collections based on known sources
         known_collections = [
             CollectionInfo(
@@ -601,17 +598,17 @@ class EpsteinFilesDownloader:
                 document_count=0
             )
         ]
-        
+
         collections.extend(known_collections)
-        
+
         # Try to discover additional collections from govinfo.gov
         try:
             search_url = f"{self.config.govinfo_base_url}/search/results?search=Jeffrey%20Epstein"
             response = self.session.get(search_url, timeout=self.config.timeout_seconds)
             response.raise_for_status()
-            
+
             soup = BeautifulSoup(response.text, 'html.parser')
-            
+
             # Look for document links
             doc_links = []
             for link in soup.find_all('a', href=True):
@@ -623,7 +620,7 @@ class EpsteinFilesDownloader:
                             'url': f"{self.config.govinfo_base_url}{href}",
                             'title': title
                         })
-            
+
             if doc_links:
                 # Add discovered documents as a collection
                 collections.append(CollectionInfo(
@@ -635,12 +632,12 @@ class EpsteinFilesDownloader:
                     document_count=len(doc_links),
                     last_updated=time.strftime("%Y-%m-%d")
                 ))
-            
+
             logger.info(f"Discovered {len(collections)} total collections (including {len(doc_links)} documents)")
-            
+
         except Exception as e:
             logger.warning(f"Failed to discover additional collections from govinfo.gov: {e}")
-        
+
         # Try to get document counts for each collection
         for collection in collections:
             try:
@@ -648,9 +645,9 @@ class EpsteinFilesDownloader:
                 collection.document_count = count
             except Exception as e:
                 logger.debug(f"Could not get document count for {collection.collection_id}: {e}")
-        
+
         return collections
-    
+
     async def _get_collection_document_count(self, collection: CollectionInfo) -> int:
         """Get document count for a collection"""
         try:
@@ -659,7 +656,7 @@ class EpsteinFilesDownloader:
                 response = self.session.get(collection.url, timeout=self.config.timeout_seconds)
                 response.raise_for_status()
                 soup = BeautifulSoup(response.text, 'html.parser')
-                
+
                 # Look for document count indicators
                 count_text = soup.find('span', class_='results-count')
                 if count_text:
@@ -667,18 +664,18 @@ class EpsteinFilesDownloader:
                     numbers = re.findall(r'\d+', count_text.get_text())
                     if numbers:
                         return int(numbers[0])
-                
+
                 # Alternative: count document links
                 doc_links = soup.find_all('a', href=lambda x: x and '/jeffrey-epstein/' in x)
                 return len(doc_links)
-                
+
             elif collection.source == "govinfo.gov":
                 # GovInfo.gov - use search API
                 search_url = f"{self.config.govinfo_base_url}/search/results?search=Jeffrey%20Epstein&pageSize=1"
                 response = self.session.get(search_url, timeout=self.config.timeout_seconds)
                 response.raise_for_status()
                 soup = BeautifulSoup(response.text, 'html.parser')
-                
+
                 # Look for result count
                 results_text = soup.find('div', class_='results-summary')
                 if results_text:
@@ -686,21 +683,21 @@ class EpsteinFilesDownloader:
                     numbers = re.findall(r'(\d+,?\d*)', results_text.get_text())
                     if numbers:
                         return int(numbers[0].replace(',', ''))
-                
+
                 # Alternative: count links
                 doc_links = soup.find_all('a', href=lambda x: x and '/content/pkg/' in x)
                 return len(doc_links)
-                
+
             elif collection.source == "justice.gov":
                 # DOJ - similar approach
                 response = self.session.get(collection.url, timeout=self.config.timeout_seconds)
                 response.raise_for_status()
                 soup = BeautifulSoup(response.text, 'html.parser')
-                
+
                 # Count document links
                 doc_links = soup.find_all('a', href=lambda x: x and 'epstein' in x.lower())
                 return len(doc_links)
-                
+
             else:
                 # Generic approach - try to count links
                 response = self.session.get(collection.url, timeout=self.config.timeout_seconds)
@@ -708,15 +705,15 @@ class EpsteinFilesDownloader:
                 soup = BeautifulSoup(response.text, 'html.parser')
                 links = soup.find_all('a', href=True)
                 return len([link for link in links if 'pdf' in link.get('href', '').lower()])
-                
+
         except Exception as e:
             logger.debug(f"Could not get document count for {collection.collection_id}: {e}")
             return 0
-    
-    async def get_collection_documents(self, collection_id: str, limit: int = 100, offset: int = 0) -> List[DocumentInfo]:
+
+    async def get_collection_documents(self, collection_id: str, limit: int = 100, offset: int = 0) -> list[DocumentInfo]:
         """Get documents from a specific collection"""
         documents = []
-        
+
         try:
             # Find collection URL
             collections = await self.discover_collections()
@@ -725,22 +722,22 @@ class EpsteinFilesDownloader:
                 if coll.collection_id == collection_id:
                     collection_url = coll.url
                     break
-            
+
             if not collection_url:
                 raise ValueError(f"Collection {collection_id} not found")
-            
+
             # Use bulk API if available
             api_url = f"{self.config.govinfo_bulk_api}?collection={collection_id}"
             if offset > 0:
                 api_url += f"&offset={offset}"
             if limit > 0:
                 api_url += f"&limit={limit}"
-            
+
             response = self.session.get(api_url, timeout=self.config.timeout_seconds)
             response.raise_for_status()
-            
+
             data = response.json()
-            
+
             if 'packages' in data:
                 for pkg_data in data['packages']:
                     doc = DocumentInfo(
@@ -759,26 +756,26 @@ class EpsteinFilesDownloader:
                         }
                     )
                     documents.append(doc)
-            
+
             logger.info(f"Found {len(documents)} documents in collection {collection_id}")
             return documents
-            
+
         except Exception as e:
             logger.error(f"Failed to get documents for collection {collection_id}: {e}")
             return []
-    
+
     def run(self):
         """Run the MCP server"""
         import uvicorn
-        
-        logger.info(f"🚀 Starting Epstein Files Downloader MCP Server")
+
+        logger.info("🚀 Starting Epstein Files Downloader MCP Server")
         logger.info(f"📍 Server URL: {self.config.base_url}")
         logger.info(f"📁 Download directory: {self.config.download_dir}")
         logger.info(f"🔗 Max concurrent downloads: {self.config.max_concurrent_downloads}")
-        
+
         # Start background task for download queue
         asyncio.create_task(self._process_download_queue())
-        
+
         # Run FastAPI server
         uvicorn.run(
             self.app,
@@ -787,11 +784,11 @@ class EpsteinFilesDownloader:
             log_level="info",
             access_log=True
         )
-    
+
     async def shutdown(self):
         """Graceful shutdown"""
         logger.info("🛑 Shutting down Epstein Files Downloader MCP Server...")
-        
+
         # Cancel active downloads
         for task_id, task in self.active_tasks.items():
             task.status = "cancelled"
@@ -799,11 +796,11 @@ class EpsteinFilesDownloader:
             task.updated_at = time.time()
             self._complete_task(task)
             logger.info(f"Cancelled download task {task_id}")
-        
+
         # Close HTTP session
         if self.session:
             self.session.close()
-        
+
         logger.info("✅ Server shutdown complete")
 
 
@@ -980,13 +977,13 @@ def main():
         action="store_true",
         help="Enable verbose logging"
     )
-    
+
     args = parser.parse_args()
-    
+
     if args.verbose:
         logger.setLevel(logging.DEBUG)
         logging.getLogger("uvicorn").setLevel(logging.DEBUG)
-    
+
     # Configure server
     config = ServerConfig(
         host=args.host,
@@ -994,19 +991,19 @@ def main():
         download_dir=args.download_dir,
         max_concurrent_downloads=args.max_concurrent
     )
-    
+
     # Create and run server
     server = EpsteinFilesDownloader(config)
-    
+
     # Handle graceful shutdown
     def handle_shutdown(signum, frame):
         logger.info(f"Received signal {signum}, shutting down...")
         asyncio.create_task(server.shutdown())
         sys.exit(0)
-    
+
     signal.signal(signal.SIGINT, handle_shutdown)
     signal.signal(signal.SIGTERM, handle_shutdown)
-    
+
     # Run server
     server.run()
 

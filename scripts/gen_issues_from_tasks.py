@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -32,19 +31,19 @@ def tasks_to_issues(tasks: dict) -> list[dict]:
     for m in tasks.get("milestones", []):
         milestone_id = m.get('id', '').lower()
         milestone_title = m.get('title', '')
-        
+
         for t in m.get("tasks", []):
             task_id = t.get('id', '')
             title = f"task: {t.get('title')}"
-            
+
             # Build body with all available metadata
             body_parts = [t.get('description', '')]
-            
+
             # Add priority if present
             priority = t.get('priority', '')
             if priority:
                 body_parts.append(f"\n**Priority**: {priority}")
-            
+
             # Add tests if present
             tests = t.get('tests', [])
             if tests:
@@ -54,24 +53,24 @@ def tasks_to_issues(tasks: dict) -> list[dict]:
                     expect = test.get('expect', '')
                     body_parts.append(f"- Command: `{cmd}`")
                     body_parts.append(f"  - Expected: {expect}")
-            
+
             # Add milestone and task ID footer
             body_parts.append(f"\n\n---\n**Milestone**: {milestone_title}\n**Task ID**: {task_id}")
-            
+
             body = "\n".join(body_parts)
-            
+
             # Build labels list
             labels = ["task", milestone_id]
-            
+
             # Add custom labels from task if present
             custom_labels = t.get('labels', [])
             if custom_labels:
                 labels.extend(custom_labels)
-            
+
             # Add priority as label if present
             if priority:
                 labels.append(priority.lower())
-            
+
             issues.append({
                 "title": title,
                 "body": body,
@@ -79,7 +78,7 @@ def tasks_to_issues(tasks: dict) -> list[dict]:
                 "milestone_id": milestone_id,
                 "task_id": task_id
             })
-    
+
     return issues
 
 
@@ -92,7 +91,7 @@ def write_outputs(issues: list[dict], md_path: Path, json_path: Path) -> None:
     lines = ["# MASTER_TASKS\n\n"]
     lines.append(f"**Generated**: {Path(json_path).name}\n")
     lines.append(f"**Total Tasks**: {len(issues)}\n\n")
-    
+
     # Group by milestone
     current_milestone = None
     for i in issues:
@@ -100,12 +99,12 @@ def write_outputs(issues: list[dict], md_path: Path, json_path: Path) -> None:
         if milestone != current_milestone:
             lines.append(f"\n## Milestone: {milestone.upper()}\n\n")
             current_milestone = milestone
-        
+
         lines.append(f"### {i['title']}\n\n")
         lines.append(f"{i['body']}\n\n")
         lines.append(f"**Labels**: {', '.join(i['labels'])}\n\n")
         lines.append("---\n\n")
-    
+
     md_path.write_text("".join(lines), encoding="utf-8")
 
 

@@ -62,7 +62,6 @@ import time
 import urllib.parse
 import zipfile
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 import requests
 
@@ -144,7 +143,7 @@ class DownloadResult:
     bytes_downloaded: int = 0
     sha256: str = ""
     extracted_files: int = 0
-    error: Optional[str] = None
+    error: str | None = None
     meta: dict = dataclasses.field(default_factory=dict)
 
 
@@ -184,7 +183,7 @@ def normalize_url(base: str, href: str) -> str:
     return urllib.parse.urljoin(base, href)
 
 
-def which(cmd: str) -> Optional[str]:
+def which(cmd: str) -> str | None:
     return shutil.which(cmd)
 
 
@@ -208,7 +207,7 @@ def http_get_text(sess: requests.Session, url: str, timeout_s: int, max_retries:
     raise RuntimeError(f"Failed to GET {url} after {max_retries} attempts: {last_err}")
 
 
-def head_content_length(sess: requests.Session, url: str, timeout_s: int, log: Log) -> Optional[int]:
+def head_content_length(sess: requests.Session, url: str, timeout_s: int, log: Log) -> int | None:
     try:
         r = sess.head(url, timeout=timeout_s, allow_redirects=True)
         if r.status_code >= 400:
@@ -248,7 +247,7 @@ def download_with_resume(
     for attempt in range(1, max_retries + 1):
         try:
             existing = dest.stat().st_size if dest.exists() else 0
-            headers: Dict[str, str] = {}
+            headers: dict[str, str] = {}
             mode = "ab" if existing > 0 else "wb"
 
             if remote_len is not None and existing == remote_len:
@@ -295,7 +294,7 @@ def download_with_resume(
 # ZIP validation + extraction
 # -----------------------------
 
-def validate_zip(path: Path) -> Tuple[bool, Optional[str]]:
+def validate_zip(path: Path) -> tuple[bool, str | None]:
     try:
         with zipfile.ZipFile(path, "r") as z:
             bad = z.testzip()
@@ -355,13 +354,13 @@ def append_manifest(manifest_path: Path, record: dict) -> None:
 # Source: DOJ Disclosures
 # -----------------------------
 
-def discover_doj_tasks(sess: requests.Session, index_url: str, out_dir: Path, timeout_s: int, max_retries: int, backoff_base_s: float, log: Log) -> List[DownloadTask]:
+def discover_doj_tasks(sess: requests.Session, index_url: str, out_dir: Path, timeout_s: int, max_retries: int, backoff_base_s: float, log: Log) -> list[DownloadTask]:
     """
     Discover DOJ Epstein disclosure datasets.
-    
+
     Supports the January 30, 2026 release with 3.5M+ pages across multiple data sets.
     Auto-discovers Data Set 1-N (including new Data Sets 9, 10, 11+).
-    
+
     Args:
         sess: Requests session
         index_url: DOJ disclosures index URL
@@ -370,7 +369,7 @@ def discover_doj_tasks(sess: requests.Session, index_url: str, out_dir: Path, ti
         max_retries: Maximum retries
         backoff_base_s: Backoff base seconds
         log: Logger instance
-    
+
     Returns:
         List of DownloadTask objects
     """
@@ -386,10 +385,10 @@ def discover_doj_tasks(sess: requests.Session, index_url: str, out_dir: Path, ti
         # Fallback: find any pages with "data-set-N" pattern
         dataset_page_matches = re.findall('href="([^"]*data-set-[0-9]+[^\"]*)"', html, flags=re.IGNORECASE)
         dataset_pages = sorted({normalize_url(index_url, m) for m in dataset_page_matches if "data-set" in m})
-    
+
     log.info(f"DOJ: Found {len(dataset_pages)} potential dataset page(s)")
 
-    tasks: List[DownloadTask] = []
+    tasks: list[DownloadTask] = []
     raw_base = out_dir / DEFAULT_RAW_DIR / "doj_disclosures"
     zips_dir = raw_base / "zips"
     extracted_dir = raw_base / "extracted"
@@ -406,15 +405,15 @@ def discover_doj_tasks(sess: requests.Session, index_url: str, out_dir: Path, ti
             continue
 
         log.info(f"DOJ: Processing Data Set {ds_num:02d} from {page_url}")
-        
+
         try:
             page_html = http_get_text(sess, page_url, timeout_s, max_retries, backoff_base_s, log)
         except Exception as e:
             log.error(f"DOJ: Failed to fetch Data Set {ds_num:02d} page: {e}")
             continue
-        
+
         # Find ZIP download links
-        zip_links = re.findall('href="([^"]+\.zip)"', page_html, flags=re.IGNORECASE)
+        zip_links = re.findall(r'href="([^"]+\.zip)"', page_html, flags=re.IGNORECASE)
         if not zip_links:
             log.warn(f"DOJ: No ZIP link found on dataset page {page_url} (Data Set {ds_num}).")
             log.warn("DOJ: This dataset may use a different format or be unavailable.")
@@ -424,7 +423,7 @@ def discover_doj_tasks(sess: requests.Session, index_url: str, out_dir: Path, ti
         zip_url = normalize_url(page_url, zip_links[0])
         zip_path = zips_dir / f"doj_dataset_{ds_num:02d}.zip"
         ds_extract_dir = extracted_dir / f"dataset_{ds_num:02d}"
-        
+
         log.info(f"DOJ: Data Set {ds_num:02d} → {zip_path.name}")
 
         tasks.append(
@@ -445,7 +444,7 @@ def discover_doj_tasks(sess: requests.Session, index_url: str, out_dir: Path, ti
 
     # Deduplicate tasks by dataset number
     seen: set = set()
-    uniq: List[DownloadTask] = []
+    uniq: list[DownloadTask] = []
     for t in sorted(tasks, key=lambda x: x.meta.get("dataset_num", 9999)):
         dn = t.meta.get("dataset_num")
         if dn in seen:
@@ -455,12 +454,12 @@ def discover_doj_tasks(sess: requests.Session, index_url: str, out_dir: Path, ti
         uniq.append(t)
 
     log.info(f"DOJ: Discovered {len(uniq)} unique dataset ZIP task(s) (Data Sets: {sorted(seen)})")
-    
+
     # Helpful message about the January 2026 release
     if any(ds >= 9 for ds in seen):
         log.info("DOJ: ℹ️  Detected Data Sets from January 30, 2026 release (3.5M+ pages)")
         log.info("DOJ: ℹ️  This release includes videos and images in addition to PDFs")
-    
+
     return uniq
 
 
@@ -468,7 +467,7 @@ def discover_doj_tasks(sess: requests.Session, index_url: str, out_dir: Path, ti
 # Source: FBI Vault
 # -----------------------------
 
-def discover_fbi_vault_tasks(sess: requests.Session, vault_url: str, out_dir: Path, timeout_s: int, max_retries: int, backoff_base_s: float, log: Log) -> List[DownloadTask]:
+def discover_fbi_vault_tasks(sess: requests.Session, vault_url: str, out_dir: Path, timeout_s: int, max_retries: int, backoff_base_s: float, log: Log) -> list[DownloadTask]:
     html = http_get_text(sess, vault_url, timeout_s, max_retries, backoff_base_s, log)
 
     part_links = re.findall('href="([^"]*/Jeffrey%20Epstein%20Part%20[0-9]{2})"', html, flags=re.IGNORECASE)
@@ -478,7 +477,7 @@ def discover_fbi_vault_tasks(sess: requests.Session, vault_url: str, out_dir: Pa
     raw_base = out_dir / DEFAULT_RAW_DIR / "fbi_vault"
     raw_base.mkdir(parents=True, exist_ok=True)
 
-    tasks: List[DownloadTask] = []
+    tasks: list[DownloadTask] = []
     for part_url in parts:
         m = re.search("Part%20([0-9]{2})", part_url)
         if not m:
@@ -502,7 +501,7 @@ def discover_fbi_vault_tasks(sess: requests.Session, vault_url: str, out_dir: Pa
         )
 
     seen = set()
-    uniq: List[DownloadTask] = []
+    uniq: list[DownloadTask] = []
     for t in sorted(tasks, key=lambda x: x.meta.get("part_num", 9999)):
         pn = t.meta.get("part_num")
         if pn in seen:
@@ -518,14 +517,14 @@ def discover_fbi_vault_tasks(sess: requests.Session, vault_url: str, out_dir: Pa
 # Source: House Oversight (Drive + Dropbox)
 # -----------------------------
 
-def extract_house_folder_links(page_html: str, page_url: str) -> List[str]:
+def extract_house_folder_links(page_html: str, page_url: str) -> list[str]:
     links = re.findall('href="([^"]+)"', page_html, flags=re.IGNORECASE)
     abs_links = [normalize_url(page_url, href) for href in links]
     return [u for u in abs_links if ("drive.google.com" in u or "dropbox.com" in u)]
 
 
-def discover_house_oversight_tasks(sess: requests.Session, release_urls: List[str], out_dir: Path, timeout_s: int, max_retries: int, backoff_base_s: float, log: Log) -> List[DownloadTask]:
-    tasks: List[DownloadTask] = []
+def discover_house_oversight_tasks(sess: requests.Session, release_urls: list[str], out_dir: Path, timeout_s: int, max_retries: int, backoff_base_s: float, log: Log) -> list[DownloadTask]:
+    tasks: list[DownloadTask] = []
     raw_base = out_dir / DEFAULT_RAW_DIR / "house_oversight"
 
     for rel_url in release_urls:
@@ -559,7 +558,7 @@ def discover_house_oversight_tasks(sess: requests.Session, release_urls: List[st
                     )
                 )
 
-    uniq: Dict[Tuple[str, str], DownloadTask] = {}
+    uniq: dict[tuple[str, str], DownloadTask] = {}
     for t in tasks:
         key = (t.meta.get("provider", ""), t.meta.get("slug", ""))
         uniq.setdefault(key, t)
@@ -738,7 +737,7 @@ def main() -> int:
 
     sources = {s.strip().lower() for s in args.sources.split(",") if s.strip()}
 
-    tasks: List[DownloadTask] = []
+    tasks: list[DownloadTask] = []
 
     if "doj" in sources:
         tasks.extend(discover_doj_tasks(sess, args.doj_index_url, out_dir, args.timeout, args.retries, args.backoff, log))
@@ -765,7 +764,7 @@ def main() -> int:
     file_tasks = [t for t in tasks if t.kind in ("zip", "pdf")]
     folder_tasks = [t for t in tasks if t.kind == "folder"]
 
-    results: List[DownloadResult] = []
+    results: list[DownloadResult] = []
 
     if file_tasks:
         log.info(f"Executing {len(file_tasks)} file task(s) with max_workers={max(1, args.max_workers)}")
