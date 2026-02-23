@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -13,7 +13,7 @@ class TaskLogger:
 
     def log(self, task_id: str, status: str, details: dict[str, Any] | None = None) -> Path:
         entry = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "task_id": task_id,
             "status": status,
             "details": details or {},
