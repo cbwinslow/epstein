@@ -1,0 +1,44 @@
+{
+  "env": "development",
+  "debug": false,
+  "database": {
+    "postgres_host": "localhost",
+    "postgres_port": 5432,
+    "postgres_user": "analysis",
+    "postgres_password": "analysis",
+    "postgres_db": "analysis",
+    "qdrant_url": "http://localhost:6333",
+    "qdrant_collection": "epstein_documents",
+    "qdrant_vector_size": 384
+  },
+  "mcp": {
+    "host": "0.0.0.0",
+    "port": 8765,
+    "base_url": "http://localhost:8765",
+    "download_dir": "./downloads",
+    "max_concurrent_downloads": 5,
+    "retry_attempts": 3,
+    "retry_delay": 5,
+    "timeout_seconds": 60
+  },
+  "pipeline": {
+    "batch_size": 10,
+    "chunk_size": 512,
+    "chunk_overlap": 50,
+    "max_file_size_mb": 100,
+    "ocr_engine": "tesseract",
+    "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "ner_model": "en_core_web_sm",
+    "supported_formats": ["pdf", "txt", "docx", "png", "jpg", "jpeg", "tiff"]
+  },
+  "agent": {
+    "max_concurrent_tasks": 50,
+    "task_timeout": 3600,
+    "model_name": "gpt-4o-mini"
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "json",
+    "log_dir": "./logs"
+  }
+}
