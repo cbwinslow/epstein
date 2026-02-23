@@ -39,6 +39,12 @@ You are working inside a repository that implements a **provenance-safe document
   - no raw PII,
   - references back to the underlying evidence.
 
+## Conversation Persistence
+- After EVERY task/completion, automatically save the conversation to `.claude/conversations/YYYY-MM-DD.json`
+- Use JSON Lines format (one JSON object per line)
+- Include: timestamp, role, content
+- When user asks, provide `/save`, `/conversations`, `/resume` commands
+
 ## Linting, Formatting & Syntax Rules 🔧
 - All committed Python code must pass project linters and formatters before merging.
   - Use `uv` to install dev tooling and `uv lock` to keep `uv.lock` committed and reproducible.
