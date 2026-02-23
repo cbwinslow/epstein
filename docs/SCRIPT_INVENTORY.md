@@ -70,14 +70,14 @@ python agents/govinfo_downloader.py --report-only
 - Optional TypeScript integration
 **Usage**: `python epstein/epstein_files_download_ocr_ner_pipeline_python_optional_ts.py`
 
-### [`epstein/epstein_files_pipeline.py`](epstein/epstein_files_pipeline.py)
+### [`epstein_files_pipeline.py`](epstein_files_pipeline.py)
 **Purpose**: Core document processing pipeline
 **Functionality**:
 - Document ingestion and preprocessing
 - Text extraction and normalization
 - Metadata extraction
 - Database integration
-**Usage**: `python epstein/epstein_files_pipeline.py`
+**Usage**: `python epstein_files_pipeline.py`
 
 ## Database Management Scripts
 
@@ -231,7 +231,7 @@ python agents/govinfo_downloader.py --report-only
 ### Ingestion Scripts
 - `agents/govinfo_downloader.py` - Primary document downloader
 - `epstein/epstein_files_download_ocr_ner_pipeline_python_optional_ts.py` - Complete pipeline
-- `epstein/epstein_files_pipeline.py` - Core processing pipeline
+- `epstein_files_pipeline.py` - Core processing pipeline
 
 ### Database Scripts
 - `db/migrate.py` - Migration management

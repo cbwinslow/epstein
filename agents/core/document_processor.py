@@ -4,7 +4,7 @@ Epstein Files Project - Consolidated Document Processor Agent
 
 Unified document processing agent that consolidates functionality from:
 - agents/epstein_data_processor.py
-- epstein/epstein_files_pipeline.py
+- epstein_files_pipeline.py
 
 This agent provides a unified interface for document processing while
 maintaining compatibility with the existing agent architecture.

@@ -9,7 +9,7 @@ This document outlines the analysis and consolidation plan for eliminating dupli
 ### 1. **Agent Duplication**
 
 #### **Identified Duplications:**
-- **`agents/epstein_data_processor.py`** vs **`epstein/epstein_files_pipeline.py`**
+- **`agents/epstein_data_processor.py`** vs **`epstein_files_pipeline.py`**
 - **`agents/govinfo_downloader.py`** vs **`mcp_servers/epstein_files_downloader/server.py`**
 - **`agents/telemetry.py`** vs **`epstein/telemetry.py`**
 - **`agents/vector_db_analyzer.py`** vs **`epstein/qdrant_*.py` scripts**
@@ -23,7 +23,7 @@ This document outlines the analysis and consolidation plan for eliminating dupli
 
 #### **Consolidation Strategy:**
 ```
-Primary Implementation: epstein/epstein_files_pipeline.py
+Primary Implementation: epstein_files_pipeline.py
 Agent Interface: agents/epstein_data_processor.py (as agent wrapper)
 MCP Server: mcp_servers/epstein_files_downloader/server.py (primary)
 Agent Interface: agents/govinfo_downloader.py (as agent wrapper)
@@ -74,7 +74,7 @@ Remove: epstein/pyproject.toml (duplicate)
 
 #### **Identified Duplications:**
 - **`scripts/cbw_bootstrap_project_ubuntu.sh`** vs **`scripts/setup_requirements.py`**
-- **`scripts/ingestion_pipeline.py`** vs **`epstein/epstein_files_pipeline.py`**
+- **`scripts/ingestion_pipeline.py`** vs **`epstein_files_pipeline.py`**
 - **`scripts/doctor.py`** vs **`cbw_epstein_doctor.py`**
 
 #### **Analysis:**
@@ -85,7 +85,7 @@ Remove: epstein/pyproject.toml (duplicate)
 #### **Consolidation Strategy:**
 ```
 Setup: scripts/setup_requirements.py (comprehensive Python solution)
-Ingestion: epstein/epstein_files_pipeline.py (primary)
+Ingestion: epstein_files_pipeline.py (primary)
 Agent Interface: scripts/ingestion_pipeline.py (agent wrapper)
 Health Check: scripts/doctor.py (primary)
 Remove: cbw_epstein_doctor.py (duplicate)
