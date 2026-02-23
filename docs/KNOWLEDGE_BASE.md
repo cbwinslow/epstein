@@ -1,109 +1,238 @@
-# Epstein Project - Knowledge Base
+# Epstein Project - Comprehensive Knowledge Base
 
-## Quick Reference
+> **AI Agent Context**: Read this file first. It contains everything you need to work on this project.
 
-**Project**: OpenDiscourse - provenance-safe document analysis pipeline for governance data  
-**Status**: Active development  
-**Branch**: `main` (default)  
-**Data Processed**: 14,676 documents, ~14.6 GB
+## Quick Start
 
----
+```bash
+# Setup
+uv sync
 
-## Essential Context
+# Run pipeline
+make bootstrap          # Start DBs
+make pipeline-run       # Run ingestion
+make db-load           # Load to Postgres
 
-### Core Principles
-- **Accuracy, traceability, auditability > speed**
-- Documents are immutable, metadata evolves
-- Every claim needs evidence trail: `doc_id (sha256) → source URL → artifact paths → offsets → extracted text`
-- Prefer idempotent operations
-
-### Key Files (Reference These)
-| Document | Purpose |
-|----------|---------|
-| `docs/RULES.md` | Rules of engagement, coding standards |
-| `TASKS.md` | Current task list with priorities |
-| `docs/KNOWLEDGE_BASE.md` | This file - always reference first |
-| `docs/ARCHITECTURE.md` | Logical layers, data flow |
-| `docs/AGENTS_AND_TOOLS.md` | Agent implementations, tool definitions |
-| `docs/PROJECT_SUMMARY.md` | High-level overview, current phase |
+# Development
+uv run pre-commit run --all-files  # Lint & format
+uv run pytest                          # Run tests
+```
 
 ---
 
-## Current Priorities (from TASKS.md)
+## Project Overview
 
-### 🔴 Critical
-1. **TASK-001**: Fix Rich Dashboard Hanging Issue
-2. **TASK-002**: Add PYTHONPATH Configuration  
-3. **TASK-003**: Create Installation Script for OCR Dependencies
-
-### 🟡 Important
-4. **TASK-004**: Add Example Configuration Files
-5. **TASK-005**: Create Real-World Usage Examples
-6. **TASK-006**: Enhance Validation Script
-7. **TASK-007**: Add CI/CD GitHub Actions Workflow
+**Project**: Epstein Files Document Analysis Pipeline  
+**Purpose**: Provenance-safe document analysis for government releases (DOJ, FBI, House Oversight)  
+**Data**: 14,676 documents, ~14.6 GB processed  
+**Python**: 3.10+ (managed via `.python-version` and `pyproject.toml`)
 
 ---
 
-## Tech Stack
+## Core Principles (Non-Negotiable)
 
-- **Database**: PostgreSQL (primary metadata store)
-- **Vector DB**: Qdrant (embeddings, semantic search)
-- **OCR**: Tesseract
-- **NER**: spaCy (en_core_web_sm)
-- **Embeddings**: text-embedding-ada-002
-- **Language**: Python 3
-- **Package Manager**: uv
-- **CLI**: rich, textual
+1. **Accuracy, traceability, auditability > speed**
+2. **Documents are immutable, metadata evolves**
+3. Every claim needs evidence: `doc_id (sha256) → source URL → artifact paths → offsets → text`
+4. Prefer idempotent operations
+5. Never "invent" findings
+
+---
+
+## File Structure
+
+```
+/                    # Root - main code and scripts
+├── agents/          # AI agent implementations
+├── bin/             # Executable scripts
+├── config/          # Configuration files
+├── db/              # Database migrations & schema
+├── docs/            # Documentation (66 files)
+├── epstein/         # Core pipeline code
+├── examples/        # Usage examples
+├── lib/             # Shared libraries
+├── mcp_servers/     # MCP server implementations
+├── projects/        # Sub-projects
+├── rulebook_packs/  # rulebook-ai packs
+├── schemas/         # JSON schemas
+├── scripts/         # Utility scripts
+├── tasks/           # Task definitions (YAML)
+├── tests/           # Test suite
+├── tools/           # CLI tools
+└── vector-stack/    # Qdrant Docker setup
+```
+
+**Important Paths**:
+- `docs/RULES.md` - Project rules (append-only)
+- `docs/KNOWLEDGE_BASE.md` - This file
+- `TASKS.md` - Current task list
+- `.claude/conversations/` - Conversation logs
+
+---
+
+## Key Components
+
+### Agents (in `agents/`)
+
+| Agent | Purpose |
+|-------|---------|
+| `document_analysis_agent.py` | OCR, text extraction, classification |
+| `epstein_data_processor.py` | Bulk document processing |
+| `entity_extraction_agent.py` | NER, relationship extraction |
+| `vector_db_analyzer.py` | Vector similarity search |
+| `multi_agent_orchestrator.py` | Task coordination |
+| `pipeline_monitor.py` | Health & performance monitoring |
+| `govinfo_downloader.py` | Government API downloads |
+
+### Core Modules (in `epstein/`)
+
+| Module | Purpose |
+|--------|---------|
+| `download_manager.py` | File downloads |
+| `file_organizer.py` | File organization |
+| `ocr_processor.py` | OCR processing |
+| `operation_monitor.py` | Pipeline monitoring |
+| `telemetry.py` | OpenTelemetry instrumentation |
+| `epstein_files_pipeline.py` | Main pipeline |
+
+### MCP Servers (in `mcp_servers/`)
+
+- `epstein_files_downloader/` - Document download API
+- `epstein_comprehensive/` - Full pipeline MCP
+
+---
+
+## Configuration
+
+### Environment Variables
+
+```bash
+# Database
+EPSTEIN_DSN=postgresql://user:pass@localhost:5432/db
+
+# Vector DB  
+QDRANT_URL=http://localhost:6333
+
+# OpenTelemetry (optional)
+OTEL_ENABLED=true
+OTEL_EXPORTER_OTLP_ENDPOINT=localhost:4317
+```
+
+### Config Files
+
+- `config/agent_config.json` - Agent settings
+- `pyproject.toml` - Python dependencies & tool config
 
 ---
 
 ## Commands
 
+### Make Targets
+
 ```bash
-# Infrastructure
-make bootstrap           # Start Postgres + Qdrant
-make down              # Stop services
+make bootstrap       # Start Postgres + Qdrant
+make down           # Stop services
+make pipeline-init  # Initialize config
+make pipeline-run   # Run full ingestion
+make db-load       # Load to Postgres
+make embed         # Generate embeddings
+make doctor        # Run diagnostics
+```
 
-# Pipeline
-make pipeline-init     # Initialize config
-make pipeline-run     # Run full ingestion
-make db-load          # Load to Postgres
-make embed            # Generate embeddings
+### Development
 
-# Development
-uv run pre-commit run --all-files  # Lint & format
-uv run ruff check .                # Quick lint
-uv run pytest                      # Run tests
+```bash
+uv sync             # Install dependencies
+uv run pytest      # Run tests
+uv run ruff check .    # Lint
+uv run mypy epstein/   # Type check
+uv run pre-commit run --all-files  # Full check
 ```
 
 ---
 
 ## Coding Standards
 
-- **Format**: black (100 char line length), isort --profile black
-- **Lint**: ruff --fix
+- **Format**: black (100 char), isort
+- **Lint**: ruff
 - **Type**: mypy
 - **Test**: pytest
 - **Commit only after**: lint + typecheck pass
 
 ---
 
-## Conversation Log
+## Rules (from docs/RULES.md)
 
-- **Location**: `.claude/conversations/YYYY-MM-DD.json`
-- **Format**: JSON Lines (one entry per line)
-- **Commands**: `/save`, `/conversations`, `/resume`
+### Must Follow
+
+- Run everything through `make` when possible
+- Use `uv` for package management
+- Add docstrings to all functions
+- Log all operations
+- Never commit secrets
+
+### Append-Only Files
+
+- `docs/RULES.md`
+- `knowledge_base/agents.md`
 
 ---
 
-## Notes
+## Current Tasks
 
-- This is a long-lived research platform for governance data
-- Designed for AI-assisted exploration without hallucination
-- Safe exports go to `epstein_artifacts/safe_exports/`
-- All pipeline steps must produce run records and failures records
+See `TASKS.md` for full list. Key priorities:
+
+### Critical
+1. Fix Rich Dashboard hanging (TASK-001)
+2. Add PYTHONPATH configuration (TASK-002)
+3. Create OCR dependency install script (TASK-003)
+
+### Important
+4. Add example configuration files (TASK-004)
+5. Create usage examples (TASK-005)
+6. Enhance validation script (TASK-006)
+7. Add CI/CD workflow (TASK-007)
+
+---
+
+## Error Handling
+
+All scripts must:
+- Log at appropriate levels (DEBUG, INFO, WARNING, ERROR)
+- Provide actionable error messages
+- Include context in errors (file, line, operation)
+- Use try/except with specific exceptions
+- Exit with appropriate codes
+
+---
+
+## Monitoring & Logging
+
+- **Logging**: loguru (configured in each module)
+- **Metrics**: OpenTelemetry (see `epstein/telemetry.py`)
+- **Tracing**: OTLP export supported
+- **Dashboard**: Rich-based TUI in `tools/mission_control/`
+
+---
+
+## Security
+
+- Never commit secrets
+- Use `.env` files (gitignored)
+- Pin dependency versions
+- Run security scans regularly
+
+---
+
+## Knowledge Base Maintenance
+
+When making changes:
+1. Update relevant docs
+2. Add to CHANGELOG.md
+3. Update TASKS.md if adding tasks
+4. Run lint/tests before commit
 
 ---
 
 *Last updated: 2026-02-23*
-*This document should be updated whenever significant context changes.*
+*Read this file first when starting work on the project.*

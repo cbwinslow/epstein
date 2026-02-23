@@ -14,6 +14,13 @@
 **Issue:** Dashboard causes hang when enabled  
 **Impact:** Cannot use optional dashboard feature  
 
+**Microgoals (Do one at a time):**
+1. [ ] Read `epstein/operation_monitor.py` lines 450-475
+2. [ ] Identify what's causing the hang
+3. [ ] Add timeout to Live context manager
+4. [ ] Add try/except around dashboard thread
+5. [ ] Test with enable_dashboard=True
+
 **Steps to Fix:**
 1. Review `epstein/operation_monitor.py` lines 450-475 (dashboard_loop function)
 2. Add timeout mechanism to Live context manager
@@ -61,6 +68,12 @@ print('Dashboard test passed')
 **Issue:** Modules require PYTHONPATH to be set  
 **Impact:** Users cannot run scripts without setup  
 
+**Microgoals:**
+1. [ ] Create scripts/setup_environment.sh
+2. [ ] Add PYTHONPATH export
+3. [ ] Update docs/AUTOMATION_QUICK_START.md
+4. [ ] Test the script
+
 **Steps to Fix:**
 1. Create `setup_environment.sh` script
 2. Add PYTHONPATH export to script
@@ -106,6 +119,13 @@ python -c "from epstein.download_manager import DownloadManager; print('✓ Impo
 **Component:** OCR Processor  
 **Issue:** OCR dependencies not installed  
 **Impact:** OCR features cannot be used  
+
+**Microgoals:**
+1. [ ] Create scripts/install_ocr_deps.sh
+2. [ ] Add Ubuntu/Debian support
+3. [ ] Add macOS support
+4. [ ] Add verification step
+5. [ ] Test on Ubuntu
 
 **Steps to Fix:**
 1. Create `scripts/install_ocr_deps.sh`
@@ -571,5 +591,49 @@ sudo apt-get install tesseract-ocr ocrmypdf ghostscript qpdf
 ---
 
 **Last Updated:** 2026-02-23  
-**Total Tasks:** 10 (3 Critical, 4 Important, 3 Nice to Have)  
-**Completion:** 0% (0/10 complete)
+**Total Tasks:** 12 (5 Critical, 4 Important, 3 Nice to Have)  
+**Completion:** 0% (0/12 complete)
+
+---
+
+## 🔴 Critical: Security Vulnerabilities (GitHub Reported)
+
+### TASK-011: Fix GitHub-Detected Vulnerabilities
+**Status:** 🔴 Open  
+**Component:** Dependencies  
+**Issue:** 12 vulnerabilities (3 high, 5 moderate, 4 low) detected by GitHub  
+**Impact:** Security risks in dependencies  
+
+**Microgoals:**
+1. [ ] Check GitHub Security tab for details
+2. [ ] Run uv pip list --outdated
+3. [ ] Update high-severity packages
+4. [ ] Update moderate-severity packages
+5. [ ] Run tests to verify
+6. [ ] Commit uv.lock
+
+**Steps:**
+1. Run `uv pip list --outdated` to check outdated packages
+2. Check GitHub Security tab for specific vulnerabilities
+3. Update vulnerable packages via `uv add --upgrade <package>`
+4. Run tests to ensure nothing breaks
+5. Commit updated lock file
+
+**Vulnerability Categories (typical):**
+- Check `requests` version (CVE considerations)
+- Check `beautifulsoup4` / `lxml` versions
+- Check `aiohttp` version
+- Check `fastapi` / `uvicorn` versions
+- Check `spacy` version
+
+**Test Command:**
+```bash
+uv pip list --outdated
+# Check Security tab: https://github.com/cbwinslow/epstein/security/dependabot
+```
+
+**Acceptance Criteria:**
+- [ ] All high-severity vulnerabilities fixed
+- [ ] All moderate-severity vulnerabilities fixed
+- [ ] Tests pass after updates
+- [ ] uv.lock updated and committed

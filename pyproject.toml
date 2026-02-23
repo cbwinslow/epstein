@@ -25,11 +25,8 @@ dependencies = [
   "rich>=14.2.0",
 ]
 
-[tool.uv]
-# Development dependencies (uv will install these into the dev venv when bootstrapping)
-# Note: `tool.uv.dev-dependencies` is deprecated in newer uv versions; consider
-# migrating to `dependency-groups.dev` when updating project tooling.
-dev-dependencies = [
+[dependency-groups]
+dev = [
   "ruff>=0.6",
   "mypy>=1.11",
   "pytest>=7.0",
