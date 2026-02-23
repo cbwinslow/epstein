@@ -1,0 +1,137 @@
+{
+  "name": "Epstein Files Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://mcp-server:8765/collections",
+        "options": {}
+      },
+      "id": "discover-collections",
+      "name": "Discover Collections",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "batchSize": 10,
+        "options": {}
+      },
+      "id": "download-files",
+      "name": "Download Files",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "command": "python epstein_files_pipeline.py run --config config.json",
+        "options": {
+          "execTimeout": 3600000
+        }
+      },
+      "id": "run-ocr-pipeline",
+      "name": "Run OCR Pipeline",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://qdrant:6333/collections/documents/points/search",
+        "options": {}
+      },
+      "id": "verify-vectors",
+      "name": "Verify Vectors",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "channel": "email",
+        "subject": "Epstein Pipeline Complete",
+        "body": "Pipeline completed. {{$json.count}} documents processed."
+      },
+      "id": "notify-complete",
+      "name": "Notify Complete",
+      "type": "n8n-nodes-base.notify",
+      "typeVersion": 1,
+      "position": [1250, 300]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Discover Collections",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Discover Collections": {
+      "main": [
+        [
+          {
+            "node": "Download Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Files": {
+      "main": [
+        [
+          {
+            "node": "Run OCR Pipeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run OCR Pipeline": {
+      "main": [
+        [
+          {
+            "node": "Verify Vectors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Vectors": {
+      "main": [
+        [
+          {
+            "node": "Notify Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
