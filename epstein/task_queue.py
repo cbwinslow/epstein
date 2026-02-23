@@ -222,12 +222,6 @@ class TaskQueue:
         )
     """
 
-    SQL_CREATE_INDEXES = """
-        CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
-        CREATE INDEX IF NOT EXISTS idx_tasks_priority ON tasks(priority DESC);
-        CREATE INDEX IF NOT EXISTS idx_processed_type ON processed_items(item_type);
-    """
-
     def __init__(self, db_path: str = "./data/task_queue.db") -> None:
         """
         Initialize the task queue.
@@ -287,7 +281,12 @@ class TaskQueue:
             cursor = conn.cursor()
             cursor.execute(self.SQL_CREATE_TASKS_TABLE)
             cursor.execute(self.SQL_CREATE_PROCESSED_TABLE)
-            cursor.execute(self.SQL_CREATE_INDEXES)
+            # Execute each index separately
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_tasks_priority ON tasks(priority DESC)")
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_processed_type ON processed_items(item_type)"
+            )
 
     def add_task(
         self,
