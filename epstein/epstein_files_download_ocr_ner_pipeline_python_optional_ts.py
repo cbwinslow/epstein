@@ -453,11 +453,34 @@ def load_spacy(model_name: str):
     import spacy
 
     try:
-        return spacy.load(model_name)
+        nlp = spacy.load(model_name)
     except Exception as e:
         raise RuntimeError(
             f"spaCy model '{model_name}' not available. Install via: python -m spacy download {model_name}\nError: {e}"
         )
+
+    # Add custom entity ruler for additional entity types
+    ruler = nlp.add_pipe("entity_ruler", before="ner")
+
+    # Define patterns for custom entities
+    patterns = [
+        # FLIGHT_NUMBER: e.g., AA123, BA456
+        {"label": "FLIGHT_NUMBER", "pattern": [{"TEXT": {"REGEX": r"\b[A-Z]{2}\d{3,4}\b"}}]},
+        # AIRCRAFT: e.g., Boeing 747, Airbus A320
+        {"label": "AIRCRAFT", "pattern": [{"LOWER": "boeing"}, {"IS_DIGIT": True}]},
+        {"label": "AIRCRAFT", "pattern": [{"LOWER": "airbus"}, {"TEXT": {"REGEX": r"A\d{3}"}}]},
+        {"label": "AIRCRAFT", "pattern": [{"LOWER": "cessna"}, {"IS_DIGIT": True}]},
+        # FINANCIAL_INSTITUTION: e.g., Bank of America, JPMorgan Chase
+        {"label": "FINANCIAL_INSTITUTION", "pattern": [{"LOWER": "bank"}, {"LOWER": "of"}, {"LOWER": "america"}]},
+        {"label": "FINANCIAL_INSTITUTION", "pattern": [{"LOWER": "jpmorgan"}, {"LOWER": "chase"}]},
+        {"label": "FINANCIAL_INSTITUTION", "pattern": [{"LOWER": "wells"}, {"LOWER": "fargo"}]},
+        {"label": "FINANCIAL_INSTITUTION", "pattern": [{"LOWER": "citibank"}]},
+        {"label": "FINANCIAL_INSTITUTION", "pattern": [{"LOWER": "goldman"}, {"LOWER": "sachs"}]},
+    ]
+
+    ruler.add_patterns(patterns)
+
+    return nlp
 
 
 def ner_on_chunks(nlp, chunks: List[str]) -> Dict[str, int]:
