@@ -231,9 +231,54 @@ All agents communicate via the **Model Context Protocol (MCP)**, ensuring standa
 
 **Related Documentation**: [Pipeline Monitor Details](knowledge_base/agents/orchestration/pipeline_monitor.md)
 
+### 9. Supervisor Agent
+**File**: `supervisor_agent.py`  
+**Category**: Orchestration & Monitoring  
+**Primary Function**: Long-running AI agent coordinator with task queue management
+
+**Key Capabilities**:
+- Task queue with SQLite persistence
+- Multi-worker background processing
+- Pause/Resume/Stop controls
+- AI model interface (Ollama/OpenRouter)
+- Analysis history tracking
+- Deduplication management
+
+**Dependencies**:
+- SQLite
+- Ollama or OpenRouter API
+- Task queue system
+
+**Configuration**:
+```python
+{
+    "model": "ollama:mistral",
+    "db_path": "./data/epstein.db",
+    "log_path": "./logs",
+    "num_workers": 2,
+    "max_retries": 3
+}
+```
+
+**Usage**:
+```bash
+# Start supervisor
+python -m epstein.supervisor_agent --workers 2 --model ollama:mistral
+
+# Interactive mode
+python -m epstein.supervisor_agent --interactive
+
+# Commands:
+# > analyze Who did Epstein meet in 2001?
+# > status
+# > pause
+# > resume
+# > stop
+```
+
 ## Specialized Utility Agents
 
-### 8. Government Information Downloader
+### 10. Government Information Downloader
 **File**: `agents/govinfo_downloader.py`  
 **Category**: Specialized Utility  
 **Primary Function**: Download and process government information from various sources
@@ -263,6 +308,23 @@ All agents communicate via the **Model Context Protocol (MCP)**, ensuring standa
 **Related Documentation**: [GovInfo Downloader Details](knowledge_base/agents/specialized/govinfo_downloader.md)
 
 ## Agent Interactions and Workflows
+
+### Complete Document Analysis Workflow
+
+```mermaid
+graph TD
+    A[GovInfo Downloader/MCP] --> B[Supervisor Agent]
+    B --> C[Task Queue]
+    C --> D[Document Analysis Agent]
+    D --> E[Entity Extraction Agent]
+    E --> F[RAG Ingestor]
+    F --> G[Qdrant Vector DB]
+    G --> H[Analysis Agent]
+    H --> I[Results]
+    
+    J[Pipeline Monitor] --> C
+    K[DB Troubleshooter] --> G
+```
 
 ### Typical Document Processing Workflow
 

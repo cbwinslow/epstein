@@ -1,10 +1,10 @@
 # Tasks — Epstein Files Pipeline
 
-*Last Updated: 2026-01-02T11:05:13.777Z*
+*Last Updated: 2026-02-23*
 
 ## Master Task Status Summary
 
-**Overall Progress: 15/19 tasks completed (79%)**
+**Overall Progress: 18/23 tasks completed (78%)**
 
 ### Milestone M0: Pre-flight & Architecture ✅ COMPLETE
 - [x] Verify repo hygiene
@@ -12,27 +12,37 @@
 
 ### Milestone M1: Infrastructure Bootstrap ⚠️ MOSTLY COMPLETE
 - [x] Bring up Postgres + Qdrant
-- [ ] Validate schema exists (M1-T02) - **REQUIRES ATTENTION**
+- [x] Validate schema exists (M1-T02)
 
 ### Milestone M2: Config & Demo Proof ⚠️ IN PROGRESS
-- [ ] Run offline demo end-to-end (M2-T01) - **NEEDS VALIDATION**
-- [ ] Search returns results (M2-T02) - **PENDING**
+- [x] Run offline demo end-to-end (M2-T01)
+- [x] Search returns results (M2-T02)
 
 ### Milestone M3: Real Ingestion (Controlled) ✅ SUBSTANTIALLY COMPLETE
 - [x] Curate seed URLs and allowlist
 - [x] Pipeline run on real sources
-- [ ] Load to Postgres and verify counts (M3-T03) - **NEEDS TESTING**
+- [x] Load to Postgres and verify counts (M3-T03)
 
-### Milestone M4: Analysis & Relationship Mining ❌ NOT STARTED
-- [ ] Establish query playbook (M4-T01) - **NEXT MAJOR MILESTONE**
-- [ ] Produce 10 evidence-bound findings (M4-T02) - **PENDING**
+### Milestone M4: Analysis & Relationship Mining ⚠️ IN PROGRESS
+- [x] Establish query playbook (M4-T01) - **AI Analysis System Added**
+- [x] RAG database setup (M4-T02) - **Qdrant + Supervisor Agent**
+- [x] Entity extraction pipeline (M4-T03) - **NER + AI Agents**
+- [ ] Produce 10 evidence-bound findings (M4-T04) - **PENDING**
 
 ### Milestone M5: Mission Control & Observability ✅ MOSTLY COMPLETE
 - [x] Design Mission Control
 - [x] Implement TUI PoC
 - [x] Add OpenTelemetry instrumentation
-- [ ] Tests & CI for Mission Control (M5-T04) - **NEEDS IMPLEMENTATION**
+- [x] Tests & CI for Mission Control (M5-T04)
 - [x] Add issue generator + create GitHub issues
+
+### Milestone M6: AI Agent System ✅ COMPLETE (NEW)
+- [x] Task queue with SQLite persistence (M6-T01)
+- [x] Deduplication system (M6-T02)
+- [x] Supervisor Agent with Ollama/OpenRouter (M6-T03)
+- [x] RAG Ingestor for document vector storage (M6-T04)
+- [x] Multi-worker background processing (M6-T05)
+- [x] Help system and walkthrough (M6-T06)
 
 ## Critical Issues Requiring Immediate Attention
 
