@@ -45,8 +45,9 @@ db-load:
 
 .PHONY: lint
 lint:
-	@$(COMPOSE) -f $(COMPOSE_FILE) --profile pipeline run --rm pipeline -m ruff check .
-	@$(COMPOSE) -f $(COMPOSE_FILE) --profile pipeline run --rm pipeline -m mypy epstein_files_pipeline.py db_ingest_artifacts.py || true
+	@echo "Running lint and type checks..."
+	@uv run ruff check .
+	@uv run mypy . || true
 
 .PHONY: verify-bundles
 verify-bundles:
@@ -82,14 +83,6 @@ format:
 check-lock:
 	@echo "Verifying uv.lock exists"
 	@test -f uv.lock || (echo "uv.lock is missing. Run 'uv lock' and commit it." && exit 1)
-
-# Enhance lint to use UV-managed tooling
-.PHONY: lint
-lint:
-	@echo "Running lint and type checks"
-	@uv run ruff check .
-	@uv run mypy . || true
-	@uv run pre-commit run --all-files || true
 
 .PHONY: test-coverage
 test-coverage:
