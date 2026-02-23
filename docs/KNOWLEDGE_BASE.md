@@ -3,7 +3,8 @@
 ## Quick Reference
 
 **Project**: OpenDiscourse - provenance-safe document analysis pipeline for governance data  
-**Status**: 79% Complete (15/19 milestone tasks)  
+**Status**: Active development  
+**Branch**: `main` (default)  
 **Data Processed**: 14,676 documents, ~14.6 GB
 
 ---
@@ -20,38 +21,26 @@
 | Document | Purpose |
 |----------|---------|
 | `docs/RULES.md` | Rules of engagement, coding standards |
-| `docs/TASKS.md` | Master task list with milestone progress |
+| `TASKS.md` | Current task list with priorities |
+| `docs/KNOWLEDGE_BASE.md` | This file - always reference first |
 | `docs/ARCHITECTURE.md` | Logical layers, data flow |
 | `docs/AGENTS_AND_TOOLS.md` | Agent implementations, tool definitions |
 | `docs/PROJECT_SUMMARY.md` | High-level overview, current phase |
-| `issues.json` | GitHub issue templates |
 
 ---
 
 ## Current Priorities (from TASKS.md)
 
-### P0 - Must Fix
-1. **Issue #52**: Database schema validation (M1-T02)
-2. **Issue #53**: Test suite implementation (M5-T04)
+### 🔴 Critical
+1. **TASK-001**: Fix Rich Dashboard Hanging Issue
+2. **TASK-002**: Add PYTHONPATH Configuration  
+3. **TASK-003**: Create Installation Script for OCR Dependencies
 
-### P1 - Important
-3. **Issue #54**: Search functionality validation (M2-T02)
-4. **Issue #55**: Database loading verification (M3-T03)
-5. **Issue #56**: Establish query playbook (M4-T01)
-6. **Issue #57**: Produce 10 evidence-bound findings (M4-T02)
-
----
-
-## Completed Milestones
-
-| Milestone | Status | Notes |
-|-----------|--------|-------|
-| M0 - Pre-flight & Architecture | 2/2 ✅ | Repo hygiene, doctor checks |
-| M1 - Infrastructure Bootstrap | 1/2 ✅ | Postgres + Qdrant up |
-| M2 - Config & Demo Proof | 1/2 ✅ | Offline demo runs |
-| M3 - Real Ingestion | 2/3 ✅ | Seed URLs, pipeline run |
-| M4 - Analysis & Relationship Mining | 0/2 ❌ | Not started |
-| M5 - Mission Control & Observability | 4/5 ✅ | TUI, telemetry, issue generator |
+### 🟡 Important
+4. **TASK-004**: Add Example Configuration Files
+5. **TASK-005**: Create Real-World Usage Examples
+6. **TASK-006**: Enhance Validation Script
+7. **TASK-007**: Add CI/CD GitHub Actions Workflow
 
 ---
 
@@ -72,18 +61,19 @@
 
 ```bash
 # Infrastructure
-make vectordb-up      # Start Postgres + Qdrant
-make vectordb-down   # Stop services
+make bootstrap           # Start Postgres + Qdrant
+make down              # Stop services
 
 # Pipeline
-make pipeline-run    # Run full ingestion
-make db-load         # Load to Postgres
-make embed           # Generate embeddings
-make search Q="..."  # Semantic search
+make pipeline-init     # Initialize config
+make pipeline-run     # Run full ingestion
+make db-load          # Load to Postgres
+make embed            # Generate embeddings
 
 # Development
 uv run pre-commit run --all-files  # Lint & format
-uv run pytest                           # Run tests
+uv run ruff check .                # Quick lint
+uv run pytest                      # Run tests
 ```
 
 ---
