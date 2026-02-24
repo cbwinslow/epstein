@@ -31,11 +31,50 @@ dev = [
   "mypy>=1.11",
   "pytest>=7.0",
   "pytest-mock>=3.11",
+  "pytest-cov>=4.1",
+  "pytest-asyncio>=0.21",
   "PyYAML>=6.0",
   "coverage>=6.5",
   "black>=24.1",
   "pre-commit>=3.4",
+  "pdfplumber>=0.10",
+  "pytesseract>=0.3",
+  "psycopg2-binary>=2.9",
+  "qdrant-client>=1.9",
 ]
+
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --strict-markers"
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["epstein", "agents", "lib", "tools"]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/__pycache__/*",
+    "*/.venv/*",
+    "*/epstein/.venv/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
+precision = 2
+show_missing = true
 
 
 [tool.ruff]
