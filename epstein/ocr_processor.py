@@ -15,7 +15,7 @@ import subprocess
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 
@@ -47,7 +47,7 @@ class OCRQuality(Enum):
 @dataclass
 class OCRMetrics:
     """Metrics for OCR processing"""
-    start_time: datetime = field(default_factory=lambda: datetime.now(UTC))
+    start_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     end_time: datetime | None = None
     duration_seconds: float = 0.0
     pages_processed: int = 0
@@ -346,7 +346,7 @@ class OCRProcessor:
             return False, f"Task {task_id} not found"
 
         task.status = OCRStatus.IN_PROGRESS
-        task.metrics.start_time = datetime.now(UTC)
+        task.metrics.start_time = datetime.now(timezone.utc)
 
         try:
             # Check if output already exists
@@ -422,7 +422,7 @@ class OCRProcessor:
             task.metrics.text_extracted_words = len(text.split())
             task.metrics.confidence_score = confidence
             task.metrics.quality_assessment = quality
-            task.metrics.end_time = datetime.now(UTC)
+            task.metrics.end_time = datetime.now(timezone.utc)
             task.metrics.update_duration()
 
             # Check quality threshold
@@ -587,7 +587,7 @@ class OCRProcessor:
         """Save task metrics to file"""
         try:
             record = {
-                "timestamp": datetime.now(UTC).isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "task": task.to_dict()
             }
 
@@ -601,7 +601,7 @@ class OCRProcessor:
         stats = self.get_statistics()
 
         report = {
-            "generated_at": datetime.now(UTC).isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "statistics": stats,
             "tasks": {tid: task.to_dict() for tid, task in self.tasks.items()},
         }

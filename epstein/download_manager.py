@@ -15,7 +15,7 @@ import logging
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 
@@ -61,7 +61,7 @@ class DownloadSource(Enum):
 @dataclass
 class DownloadMetrics:
     """Metrics for a download operation"""
-    start_time: datetime = field(default_factory=lambda: datetime.now(UTC))
+    start_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     end_time: datetime | None = None
     bytes_downloaded: int = 0
     total_bytes: int | None = None
@@ -72,7 +72,7 @@ class DownloadMetrics:
     @property
     def duration_seconds(self) -> float:
         """Calculate duration in seconds"""
-        end = self.end_time or datetime.now(UTC)
+        end = self.end_time or datetime.now(timezone.utc)
         return (end - self.start_time).total_seconds()
 
     @property
@@ -261,7 +261,7 @@ class DownloadManager:
             return False, f"Task {task_id} not found"
 
         task.status = DownloadStatus.IN_PROGRESS
-        task.metrics.start_time = datetime.now(UTC)
+        task.metrics.start_time = datetime.now(timezone.utc)
 
         session = self._get_session()
 
@@ -286,7 +286,7 @@ class DownloadManager:
                 logger.info(f"File already downloaded: {task.name}")
                 task.status = DownloadStatus.COMPLETED
                 task.metrics.bytes_downloaded = existing_size
-                task.metrics.end_time = datetime.now(UTC)
+                task.metrics.end_time = datetime.now(timezone.utc)
                 self._save_to_manifest(task)
                 return True, None
 
@@ -350,7 +350,7 @@ class DownloadManager:
                     error = f"Checksum mismatch: expected {task.checksum}, got {calculated_checksum}"
                     logger.error(error)
                     task.status = DownloadStatus.FAILED
-                    task.metrics.end_time = datetime.now(UTC)
+                    task.metrics.end_time = datetime.now(timezone.utc)
                     return False, error
 
             # Calculate checksum if not provided
@@ -362,7 +362,7 @@ class DownloadManager:
 
             # Mark as completed
             task.status = DownloadStatus.COMPLETED
-            task.metrics.end_time = datetime.now(UTC)
+            task.metrics.end_time = datetime.now(timezone.utc)
             task.metrics.update_speed()
 
             logger.info(
@@ -381,7 +381,7 @@ class DownloadManager:
             logger.error(f"{error_msg} for task {task.name}")
             task.status = DownloadStatus.FAILED
             task.metrics.error_count += 1
-            task.metrics.end_time = datetime.now(UTC)
+            task.metrics.end_time = datetime.now(timezone.utc)
             return False, error_msg
 
     def download_with_retry(
@@ -478,7 +478,7 @@ class DownloadManager:
     def _save_to_manifest(self, task: DownloadTask) -> None:
         """Save task to manifest file"""
         record = {
-            "timestamp": datetime.now(UTC).isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "task": task.to_dict()
         }
 

@@ -16,7 +16,7 @@ import time
 from collections import defaultdict, deque
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 
@@ -77,7 +77,7 @@ class Alert:
     level: AlertLevel
     message: str
     operation_type: OperationType
-    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     metadata: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
@@ -100,7 +100,7 @@ class OperationMetrics:
     failed_count: int = 0
     in_progress_count: int = 0
     skipped_count: int = 0
-    start_time: datetime = field(default_factory=lambda: datetime.now(UTC))
+    start_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     end_time: datetime | None = None
     average_duration_seconds: float = 0.0
     total_bytes_processed: int = 0
@@ -124,7 +124,7 @@ class OperationMetrics:
     @property
     def elapsed_seconds(self) -> float:
         """Calculate elapsed time in seconds"""
-        end = self.end_time or datetime.now(UTC)
+        end = self.end_time or datetime.now(timezone.utc)
         return (end - self.start_time).total_seconds()
 
     def to_dict(self) -> dict:
@@ -245,7 +245,7 @@ class OperationMonitor:
         with self.lock:
             metrics = self.metrics[operation_type]
             metrics.total_count = total_count
-            metrics.start_time = datetime.now(UTC)
+            metrics.start_time = datetime.now(timezone.utc)
             metrics.end_time = None
 
             # Create progress bar if dashboard enabled
@@ -327,7 +327,7 @@ class OperationMonitor:
         """Mark operation as complete"""
         with self.lock:
             metrics = self.metrics[operation_type]
-            metrics.end_time = datetime.now(UTC)
+            metrics.end_time = datetime.now(timezone.utc)
             metrics.in_progress_count = 0
 
             # Log completion
@@ -507,7 +507,7 @@ class OperationMonitor:
         """Log event to audit trail"""
         try:
             record = {
-                "timestamp": datetime.now(UTC).isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 **event
             }
 
@@ -520,7 +520,7 @@ class OperationMonitor:
         """Save current metrics to file"""
         try:
             metrics_data = {
-                "timestamp": datetime.now(UTC).isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "metrics": self.get_metrics(),
             }
 
@@ -627,7 +627,7 @@ class OperationMonitor:
     def export_report(self, output_path: Path) -> None:
         """Export comprehensive monitoring report"""
         report = {
-            "generated_at": datetime.now(UTC).isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "metrics": self.get_metrics(),
             "recent_alerts": [a.to_dict() for a in self.get_recent_alerts(50)],
             "alert_summary": {

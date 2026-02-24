@@ -66,6 +66,9 @@ extend-exclude = [
     "scripts/",
     "epstein/",
 ]
+filterwarnings = [
+    "ignore::pytest.PytestUnhandledLoopWarning",
+]
 
 [tool.mypy]
 python_version = "3.10"

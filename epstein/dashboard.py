@@ -26,7 +26,7 @@ import asyncio
 import logging
 import threading
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 from uuid import uuid4
@@ -76,7 +76,7 @@ class BatchJob:
     description: str
     tasks: list[dict[str, Any]]
     status: str = "pending"
-    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     started_at: str | None = None
     completed_at: str | None = None
     progress: float = 0.0
@@ -146,7 +146,7 @@ class DashboardState:
         """Add a log entry."""
         with self._lock:
             entry = LogEntry(
-                timestamp=datetime.now(UTC).isoformat(),
+                timestamp=datetime.now(timezone.utc).isoformat(),
                 level=level,
                 source=source,
                 message=message,
@@ -205,7 +205,7 @@ class DashboardState:
             if download_id not in self.downloads:
                 self.downloads[download_id] = {}
             self.downloads[download_id].update(data)
-            self.downloads[download_id]["updated_at"] = datetime.now(UTC).isoformat()
+            self.downloads[download_id]["updated_at"] = datetime.now(timezone.utc).isoformat()
 
 
 # Create global state
@@ -612,7 +612,7 @@ async def start_batch(job_id: str):
 
     batch = state.batches[job_id]
     batch.status = "running"
-    batch.started_at = datetime.now(UTC).isoformat()
+    batch.started_at = datetime.now(timezone.utc).isoformat()
 
     state.add_log("INFO", "batch", f"Started batch: {batch.name}")
 

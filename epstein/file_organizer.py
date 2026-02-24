@@ -16,7 +16,7 @@ import re
 import shutil
 import zipfile
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 
@@ -256,7 +256,7 @@ class FileOrganizer:
         name = name[:50]  # Limit length
 
         # Get current date
-        date_str = datetime.now(UTC).strftime("%Y%m%d")
+        date_str = datetime.now(timezone.utc).strftime("%Y%m%d")
 
         # Select naming pattern
         pattern = self.NAMING_PATTERNS.get(source, self.NAMING_PATTERNS["default"])
@@ -483,7 +483,7 @@ class FileOrganizer:
                 category=category,
                 hash_sha256=file_hash,
                 size_bytes=organized_path.stat().st_size,
-                created_at=datetime.now(UTC),
+                created_at=datetime.now(timezone.utc),
                 source=source,
                 dataset_number=dataset_number,
                 original_filename=file_path.name,
