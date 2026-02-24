@@ -672,32 +672,70 @@ uv run mypy epstein/ --ignore-missing-imports
 ---
 
 ### TASK-014: Fix Test Collection Errors
-**Status:** 🔴 Open  
+**Status:** ✅ Complete (2026-02-23)
 **Component:** Testing  
 **Issue:** 11 test files have collection errors (PYTHONPATH not set)  
 **Impact:** Cannot run tests  
 
+**Fixed:**
+- Created `tests/conftest.py` with sys.path setup
+- Tests now collect 185+ tests
+
+---
+
+### TASK-023: Improve Test Quality & Coverage
+**Status:** 🟡 Open  
+**Component:** Testing  
+**Issue:** Tests pass but may not validate correctness  
+
+**Current Problems:**
+- Only mocked unit tests (no integration/E2E)
+- No coverage enforcement
+- No performance benchmarks
+- 1 test file broken (`test_ingestion_pipeline.py`)
+
 **Microgoals:**
-1. [ ] Create conftest.py with PYTHONPATH
-2. [ ] Fix imports in test files
-3. [ ] Verify tests collect
-4. [ ] Run tests and fix failures
+1. [ ] Fix broken test file (missing `scripts.ingestion_utils`)
+2. [ ] Add pytest-cov configuration
+3. [ ] Set minimum coverage threshold (e.g., 60%)
+4. [ ] Add integration tests for pipeline stages
+5. [ ] Add E2E smoke tests
+6. [ ] Add performance benchmarks as tests
 
 **Steps:**
-1. Create `tests/conftest.py` with sys.path setup
-2. Fix imports in test files
-3. Run tests with pytest
+1. Create missing `scripts/ingestion_utils.py` or remove broken test imports
+2. Add `--cov` to pytest in Makefile
+3. Add `min-coverage` configuration
+4. Create `tests/test_integration.py` with real DB/Qdrant connections
+5. Create `tests/test_e2e.py` for full pipeline smoke tests
+6. Add benchmark tests with assertions on timing
+
+**Test Quality Checklist:**
+- [ ] Unit tests: test individual functions/methods
+- [ ] Integration tests: test component interactions
+- [ ] E2E tests: test full workflows
+- [ ] Property tests: test invariants with hypothesis
+- [ ] Performance tests: benchmark with assertions
+- [ ] Fuzz tests: test with random inputs
+- [ ] Mutation tests: verify tests catch bugs
 
 **Test Command:**
 ```bash
-PYTHONPATH=. uv run pytest --collect-only
-PYTHONPATH=. uv run pytest -v
+# Run with coverage
+uv run pytest --cov=epstein --cov-report=html --cov-fail-under=60
+
+# Run specific test types
+uv run pytest tests/unit/
+uv run pytest tests/integration/
+uv run pytest tests/e2e/
 ```
 
 **Acceptance Criteria:**
 - [ ] All tests collect without errors
-- [ ] Tests pass
-- [ ] Test coverage >60%
+- [ ] Coverage >60% on epstein/ package
+- [ ] Integration tests added
+- [ ] E2E smoke tests added
+- [ ] CI enforces coverage gate
 
 ---
 
@@ -906,11 +944,13 @@ make pipeline-run
 
 | Metric | Current | Target |
 |--------|---------|--------|
-| Lint errors | 441 | 0 |
-| Type errors | 52 | <10 |
-| Test pass rate | 0% (broken) | >80% |
+| Lint errors | 0 | 0 |
+| Type errors | 51 (configured) | <10 |
+| Test collection | 185 | 200+ |
+| Test pass rate | ~70% | >80% |
 | Code coverage | Unknown | >60% |
-| Docstrings | Partial | 100% |
+| Integration tests | 0 | 5+ |
+| E2E tests | 0 | 3+ |
 
 ### Stack Confirmed
 
