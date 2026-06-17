@@ -5,7 +5,7 @@ description = "Reproducible, provenance-safe PDF analysis pipeline (OCR/text/chu
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-  "requests>=2.31",
+  "requests>=2.33.1",
   "beautifulsoup4>=4.12",
   "lxml>=5.0",
   "tqdm>=4.66",
