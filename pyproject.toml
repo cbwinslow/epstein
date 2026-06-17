@@ -39,7 +39,7 @@ dev = [
   "pre-commit>=3.4",
   "pdfplumber>=0.10",
   "pytesseract>=0.3",
-  "psycopg2-binary>=2.9",
+  "psycopg2-binary>=2.9.11",
   "qdrant-client>=1.9",
 ]
 
