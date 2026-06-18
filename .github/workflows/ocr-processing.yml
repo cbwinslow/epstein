@@ -65,7 +65,7 @@ jobs:
         uses: actions/checkout@v4.1.1
       
       - name: Set up Python
-        uses: actions/setup-python@v5.0.0
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
@@ -302,7 +302,7 @@ jobs:
           path: ${{ env.ARTIFACTS_DIR }}
       
       - name: Set up Python
-        uses: actions/setup-python@v5.0.0
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
