@@ -59,7 +59,7 @@ jobs:
           python scripts/gen_issues_from_tasks.py --in tasks/master_tasks.yml --out-json ./issues.json --dry-run
 
       - name: Upload issues.json artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: issues
           path: ./issues.json
