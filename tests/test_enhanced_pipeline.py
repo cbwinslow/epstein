@@ -127,7 +127,7 @@ class TestDownloadManager:
         expected = hashlib.sha256(test_content).hexdigest()
         assert checksum == expected
 
-    @patch('requests.Session')
+    @patch("requests.Session")
     def test_session_creation(self, mock_session, download_manager):
         """Test HTTP session creation"""
         session = download_manager._get_session()
@@ -140,10 +140,7 @@ class TestDownloadManager:
         cookies = {"session": "test123", "auth": "token456"}
         session_config = SessionConfig(cookies=cookies)
 
-        manager = DownloadManager(
-            output_dir=temp_dir,
-            session_config=session_config
-        )
+        manager = DownloadManager(output_dir=temp_dir, session_config=session_config)
 
         session = manager._get_session()
 
@@ -154,10 +151,7 @@ class TestDownloadManager:
         """Test session with authentication key"""
         session_config = SessionConfig(session_key="test_key_123")
 
-        manager = DownloadManager(
-            output_dir=temp_dir,
-            session_config=session_config
-        )
+        manager = DownloadManager(output_dir=temp_dir, session_config=session_config)
 
         session = manager._get_session()
 
@@ -435,9 +429,7 @@ class TestOperationMonitor:
     def test_start_operation(self, monitor):
         """Test starting operation tracking"""
         monitor.start_operation(
-            OperationType.DOWNLOAD,
-            total_count=100,
-            description="Test downloads"
+            OperationType.DOWNLOAD, total_count=100, description="Test downloads"
         )
 
         metrics = monitor.metrics[OperationType.DOWNLOAD]
@@ -474,9 +466,7 @@ class TestOperationMonitor:
         monitor.start_operation(OperationType.DOWNLOAD, total_count=100)
 
         monitor.report_error(
-            OperationType.DOWNLOAD,
-            "Test error message",
-            metadata={"file": "test.pdf"}
+            OperationType.DOWNLOAD, "Test error message", metadata={"file": "test.pdf"}
         )
 
         metrics = monitor.metrics[OperationType.DOWNLOAD]
@@ -487,10 +477,7 @@ class TestOperationMonitor:
         """Test warning reporting"""
         monitor.start_operation(OperationType.DOWNLOAD, total_count=100)
 
-        monitor.report_warning(
-            OperationType.DOWNLOAD,
-            "Test warning message"
-        )
+        monitor.report_warning(OperationType.DOWNLOAD, "Test warning message")
 
         metrics = monitor.metrics[OperationType.DOWNLOAD]
         assert len(metrics.warnings) == 1

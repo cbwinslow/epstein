@@ -30,13 +30,15 @@ def get_file_sizes(directory: Path) -> dict[str, int]:
             continue
     return sizes
 
+
 def format_size(size_bytes: int) -> str:
     """Format bytes to human readable."""
-    for _unit in ['B', 'KB', 'MB', 'GB']:
+    for _unit in ["B", "KB", "MB", "GB"]:
         if size_bytes < 1024.0:
             return ".1f"
         size_bytes /= 1024.0
     return ".1f"
+
 
 def monitor_downloads(output_dir: Path, interval: float = 2.0) -> None:
     """Monitor download progress with tqdm bars."""
@@ -63,11 +65,11 @@ def monitor_downloads(output_dir: Path, interval: float = 2.0) -> None:
                     # New file - create progress bar
                     progress_bars[filename] = tqdm.tqdm(
                         desc=f"{filename}",
-                        unit='B',
+                        unit="B",
                         unit_scale=True,
                         unit_divisor=1024,
                         ncols=100,
-                        bar_format='{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]'
+                        bar_format="{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]",
                     )
                     prev_sizes[filename] = 0
                 else:
@@ -79,7 +81,9 @@ def monitor_downloads(output_dir: Path, interval: float = 2.0) -> None:
                         rate = size_diff / time_diff
                         progress_bars[filename].update(size_diff)
                         # Update description with rate
-                        progress_bars[filename].set_description(f"{filename} ({format_size(int(rate))}/s)")
+                        progress_bars[filename].set_description(
+                            f"{filename} ({format_size(int(rate))}/s)"
+                        )
 
             # Remove bars for completed/deleted files
             for filename in list(progress_bars.keys()):
@@ -96,12 +100,18 @@ def monitor_downloads(output_dir: Path, interval: float = 2.0) -> None:
         for bar in progress_bars.values():
             bar.close()
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Monitor epstein_bulk_downloader progress")
-    parser.add_argument("output_dir", nargs='?', default="./epstein_project",
-                       help="Output directory to monitor (default: ./epstein_project)")
-    parser.add_argument("--interval", type=float, default=2.0,
-                       help="Update interval in seconds (default: 2.0)")
+    parser.add_argument(
+        "output_dir",
+        nargs="?",
+        default="./epstein_project",
+        help="Output directory to monitor (default: ./epstein_project)",
+    )
+    parser.add_argument(
+        "--interval", type=float, default=2.0, help="Update interval in seconds (default: 2.0)"
+    )
 
     args = parser.parse_args()
     output_dir = Path(args.output_dir).resolve()
@@ -111,6 +121,7 @@ def main() -> None:
         return
 
     monitor_downloads(output_dir, args.interval)
+
 
 if __name__ == "__main__":
     main()

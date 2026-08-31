@@ -3,6 +3,7 @@
 Provides a simple `init_tracer()` function that configures a ConsoleSpanExporter by default,
 and an OTLP exporter if OTEL_ENABLED/OTEL_EXPORTER_OTLP_ENDPOINT is set.
 """
+
 from __future__ import annotations
 
 import os
@@ -47,9 +48,12 @@ def init_tracer(service_name: str | None = None) -> None:
 
 def get_tracer(name: str | None = None):
     if trace is None:
+
         class NoopTracer:
             def start_as_current_span(self, *a, **k):
                 from contextlib import nullcontext
+
                 return nullcontext()
+
         return NoopTracer()
     return trace.get_tracer(name or __name__)

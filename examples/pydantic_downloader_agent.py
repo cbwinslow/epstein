@@ -26,13 +26,14 @@ except ImportError:
 
 
 # Configuration
-MCP_SERVER_URL = os.getenv('MCP_SERVER_URL', 'http://localhost:8765')
-DOWNLOAD_DIR = os.getenv('DOWNLOAD_DIR', '/tmp/downloads')
+MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", "http://localhost:8765")
+DOWNLOAD_DIR = os.getenv("DOWNLOAD_DIR", "/tmp/downloads")
 
 
 # Data Models
 class CollectionInfo(BaseModel):
     """Information about a document collection"""
+
     collection_id: str
     name: str
     description: str
@@ -43,6 +44,7 @@ class CollectionInfo(BaseModel):
 
 class DownloadRequest(BaseModel):
     """Request to download documents"""
+
     collection_id: str
     destination: str = Field(default=DOWNLOAD_DIR)
     filter_criteria: dict = Field(default_factory=dict)
@@ -50,6 +52,7 @@ class DownloadRequest(BaseModel):
 
 class DownloadStatus(BaseModel):
     """Status of a download task"""
+
     task_id: str
     url: str
     status: str
@@ -70,16 +73,9 @@ class DocumentDownloaderAgent:
     - Report completion status
     """
 
-    def __init__(
-        self,
-        model: str = 'openai:gpt-4',
-        mcp_server_url: str = MCP_SERVER_URL
-    ):
+    def __init__(self, model: str = "openai:gpt-4", mcp_server_url: str = MCP_SERVER_URL):
         self.mcp_url = mcp_server_url
-        self.agent = Agent(
-            model=model,
-            system_prompt=self._get_system_prompt()
-        )
+        self.agent = Agent(model=model, system_prompt=self._get_system_prompt())
         self._register_tools()
 
     def _get_system_prompt(self) -> str:
@@ -120,7 +116,7 @@ Never:
         def list_collections() -> list[CollectionInfo]:
             """List all available document collections from government sources"""
             try:
-                response = requests.get(f'{self.mcp_url}/collections')
+                response = requests.get(f"{self.mcp_url}/collections")
                 response.raise_for_status()
                 collections = response.json()
                 return [CollectionInfo(**c) for c in collections]
@@ -131,9 +127,7 @@ Never:
         def get_collection_info(collection_id: str) -> CollectionInfo:
             """Get detailed information about a specific collection"""
             try:
-                response = requests.get(
-                    f'{self.mcp_url}/collections/{collection_id}'
-                )
+                response = requests.get(f"{self.mcp_url}/collections/{collection_id}")
                 response.raise_for_status()
                 return CollectionInfo(**response.json())
             except Exception as e:
@@ -144,8 +138,8 @@ Never:
             """List documents in a collection"""
             try:
                 response = requests.get(
-                    f'{self.mcp_url}/collections/{collection_id}/documents',
-                    params={'limit': limit, 'offset': 0}
+                    f"{self.mcp_url}/collections/{collection_id}/documents",
+                    params={"limit": limit, "offset": 0},
                 )
                 response.raise_for_status()
                 return response.json()
@@ -159,10 +153,7 @@ Never:
             Returns list of download tasks.
             """
             try:
-                response = requests.post(
-                    f'{self.mcp_url}/download/bulk',
-                    json=request.model_dump()
-                )
+                response = requests.post(f"{self.mcp_url}/download/bulk", json=request.model_dump())
                 response.raise_for_status()
                 tasks = response.json()
                 return [DownloadStatus(**t) for t in tasks]
@@ -174,8 +165,7 @@ Never:
             """Download a single document"""
             try:
                 response = requests.post(
-                    f'{self.mcp_url}/download',
-                    json={'url': url, 'destination': destination}
+                    f"{self.mcp_url}/download", json={"url": url, "destination": destination}
                 )
                 response.raise_for_status()
                 return DownloadStatus(**response.json())
@@ -186,9 +176,7 @@ Never:
         def check_download_status(task_id: str) -> DownloadStatus:
             """Check the status of a download task"""
             try:
-                response = requests.get(
-                    f'{self.mcp_url}/download/status/{task_id}'
-                )
+                response = requests.get(f"{self.mcp_url}/download/status/{task_id}")
                 response.raise_for_status()
                 return DownloadStatus(**response.json())
             except Exception as e:
@@ -198,7 +186,7 @@ Never:
         def get_all_download_status() -> list[DownloadStatus]:
             """Get status of all active downloads"""
             try:
-                response = requests.get(f'{self.mcp_url}/download/status')
+                response = requests.get(f"{self.mcp_url}/download/status")
                 response.raise_for_status()
                 statuses = response.json()
                 return [DownloadStatus(**s) for s in statuses]
@@ -209,7 +197,7 @@ Never:
         def get_server_health() -> dict:
             """Check if the MCP server is healthy and responding"""
             try:
-                response = requests.get(f'{self.mcp_url}/health')
+                response = requests.get(f"{self.mcp_url}/health")
                 response.raise_for_status()
                 return response.json()
             except Exception as e:
@@ -240,7 +228,7 @@ Never:
             try:
                 user_input = input("You: ").strip()
 
-                if user_input.lower() in ['quit', 'exit']:
+                if user_input.lower() in ["quit", "exit"]:
                     print("Goodbye!")
                     break
 
@@ -265,35 +253,24 @@ async def main():
     """Main entry point"""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description='PydanticAI Document Downloader Agent'
+    parser = argparse.ArgumentParser(description="PydanticAI Document Downloader Agent")
+    parser.add_argument(
+        "request", nargs="*", help="Natural language request (omit for interactive mode)"
     )
     parser.add_argument(
-        'request',
-        nargs='*',
-        help='Natural language request (omit for interactive mode)'
+        "--model", default="openai:gpt-4", help="LLM model to use (default: openai:gpt-4)"
     )
     parser.add_argument(
-        '--model',
-        default='openai:gpt-4',
-        help='LLM model to use (default: openai:gpt-4)'
-    )
-    parser.add_argument(
-        '--server',
-        default=MCP_SERVER_URL,
-        help=f'MCP server URL (default: {MCP_SERVER_URL})'
+        "--server", default=MCP_SERVER_URL, help=f"MCP server URL (default: {MCP_SERVER_URL})"
     )
 
     args = parser.parse_args()
 
     # Create agent
-    agent = DocumentDownloaderAgent(
-        model=args.model,
-        mcp_server_url=args.server
-    )
+    agent = DocumentDownloaderAgent(model=args.model, mcp_server_url=args.server)
 
     # Check server health
-    health_response = requests.get(f'{args.server}/health')
+    health_response = requests.get(f"{args.server}/health")
     if health_response.status_code != 200:
         print(f"ERROR: MCP server at {args.server} is not responding")
         print("Please start the server with:")
@@ -306,7 +283,7 @@ async def main():
     # Run agent
     if args.request:
         # Single request mode
-        request = ' '.join(args.request)
+        request = " ".join(args.request)
         print(f"\nRequest: {request}")
         print("\nAgent: ", end="", flush=True)
         response = await agent.run(request)
@@ -316,5 +293,5 @@ async def main():
         await agent.chat()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(main())

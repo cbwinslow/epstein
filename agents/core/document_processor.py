@@ -19,7 +19,11 @@ from uuid import uuid4
 
 from agents.base_agent import BaseAgent
 from epstein.epstein_files_pipeline import EpsteinIngestionPipeline, PipelineConfig
-from lib.observability_stack import get_observability_stack, trace_function, track_llm_call
+from lib.observability_stack import (
+    get_observability_stack,
+    trace_function,
+    track_llm_call,
+)
 from lib.resource_manager import WorkerType, get_resource_manager
 
 # Configure logging

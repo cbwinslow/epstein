@@ -12,13 +12,16 @@ def make_pack(tmpdir: Path, name: str, with_files: bool = True) -> Path:
     p = tmpdir / name
     p.mkdir()
     py = p / "pack.yaml"
-    py.write_text(f"""name: {name}
+    py.write_text(
+        f"""name: {name}
 version: 0.1
 starters:
   memory_dir: memory
   tools_dir: tools
   rules_file: rules/RULES.md
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
     if with_files:
         (p / "memory").mkdir()
         (p / "tools").mkdir()

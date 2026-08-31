@@ -34,7 +34,7 @@ class EpsteinTools:
             "status": "running",
             "started_at": datetime.now().isoformat(),
             "config": config_path,
-            "documents": documents
+            "documents": documents,
         }
 
         try:
@@ -48,7 +48,7 @@ class EpsteinTools:
                 "total_pages": len(documents) * 10,  # Assume 10 pages per doc
                 "entities_found": 156,
                 "embeddings_generated": len(documents) * 50,  # Assume 50 chunks per doc
-                "completed_at": datetime.now().isoformat()
+                "completed_at": datetime.now().isoformat(),
             }
 
             self.active_tasks[task_id] = results
@@ -60,7 +60,7 @@ class EpsteinTools:
                 "task_id": task_id,
                 "status": "error",
                 "error": str(e),
-                "failed_at": datetime.now().isoformat()
+                "failed_at": datetime.now().isoformat(),
             }
             self.active_tasks[task_id] = error_result
             self.pipeline_status = "idle"
@@ -83,21 +83,21 @@ class EpsteinTools:
                 "document_id": "doc_001",
                 "title": "Document 1",
                 "entities": ["PERSON: John Doe", "ORG: Acme Corp"],
-                "created_at": "2025-01-15T10:30:00Z"
+                "created_at": "2025-01-15T10:30:00Z",
             },
             {
                 "document_id": "doc_002",
                 "title": "Document 2",
                 "entities": ["PERSON: Jane Smith", "LOC: New York"],
-                "created_at": "2025-01-16T14:22:00Z"
-            }
+                "created_at": "2025-01-16T14:22:00Z",
+            },
         ]
 
         return {
             "query": query,
             "results": mock_results[:limit],
             "total_count": len(mock_results),
-            "executed_at": datetime.now().isoformat()
+            "executed_at": datetime.now().isoformat(),
         }
 
     def search_vectors(self, query_text: str, limit: int = 10) -> dict[str, Any]:
@@ -117,14 +117,14 @@ class EpsteinTools:
                 "document_id": "doc_001",
                 "similarity_score": 0.95,
                 "snippet": "This document contains information about...",
-                "entities": ["John Doe", "Acme Corp"]
+                "entities": ["John Doe", "Acme Corp"],
             },
             {
                 "document_id": "doc_003",
                 "similarity_score": 0.87,
                 "snippet": "Related content showing similar patterns...",
-                "entities": ["Jane Smith", "New York"]
-            }
+                "entities": ["Jane Smith", "New York"],
+            },
         ]
 
         return {
@@ -132,18 +132,22 @@ class EpsteinTools:
             "results": mock_results[:limit],
             "search_method": "vector_similarity",
             "embedding_model": "text-embedding-ada-002",
-            "searched_at": datetime.now().isoformat()
+            "searched_at": datetime.now().isoformat(),
         }
 
     def get_pipeline_status(self) -> dict[str, Any]:
         """Get current pipeline status and active tasks."""
         return {
             "pipeline_status": self.pipeline_status,
-            "active_tasks": len([t for t in self.active_tasks.values() if t["status"] == "running"]),
-            "completed_tasks": len([t for t in self.active_tasks.values() if t["status"] == "completed"]),
+            "active_tasks": len(
+                [t for t in self.active_tasks.values() if t["status"] == "running"]
+            ),
+            "completed_tasks": len(
+                [t for t in self.active_tasks.values() if t["status"] == "completed"]
+            ),
             "failed_tasks": len([t for t in self.active_tasks.values() if t["status"] == "error"]),
             "total_tasks": len(self.active_tasks),
-            "checked_at": datetime.now().isoformat()
+            "checked_at": datetime.now().isoformat(),
         }
 
     def analyze_entities(self, document_id: str) -> dict[str, Any]:
@@ -160,23 +164,23 @@ class EpsteinTools:
         mock_entities = {
             "PERSON": [
                 {"text": "John Doe", "count": 5, "confidence": 0.95},
-                {"text": "Jane Smith", "count": 3, "confidence": 0.88}
+                {"text": "Jane Smith", "count": 3, "confidence": 0.88},
             ],
             "ORG": [
                 {"text": "Acme Corp", "count": 4, "confidence": 0.92},
-                {"text": "Global Tech", "count": 2, "confidence": 0.85}
+                {"text": "Global Tech", "count": 2, "confidence": 0.85},
             ],
             "LOC": [
                 {"text": "New York", "count": 3, "confidence": 0.90},
-                {"text": "Los Angeles", "count": 1, "confidence": 0.82}
-            ]
+                {"text": "Los Angeles", "count": 1, "confidence": 0.82},
+            ],
         }
 
         return {
             "document_id": document_id,
             "entities": mock_entities,
             "total_entities": sum(len(entities) for entities in mock_entities.values()),
-            "analyzed_at": datetime.now().isoformat()
+            "analyzed_at": datetime.now().isoformat(),
         }
 
     def export_results(self, format: str = "json", task_id: str | None = None) -> dict[str, Any]:
@@ -201,7 +205,7 @@ class EpsteinTools:
             "file_path": f"/tmp/epstein_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{format}",
             "file_size": len(str(results)) * 100,  # Mock size calculation
             "exported_at": datetime.now().isoformat(),
-            "data": results if format == "json" else "Data exported successfully"
+            "data": results if format == "json" else "Data exported successfully",
         }
 
 
@@ -217,17 +221,17 @@ TOOLS = [
                 "properties": {
                     "config_path": {
                         "type": "string",
-                        "description": "Path to pipeline configuration file"
+                        "description": "Path to pipeline configuration file",
                     },
                     "documents": {
                         "type": "array",
                         "items": {"type": "string"},
-                        "description": "List of document paths to process"
-                    }
+                        "description": "List of document paths to process",
+                    },
                 },
-                "required": ["config_path", "documents"]
-            }
-        }
+                "required": ["config_path", "documents"],
+            },
+        },
     },
     {
         "type": "function",
@@ -237,19 +241,16 @@ TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "SQL query string to execute"
-                    },
+                    "query": {"type": "string", "description": "SQL query string to execute"},
                     "limit": {
                         "type": "integer",
                         "description": "Maximum number of results to return",
-                        "default": 100
-                    }
+                        "default": 100,
+                    },
                 },
-                "required": ["query"]
-            }
-        }
+                "required": ["query"],
+            },
+        },
     },
     {
         "type": "function",
@@ -261,28 +262,25 @@ TOOLS = [
                 "properties": {
                     "query_text": {
                         "type": "string",
-                        "description": "Text to search for similar documents"
+                        "description": "Text to search for similar documents",
                     },
                     "limit": {
                         "type": "integer",
                         "description": "Maximum number of results to return",
-                        "default": 10
-                    }
+                        "default": 10,
+                    },
                 },
-                "required": ["query_text"]
-            }
-        }
+                "required": ["query_text"],
+            },
+        },
     },
     {
         "type": "function",
         "function": {
             "name": "get_pipeline_status",
             "description": "Get current pipeline status and active tasks",
-            "parameters": {
-                "type": "object",
-                "properties": {}
-            }
-        }
+            "parameters": {"type": "object", "properties": {}},
+        },
     },
     {
         "type": "function",
@@ -292,14 +290,11 @@ TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "document_id": {
-                        "type": "string",
-                        "description": "ID of document to analyze"
-                    }
+                    "document_id": {"type": "string", "description": "ID of document to analyze"}
                 },
-                "required": ["document_id"]
-            }
-        }
+                "required": ["document_id"],
+            },
+        },
     },
     {
         "type": "function",
@@ -313,17 +308,17 @@ TOOLS = [
                         "type": "string",
                         "description": "Export format",
                         "enum": ["json", "csv", "xml"],
-                        "default": "json"
+                        "default": "json",
                     },
                     "task_id": {
                         "type": "string",
-                        "description": "Specific task ID to export (optional)"
-                    }
+                        "description": "Specific task ID to export (optional)",
+                    },
                 },
-                "required": []
-            }
-        }
-    }
+                "required": [],
+            },
+        },
+    },
 ]
 
 
@@ -333,10 +328,7 @@ if __name__ == "__main__":
 
     async def main():
         # Test pipeline execution
-        result = await tools.run_pipeline(
-            "config.json",
-            ["doc1.pdf", "doc2.pdf"]
-        )
+        result = await tools.run_pipeline("config.json", ["doc1.pdf", "doc2.pdf"])
         print("Pipeline result:", json.dumps(result, indent=2))
 
         # Test database query

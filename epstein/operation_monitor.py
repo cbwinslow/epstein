@@ -34,27 +34,35 @@ try:
         TimeRemainingColumn,
     )
     from rich.table import Table
+
     RICH_AVAILABLE = True
 except ImportError:
     RICH_AVAILABLE = False
+
     # Create dummy classes
     class Console:
         pass
+
     class Progress:
         def __init__(self, *args, **kwargs):
             pass
+
         def add_task(self, *args, **kwargs):
             return None
+
         def update(self, *args, **kwargs):
             pass
+
     class Table:
         pass
+
 
 logger = logging.getLogger(__name__)
 
 
 class OperationType(Enum):
     """Types of operations to monitor"""
+
     DOWNLOAD = "download"
     OCR = "ocr"
     EXTRACT = "extract"
@@ -65,6 +73,7 @@ class OperationType(Enum):
 
 class AlertLevel(Enum):
     """Alert severity levels"""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -74,6 +83,7 @@ class AlertLevel(Enum):
 @dataclass
 class Alert:
     """Represents a monitoring alert"""
+
     level: AlertLevel
     message: str
     operation_type: OperationType
@@ -94,6 +104,7 @@ class Alert:
 @dataclass
 class OperationMetrics:
     """Metrics for an operation"""
+
     operation_type: OperationType
     total_count: int = 0
     completed_count: int = 0
@@ -167,7 +178,7 @@ class OperationMonitor:
         log_dir: Path,
         enable_dashboard: bool = False,
         enable_alerts: bool = True,
-        max_alerts_history: int = 1000
+        max_alerts_history: int = 1000,
     ):
         """
         Initialize operation monitor
@@ -187,8 +198,7 @@ class OperationMonitor:
 
         # Metrics tracking
         self.metrics: dict[OperationType, OperationMetrics] = {
-            op_type: OperationMetrics(operation_type=op_type)
-            for op_type in OperationType
+            op_type: OperationMetrics(operation_type=op_type) for op_type in OperationType
         }
 
         # Alert tracking
@@ -229,10 +239,7 @@ class OperationMonitor:
         logger.info(f"Operation monitor initialized: log_dir={log_dir}")
 
     def start_operation(
-        self,
-        operation_type: OperationType,
-        total_count: int,
-        description: str = ""
+        self, operation_type: OperationType, total_count: int, description: str = ""
     ) -> None:
         """
         Start tracking an operation
@@ -251,18 +258,19 @@ class OperationMonitor:
             # Create progress bar if dashboard enabled
             if self.enable_dashboard:
                 task_id = self.progress.add_task(
-                    description or f"{operation_type.value.title()}",
-                    total=total_count
+                    description or f"{operation_type.value.title()}", total=total_count
                 )
                 self.progress_tasks[operation_type.value] = task_id
 
             # Log to audit trail
-            self._log_audit({
-                "event": "operation_started",
-                "operation_type": operation_type.value,
-                "total_count": total_count,
-                "description": description,
-            })
+            self._log_audit(
+                {
+                    "event": "operation_started",
+                    "operation_type": operation_type.value,
+                    "total_count": total_count,
+                    "description": description,
+                }
+            )
 
             logger.info(f"Started {operation_type.value} operation: {total_count} items")
 
@@ -273,7 +281,7 @@ class OperationMonitor:
         failed: int = 0,
         skipped: int = 0,
         bytes_processed: int = 0,
-        duration_seconds: float = 0.0
+        duration_seconds: float = 0.0,
     ) -> None:
         """
         Update operation progress
@@ -299,16 +307,16 @@ class OperationMonitor:
                 total_ops = metrics.completed_count
                 if total_ops > 0:
                     metrics.average_duration_seconds = (
-                        (metrics.average_duration_seconds * (total_ops - completed) +
-                         duration_seconds * completed) / total_ops
-                    )
+                        metrics.average_duration_seconds * (total_ops - completed)
+                        + duration_seconds * completed
+                    ) / total_ops
 
             # Update in-progress count
             metrics.in_progress_count = (
-                metrics.total_count -
-                metrics.completed_count -
-                metrics.failed_count -
-                metrics.skipped_count
+                metrics.total_count
+                - metrics.completed_count
+                - metrics.failed_count
+                - metrics.skipped_count
             )
 
             # Update progress bar
@@ -316,7 +324,9 @@ class OperationMonitor:
                 task_id = self.progress_tasks[operation_type.value]
                 self.progress.update(
                     task_id,
-                    completed=metrics.completed_count + metrics.failed_count + metrics.skipped_count
+                    completed=metrics.completed_count
+                    + metrics.failed_count
+                    + metrics.skipped_count,
                 )
 
             # Check for alerts
@@ -331,11 +341,13 @@ class OperationMonitor:
             metrics.in_progress_count = 0
 
             # Log completion
-            self._log_audit({
-                "event": "operation_completed",
-                "operation_type": operation_type.value,
-                "metrics": metrics.to_dict(),
-            })
+            self._log_audit(
+                {
+                    "event": "operation_completed",
+                    "operation_type": operation_type.value,
+                    "metrics": metrics.to_dict(),
+                }
+            )
 
             # Save metrics
             self._save_metrics()
@@ -347,10 +359,7 @@ class OperationMonitor:
             )
 
     def report_error(
-        self,
-        operation_type: OperationType,
-        error_message: str,
-        metadata: dict | None = None
+        self, operation_type: OperationType, error_message: str, metadata: dict | None = None
     ) -> None:
         """
         Report an error
@@ -370,23 +379,22 @@ class OperationMonitor:
                     level=AlertLevel.ERROR,
                     message=error_message,
                     operation_type=operation_type,
-                    metadata=metadata or {}
+                    metadata=metadata or {},
                 )
                 self._add_alert(alert)
 
             # Log to audit trail
-            self._log_audit({
-                "event": "error",
-                "operation_type": operation_type.value,
-                "error_message": error_message,
-                "metadata": metadata or {},
-            })
+            self._log_audit(
+                {
+                    "event": "error",
+                    "operation_type": operation_type.value,
+                    "error_message": error_message,
+                    "metadata": metadata or {},
+                }
+            )
 
     def report_warning(
-        self,
-        operation_type: OperationType,
-        warning_message: str,
-        metadata: dict | None = None
+        self, operation_type: OperationType, warning_message: str, metadata: dict | None = None
     ) -> None:
         """Report a warning"""
         with self.lock:
@@ -399,17 +407,19 @@ class OperationMonitor:
                     level=AlertLevel.WARNING,
                     message=warning_message,
                     operation_type=operation_type,
-                    metadata=metadata or {}
+                    metadata=metadata or {},
                 )
                 self._add_alert(alert)
 
             # Log to audit trail
-            self._log_audit({
-                "event": "warning",
-                "operation_type": operation_type.value,
-                "warning_message": warning_message,
-                "metadata": metadata or {},
-            })
+            self._log_audit(
+                {
+                    "event": "warning",
+                    "operation_type": operation_type.value,
+                    "warning_message": warning_message,
+                    "metadata": metadata or {},
+                }
+            )
 
     def _check_alert_conditions(self, operation_type: OperationType) -> None:
         """Check if alert conditions are met"""
@@ -421,7 +431,7 @@ class OperationMonitor:
                 level=AlertLevel.CRITICAL,
                 message=f"High failure rate: {metrics.failure_rate:.1f}%",
                 operation_type=operation_type,
-                metadata={"failure_count": metrics.failed_count, "total": metrics.total_count}
+                metadata={"failure_count": metrics.failed_count, "total": metrics.total_count},
             )
             self._add_alert(alert)
 
@@ -431,7 +441,7 @@ class OperationMonitor:
                 level=AlertLevel.WARNING,
                 message=f"Slow operation detected: {metrics.average_duration_seconds:.1f}s average",
                 operation_type=operation_type,
-                metadata={"average_duration": metrics.average_duration_seconds}
+                metadata={"average_duration": metrics.average_duration_seconds},
             )
             self._add_alert(alert)
 
@@ -441,7 +451,7 @@ class OperationMonitor:
                 level=AlertLevel.ERROR,
                 message=f"High error count: {len(metrics.errors)} errors",
                 operation_type=operation_type,
-                metadata={"error_count": len(metrics.errors)}
+                metadata={"error_count": len(metrics.errors)},
             )
             self._add_alert(alert)
 
@@ -488,10 +498,7 @@ class OperationMonitor:
             if operation_type:
                 return self.metrics[operation_type].to_dict()
 
-            return {
-                op_type.value: metrics.to_dict()
-                for op_type, metrics in self.metrics.items()
-            }
+            return {op_type.value: metrics.to_dict() for op_type, metrics in self.metrics.items()}
 
     def get_recent_alerts(self, count: int = 10, level: AlertLevel | None = None) -> list[Alert]:
         """Get recent alerts"""
@@ -506,10 +513,7 @@ class OperationMonitor:
     def _log_audit(self, event: dict) -> None:
         """Log event to audit trail"""
         try:
-            record = {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                **event
-            }
+            record = {"timestamp": datetime.now(timezone.utc).isoformat(), **event}
 
             with open(self.audit_file, "a") as f:
                 f.write(json.dumps(record) + "\n")
@@ -582,7 +586,7 @@ class OperationMonitor:
                 alert.operation_type.value,
                 alert.message,
                 alert.timestamp.strftime("%H:%M:%S"),
-                style=level_style
+                style=level_style,
             )
 
         return table
@@ -599,7 +603,7 @@ class OperationMonitor:
             with Live(
                 self.generate_dashboard_table(),
                 console=self.console,
-                refresh_per_second=refresh_rate
+                refresh_per_second=refresh_rate,
             ) as live:
                 while self.dashboard_running:
                     layout = Layout()
@@ -634,7 +638,7 @@ class OperationMonitor:
                 "total": len(self.alerts),
                 "by_level": defaultdict(int),
                 "by_operation": defaultdict(int),
-            }
+            },
         }
 
         # Count alerts by level and operation
