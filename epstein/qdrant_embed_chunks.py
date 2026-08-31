@@ -426,19 +426,19 @@ if __name__ == "__main__":
 '''
 
 # Write new scripts
-(work/"qdrant_embed_chunks.py").write_text(embed_py, encoding="utf-8")
-(work/"qdrant_semantic_search.py").write_text(search_py, encoding="utf-8")
-os.chmod(work/"qdrant_embed_chunks.py", 0o755)
-os.chmod(work/"qdrant_semantic_search.py", 0o755)
+(work / "qdrant_embed_chunks.py").write_text(embed_py, encoding="utf-8")
+(work / "qdrant_semantic_search.py").write_text(search_py, encoding="utf-8")
+os.chmod(work / "qdrant_embed_chunks.py", 0o755)
+os.chmod(work / "qdrant_semantic_search.py", 0o755)
 
 # Update pyproject.toml to include fastembed
-pyproj = (work/"pyproject.toml").read_text(encoding="utf-8")
+pyproj = (work / "pyproject.toml").read_text(encoding="utf-8")
 if "fastembed" not in pyproj:
     pyproj = pyproj.replace('"qdrant-client>=1.9",', '"qdrant-client>=1.9",\n  "fastembed>=0.3",')
-    (work/"pyproject.toml").write_text(pyproj, encoding="utf-8")
+    (work / "pyproject.toml").write_text(pyproj, encoding="utf-8")
 
 # Update Makefile with embed/search targets if missing
-mk = (work/"Makefile").read_text(encoding="utf-8")
+mk = (work / "Makefile").read_text(encoding="utf-8")
 if "embed:" not in mk:
     mk += r"""
 
@@ -457,7 +457,7 @@ search:
 	  -e Q="$${Q:-}" \
 	  pipeline qdrant_semantic_search.py "$${Q:-}" --qdrant-url "$${QDRANT_URL:-http://qdrant:6333}" --dsn "$${EPSTEIN_DSN:-postgresql://analysis:analysis@postgres:5432/analysis}" --with-text
 """
-    (work/"Makefile").write_text(mk, encoding="utf-8")
+    (work / "Makefile").write_text(mk, encoding="utf-8")
 
 # Create updated zip
 zip_path = pathlib.Path("/mnt/data/epstein_files_project_final_v2.zip")
@@ -469,4 +469,3 @@ with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as z:
             z.write(p, p.relative_to(work).as_posix())
 
 str(zip_path), len([p for p in work.rglob("*") if p.is_file()])
-

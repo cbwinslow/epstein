@@ -52,6 +52,7 @@ CACHE_FILE = CACHE_DIR / "openrouter_free_models.json"
 @dataclass
 class ModelInfo:
     """Information about an OpenRouter model"""
+
     id: str
     name: str
     description: str = ""
@@ -71,6 +72,7 @@ class ModelInfo:
 @dataclass
 class ModelsCache:
     """Cache for OpenRouter models"""
+
     models: list[ModelInfo]
     timestamp: float
     expires_at: float
@@ -82,31 +84,29 @@ class ModelsCache:
     def to_dict(self) -> dict:
         """Convert to dictionary for JSON serialization"""
         return {
-            'models': [m.to_dict() for m in self.models],
-            'timestamp': self.timestamp,
-            'expires_at': self.expires_at
+            "models": [m.to_dict() for m in self.models],
+            "timestamp": self.timestamp,
+            "expires_at": self.expires_at,
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'ModelsCache':
+    def from_dict(cls, data: dict) -> "ModelsCache":
         """Create from dictionary"""
-        models = [ModelInfo(**m) for m in data.get('models', [])]
+        models = [ModelInfo(**m) for m in data.get("models", [])]
         return cls(
-            models=models,
-            timestamp=data.get('timestamp', 0),
-            expires_at=data.get('expires_at', 0)
+            models=models, timestamp=data.get("timestamp", 0), expires_at=data.get("expires_at", 0)
         )
 
 
 def _get_base_url() -> str:
     """Get OpenRouter base URL from environment or use default"""
-    return os.getenv('OPENROUTER_BASE_URL', DEFAULT_OPENROUTER_BASE_URL)
+    return os.getenv("OPENROUTER_BASE_URL", DEFAULT_OPENROUTER_BASE_URL)
 
 
 def _get_cache_ttl() -> int:
     """Get cache TTL from environment or use default"""
     try:
-        return int(os.getenv('OPENROUTER_MODELS_CACHE_TTL', DEFAULT_CACHE_TTL))
+        return int(os.getenv("OPENROUTER_MODELS_CACHE_TTL", DEFAULT_CACHE_TTL))
     except ValueError:
         return DEFAULT_CACHE_TTL
 
@@ -123,7 +123,7 @@ def _load_cache() -> ModelsCache | None:
         return None
 
     try:
-        with CACHE_FILE.open('r', encoding='utf-8') as f:
+        with CACHE_FILE.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
         cache = ModelsCache.from_dict(data)
@@ -150,7 +150,7 @@ def _save_cache(cache: ModelsCache) -> None:
     try:
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
-        with CACHE_FILE.open('w', encoding='utf-8') as f:
+        with CACHE_FILE.open("w", encoding="utf-8") as f:
             json.dump(cache.to_dict(), f, indent=2)
 
         logger.info(f"Saved {len(cache.models)} models to cache")
@@ -171,21 +171,19 @@ def fetch_models_from_api() -> list[ModelInfo]:
         requests.RequestException: If API request fails
     """
     if requests is None:
-        raise RuntimeError(
-            "requests library is required. Install it with: pip install requests"
-        )
+        raise RuntimeError("requests library is required. Install it with: pip install requests")
 
     base_url = _get_base_url()
     url = f"{base_url}{MODELS_ENDPOINT}"
 
     headers = {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
     }
 
     # Add API key if available
-    api_key = os.getenv('OPENROUTER_API_KEY')
+    api_key = os.getenv("OPENROUTER_API_KEY")
     if api_key:
-        headers['Authorization'] = f'Bearer {api_key}'
+        headers["Authorization"] = f"Bearer {api_key}"
 
     logger.info(f"Fetching models from {url}")
 
@@ -194,29 +192,33 @@ def fetch_models_from_api() -> list[ModelInfo]:
         response.raise_for_status()
 
         data = response.json()
-        models_data = data.get('data', [])
+        models_data = data.get("data", [])
 
         logger.info(f"Fetched {len(models_data)} models from API")
 
         models = []
         for model_data in models_data:
             # Parse pricing
-            pricing = model_data.get('pricing', {})
-            prompt_price = float(pricing.get('prompt', '0'))
-            completion_price = float(pricing.get('completion', '0'))
-            is_free = (prompt_price == 0.0 and completion_price == 0.0)
+            pricing = model_data.get("pricing", {})
+            prompt_price = float(pricing.get("prompt", "0"))
+            completion_price = float(pricing.get("completion", "0"))
+            is_free = prompt_price == 0.0 and completion_price == 0.0
 
             model = ModelInfo(
-                id=model_data.get('id', ''),
-                name=model_data.get('name', ''),
-                description=model_data.get('description', ''),
-                context_length=model_data.get('context_length', 0),
+                id=model_data.get("id", ""),
+                name=model_data.get("name", ""),
+                description=model_data.get("description", ""),
+                context_length=model_data.get("context_length", 0),
                 pricing_prompt=prompt_price,
                 pricing_completion=completion_price,
                 is_free=is_free,
-                created=model_data.get('created', 0),
-                architecture=model_data.get('architecture', {}).get('modality'),
-                top_provider=model_data.get('top_provider', {}).get('name') if model_data.get('top_provider') else None
+                created=model_data.get("created", 0),
+                architecture=model_data.get("architecture", {}).get("modality"),
+                top_provider=(
+                    model_data.get("top_provider", {}).get("name")
+                    if model_data.get("top_provider")
+                    else None
+                ),
             )
             models.append(model)
 
@@ -255,11 +257,7 @@ def refresh_free_models_cache(force: bool = False) -> list[ModelInfo]:
     # Save to cache
     now = time.time()
     ttl = _get_cache_ttl()
-    cache = ModelsCache(
-        models=all_models,
-        timestamp=now,
-        expires_at=now + ttl
-    )
+    cache = ModelsCache(models=all_models, timestamp=now, expires_at=now + ttl)
     _save_cache(cache)
 
     # Return only free models
@@ -381,44 +379,24 @@ Examples:
 
   # Export to JSON
   python -m epstein.openrouter_models --export models.json
-        """
+        """,
     )
 
     parser.add_argument(
-        '--verbose', '-v',
-        action='store_true',
-        help='Print detailed model information'
+        "--verbose", "-v", action="store_true", help="Print detailed model information"
     )
+    parser.add_argument("--refresh", "-r", action="store_true", help="Force refresh cache from API")
+    parser.add_argument("--clear-cache", action="store_true", help="Clear the models cache")
     parser.add_argument(
-        '--refresh', '-r',
-        action='store_true',
-        help='Force refresh cache from API'
+        "--export", "-e", type=Path, metavar="FILE", help="Export models to JSON file"
     )
-    parser.add_argument(
-        '--clear-cache',
-        action='store_true',
-        help='Clear the models cache'
-    )
-    parser.add_argument(
-        '--export', '-e',
-        type=Path,
-        metavar='FILE',
-        help='Export models to JSON file'
-    )
-    parser.add_argument(
-        '--debug',
-        action='store_true',
-        help='Enable debug logging'
-    )
+    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
 
     args = parser.parse_args()
 
     # Configure logging
     log_level = logging.DEBUG if args.debug else logging.INFO
-    logging.basicConfig(
-        level=log_level,
-        format='%(asctime)s [%(levelname)s] %(name)s: %(message)s'
-    )
+    logging.basicConfig(level=log_level, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
     # Handle commands
     if args.clear_cache:
@@ -436,13 +414,13 @@ Examples:
         # Export if requested
         if args.export:
             export_data = {
-                'timestamp': datetime.utcnow().isoformat() + 'Z',
-                'count': len(models),
-                'models': [m.to_dict() for m in models]
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "count": len(models),
+                "models": [m.to_dict() for m in models],
             }
 
             args.export.parent.mkdir(parents=True, exist_ok=True)
-            with args.export.open('w', encoding='utf-8') as f:
+            with args.export.open("w", encoding="utf-8") as f:
                 json.dump(export_data, f, indent=2)
 
             print(f"\n💾 Exported {len(models)} models to {args.export}")
@@ -455,6 +433,7 @@ Examples:
         return 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
+
     sys.exit(main())

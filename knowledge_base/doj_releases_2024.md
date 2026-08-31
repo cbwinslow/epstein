@@ -4,8 +4,8 @@
 
 In late December 2024, the Department of Justice (DOJ) released a significant collection of documents related to the Jeffrey Epstein case. These documents are now publicly available and can be accessed through multiple sources for bulk download and analysis.
 
-**Release Date**: Approximately December 19-23, 2024  
-**Source**: Department of Justice, Southern District of New York  
+**Release Date**: Approximately December 19-23, 2024
+**Source**: Department of Justice, Southern District of New York
 **Access URL**: https://www.justice.gov/epstein/doj-disclosures
 
 ## What Was Released
@@ -174,7 +174,7 @@ import requests
 # Create an AI agent with MCP server tools
 agent = Agent(
     model='openai:gpt-4',
-    system_prompt='''You are a document retrieval specialist. 
+    system_prompt='''You are a document retrieval specialist.
     Use the MCP server to download Epstein-related documents.'''
 )
 

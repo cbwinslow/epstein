@@ -17,7 +17,9 @@ class AdvancedAnalysisTools:
         self.entity_cache = {}
         self.kg_cache = {}
 
-    async def advanced_document_analysis(self, file_path: str, analysis_types: list[str]) -> dict[str, Any]:
+    async def advanced_document_analysis(
+        self, file_path: str, analysis_types: list[str]
+    ) -> dict[str, Any]:
         """
         Perform advanced document analysis with multiple analysis types.
 
@@ -38,12 +40,12 @@ class AdvancedAnalysisTools:
 
             if "metadata" in analysis_types:
                 results["metadata"] = {
-                    "file_name": file_path.split('/')[-1],
+                    "file_name": file_path.split("/")[-1],
                     "file_size": 2048576,
                     "page_count": 42,
                     "author": "Document Author",
                     "title": "Comprehensive Analysis Report",
-                    "keywords": ["analysis", "report", "comprehensive"]
+                    "keywords": ["analysis", "report", "comprehensive"],
                 }
 
             if "content" in analysis_types:
@@ -52,7 +54,7 @@ class AdvancedAnalysisTools:
                     "character_count": 78214,
                     "paragraph_count": 187,
                     "language": "english",
-                    "reading_time_minutes": 62
+                    "reading_time_minutes": 62,
                 }
 
             if "quality" in analysis_types:
@@ -61,7 +63,7 @@ class AdvancedAnalysisTools:
                     "structure_score": 0.93,
                     "completeness": 0.97,
                     "overall_quality": 0.91,
-                    "quality_grade": "A-"
+                    "quality_grade": "A-",
                 }
 
             if "statistics" in analysis_types:
@@ -69,7 +71,7 @@ class AdvancedAnalysisTools:
                     "unique_words": 3245,
                     "sentence_count": 542,
                     "average_word_length": 5.8,
-                    "lexical_density": 0.58
+                    "lexical_density": 0.58,
                 }
 
             analysis_result = {
@@ -78,7 +80,7 @@ class AdvancedAnalysisTools:
                 "analysis_types": analysis_types,
                 "status": "completed",
                 "results": results,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
             self.analysis_cache[analysis_id] = analysis_result
@@ -89,10 +91,12 @@ class AdvancedAnalysisTools:
                 "analysis_id": analysis_id,
                 "status": "error",
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
-    async def extract_complex_entities(self, text: str, entity_types: list[str], advanced_options: dict[str, Any] | None = None) -> dict[str, Any]:
+    async def extract_complex_entities(
+        self, text: str, entity_types: list[str], advanced_options: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         Extract complex entities with advanced options.
 
@@ -120,7 +124,11 @@ class AdvancedAnalysisTools:
                 if entity_type == "PERSON":
                     mock_entities = ["Dr. John Smith", "Prof. Sarah Johnson", "Mr. Robert Brown"]
                 elif entity_type == "ORG":
-                    mock_entities = ["International Research Institute", "Global Technology Solutions", "Advanced Analytics Corp"]
+                    mock_entities = [
+                        "International Research Institute",
+                        "Global Technology Solutions",
+                        "Advanced Analytics Corp",
+                    ]
                 elif entity_type == "LOC":
                     mock_entities = ["New York City, NY", "San Francisco, CA", "London, UK"]
                 elif entity_type == "DATE":
@@ -139,9 +147,13 @@ class AdvancedAnalysisTools:
                         "text": entity_text,
                         "confidence": confidence,
                         "start_pos": text.find(entity_text) if entity_text in text else 0,
-                        "end_pos": text.find(entity_text) + len(entity_text) if entity_text in text else len(entity_text),
+                        "end_pos": (
+                            text.find(entity_text) + len(entity_text)
+                            if entity_text in text
+                            else len(entity_text)
+                        ),
                         "context": f"Contextual information for {entity_text}",
-                        "normalized_form": entity_text.upper()
+                        "normalized_form": entity_text.upper(),
                     }
 
                     entities.append(entity)
@@ -151,7 +163,9 @@ class AdvancedAnalysisTools:
             # Calculate average confidence for each entity type
             for entity_type in entity_stats:
                 if entity_stats[entity_type]["count"] > 0:
-                    entity_stats[entity_type]["avg_confidence"] /= entity_stats[entity_type]["count"]
+                    entity_stats[entity_type]["avg_confidence"] /= entity_stats[entity_type][
+                        "count"
+                    ]
 
             result = {
                 "extraction_id": extraction_id,
@@ -161,7 +175,7 @@ class AdvancedAnalysisTools:
                 "entity_statistics": entity_stats,
                 "total_entities": len(entities),
                 "advanced_options": advanced_options or {},
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
             self.entity_cache[extraction_id] = result
@@ -172,10 +186,12 @@ class AdvancedAnalysisTools:
                 "extraction_id": extraction_id,
                 "status": "error",
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
-    async def build_advanced_knowledge_graph(self, text: str, entity_types: list[str], graph_options: dict[str, Any] | None = None) -> dict[str, Any]:
+    async def build_advanced_knowledge_graph(
+        self, text: str, entity_types: list[str], graph_options: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         Build an advanced knowledge graph with customizable options.
 
@@ -201,7 +217,7 @@ class AdvancedAnalysisTools:
 
             # Create relationships between entities
             for i, entity1 in enumerate(entities):
-                for j, entity2 in enumerate(entities[i+1:], i+1):
+                for j, entity2 in enumerate(entities[i + 1 :], i + 1):
                     if i < j:  # Avoid duplicate relationships
                         relationship_type = "RELATED_TO"
                         confidence = round(0.6 + (0.4 * ((i + j) % 10) / 10), 2)
@@ -214,7 +230,7 @@ class AdvancedAnalysisTools:
                             "confidence": confidence,
                             "evidence": f"Evidence linking {entity1['text']} and {entity2['text']}",
                             "source_entity_type": entity1["entity_type"],
-                            "target_entity_type": entity2["entity_type"]
+                            "target_entity_type": entity2["entity_type"],
                         }
                         relationships.append(relationship)
 
@@ -223,30 +239,34 @@ class AdvancedAnalysisTools:
             edges = []
 
             for entity in entities:
-                nodes.append({
-                    "id": entity["entity_id"],
-                    "label": entity["text"],
-                    "type": entity["entity_type"],
-                    "confidence": entity["confidence"],
-                    "properties": {
-                        "normalized_form": entity["normalized_form"],
-                        "context": entity["context"]
+                nodes.append(
+                    {
+                        "id": entity["entity_id"],
+                        "label": entity["text"],
+                        "type": entity["entity_type"],
+                        "confidence": entity["confidence"],
+                        "properties": {
+                            "normalized_form": entity["normalized_form"],
+                            "context": entity["context"],
+                        },
                     }
-                })
+                )
 
             for relationship in relationships:
-                edges.append({
-                    "id": relationship["relationship_id"],
-                    "source": relationship["source_entity"],
-                    "target": relationship["target_entity"],
-                    "type": relationship["relationship_type"],
-                    "confidence": relationship["confidence"],
-                    "properties": {
-                        "evidence": relationship["evidence"],
-                        "source_type": relationship["source_entity_type"],
-                        "target_type": relationship["target_entity_type"]
+                edges.append(
+                    {
+                        "id": relationship["relationship_id"],
+                        "source": relationship["source_entity"],
+                        "target": relationship["target_entity"],
+                        "type": relationship["relationship_type"],
+                        "confidence": relationship["confidence"],
+                        "properties": {
+                            "evidence": relationship["evidence"],
+                            "source_type": relationship["source_entity_type"],
+                            "target_type": relationship["target_entity_type"],
+                        },
                     }
-                })
+                )
 
             # Calculate graph statistics
             graph_stats = {
@@ -255,7 +275,14 @@ class AdvancedAnalysisTools:
                 "density": round(len(edges) / len(nodes) if nodes else 0, 3),
                 "average_degree": round(2 * len(edges) / len(nodes) if nodes else 0, 2),
                 "connected_components": 1,
-                "average_confidence": round(sum(r["confidence"] for r in relationships) / len(relationships) if relationships else 0, 2)
+                "average_confidence": round(
+                    (
+                        sum(r["confidence"] for r in relationships) / len(relationships)
+                        if relationships
+                        else 0
+                    ),
+                    2,
+                ),
             }
 
             knowledge_graph = {
@@ -266,8 +293,8 @@ class AdvancedAnalysisTools:
                     "entity_types": entity_types,
                     "text_length": len(text),
                     "graph_type": "advanced_knowledge_graph",
-                    "construction_options": graph_options or {}
-                }
+                    "construction_options": graph_options or {},
+                },
             }
 
             self.kg_cache[graph_id] = knowledge_graph
@@ -276,7 +303,7 @@ class AdvancedAnalysisTools:
                 "graph_id": graph_id,
                 "knowledge_graph": knowledge_graph,
                 "entity_extraction": entity_result,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
             return result
@@ -286,7 +313,7 @@ class AdvancedAnalysisTools:
                 "graph_id": graph_id,
                 "status": "error",
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
     def get_analysis_result(self, analysis_id: str) -> dict[str, Any]:
@@ -326,19 +353,19 @@ TOOLS = [
                 "properties": {
                     "file_path": {
                         "type": "string",
-                        "description": "Path to the document to analyze"
+                        "description": "Path to the document to analyze",
                     },
                     "analysis_types": {
                         "type": "array",
                         "items": {"type": "string"},
                         "description": "List of analysis types to perform",
                         "default": ["metadata", "content", "quality", "statistics"],
-                        "enum": ["metadata", "content", "quality", "statistics"]
-                    }
+                        "enum": ["metadata", "content", "quality", "statistics"],
+                    },
                 },
-                "required": ["file_path"]
-            }
-        }
+                "required": ["file_path"],
+            },
+        },
     },
     {
         "type": "function",
@@ -350,13 +377,13 @@ TOOLS = [
                 "properties": {
                     "text": {
                         "type": "string",
-                        "description": "Text content to analyze for entities"
+                        "description": "Text content to analyze for entities",
                     },
                     "entity_types": {
                         "type": "array",
                         "items": {"type": "string"},
                         "description": "List of entity types to extract",
-                        "default": ["PERSON", "ORG", "LOC", "DATE", "GPE"]
+                        "default": ["PERSON", "ORG", "LOC", "DATE", "GPE"],
                     },
                     "advanced_options": {
                         "type": "object",
@@ -365,24 +392,24 @@ TOOLS = [
                             "confidence_threshold": {
                                 "type": "number",
                                 "description": "Minimum confidence threshold for entities",
-                                "default": 0.7
+                                "default": 0.7,
                             },
                             "context_window": {
                                 "type": "integer",
                                 "description": "Context window size for entity extraction",
-                                "default": 50
+                                "default": 50,
                             },
                             "enable_normalization": {
                                 "type": "boolean",
                                 "description": "Enable entity normalization",
-                                "default": True
-                            }
-                        }
-                    }
+                                "default": True,
+                            },
+                        },
+                    },
                 },
-                "required": ["text"]
-            }
-        }
+                "required": ["text"],
+            },
+        },
     },
     {
         "type": "function",
@@ -394,13 +421,13 @@ TOOLS = [
                 "properties": {
                     "text": {
                         "type": "string",
-                        "description": "Text content to analyze for knowledge graph construction"
+                        "description": "Text content to analyze for knowledge graph construction",
                     },
                     "entity_types": {
                         "type": "array",
                         "items": {"type": "string"},
                         "description": "List of entity types to include in the knowledge graph",
-                        "default": ["PERSON", "ORG", "LOC", "GPE"]
+                        "default": ["PERSON", "ORG", "LOC", "GPE"],
                     },
                     "graph_options": {
                         "type": "object",
@@ -410,24 +437,24 @@ TOOLS = [
                                 "type": "array",
                                 "items": {"type": "string"},
                                 "description": "Specific relationship types to extract",
-                                "default": ["RELATED_TO", "WORKS_AT", "LOCATED_IN"]
+                                "default": ["RELATED_TO", "WORKS_AT", "LOCATED_IN"],
                             },
                             "min_confidence": {
                                 "type": "number",
                                 "description": "Minimum confidence threshold for relationships",
-                                "default": 0.6
+                                "default": 0.6,
                             },
                             "max_relationships_per_entity": {
                                 "type": "integer",
                                 "description": "Maximum relationships per entity",
-                                "default": 5
-                            }
-                        }
-                    }
+                                "default": 5,
+                            },
+                        },
+                    },
                 },
-                "required": ["text"]
-            }
-        }
+                "required": ["text"],
+            },
+        },
     },
     {
         "type": "function",
@@ -439,12 +466,12 @@ TOOLS = [
                 "properties": {
                     "analysis_id": {
                         "type": "string",
-                        "description": "ID of the analysis to retrieve"
+                        "description": "ID of the analysis to retrieve",
                     }
                 },
-                "required": ["analysis_id"]
-            }
-        }
+                "required": ["analysis_id"],
+            },
+        },
     },
     {
         "type": "function",
@@ -456,12 +483,12 @@ TOOLS = [
                 "properties": {
                     "extraction_id": {
                         "type": "string",
-                        "description": "ID of the extraction to retrieve"
+                        "description": "ID of the extraction to retrieve",
                     }
                 },
-                "required": ["extraction_id"]
-            }
-        }
+                "required": ["extraction_id"],
+            },
+        },
     },
     {
         "type": "function",
@@ -473,13 +500,13 @@ TOOLS = [
                 "properties": {
                     "graph_id": {
                         "type": "string",
-                        "description": "ID of the knowledge graph to retrieve"
+                        "description": "ID of the knowledge graph to retrieve",
                     }
                 },
-                "required": ["graph_id"]
-            }
-        }
-    }
+                "required": ["graph_id"],
+            },
+        },
+    },
 ]
 
 
@@ -493,9 +520,9 @@ TOOLS_INFO = {
         "Complex entity extraction",
         "Knowledge graph construction",
         "Detailed statistical analysis",
-        "Customizable extraction options"
+        "Customizable extraction options",
     ],
-    "tools": TOOLS
+    "tools": TOOLS,
 }
 
 
@@ -506,8 +533,7 @@ if __name__ == "__main__":
     async def main():
         # Test advanced document analysis
         analysis_result = await tools.advanced_document_analysis(
-            "comprehensive_report.pdf",
-            ["metadata", "content", "quality"]
+            "comprehensive_report.pdf", ["metadata", "content", "quality"]
         )
         print("Advanced analysis:", json.dumps(analysis_result, indent=2))
 
@@ -517,7 +543,7 @@ if __name__ == "__main__":
         entities_result = await tools.extract_complex_entities(
             sample_text,
             ["PERSON", "ORG", "LOC", "GPE"],
-            {"confidence_threshold": 0.75, "enable_normalization": True}
+            {"confidence_threshold": 0.75, "enable_normalization": True},
         )
         print("Complex entities:", json.dumps(entities_result, indent=2))
 
@@ -525,7 +551,7 @@ if __name__ == "__main__":
         kg_result = await tools.build_advanced_knowledge_graph(
             sample_text,
             ["PERSON", "ORG", "LOC"],
-            {"relationship_types": ["RELATED_TO", "WORKS_AT"], "min_confidence": 0.65}
+            {"relationship_types": ["RELATED_TO", "WORKS_AT"], "min_confidence": 0.65},
         )
         print("Advanced knowledge graph:", json.dumps(kg_result, indent=2))
 

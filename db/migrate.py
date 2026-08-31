@@ -21,8 +21,8 @@ from psycopg2.extras import DictCursor
 
 class MigrationManager:
     def __init__(self, db_url=None):
-        self.db_url = db_url or os.getenv('DATABASE_URL')
-        self.migrations_dir = Path(__file__).parent / 'migrations'
+        self.db_url = db_url or os.getenv("DATABASE_URL")
+        self.migrations_dir = Path(__file__).parent / "migrations"
 
     def get_connection(self):
         """Get database connection"""
@@ -47,12 +47,12 @@ class MigrationManager:
         self.ensure_migration_table()
         with self.get_connection() as conn, conn.cursor() as cur:
             cur.execute("SELECT version FROM schema_migrations ORDER BY version")
-            return {row['version'] for row in cur.fetchall()}
+            return {row["version"] for row in cur.fetchall()}
 
     def get_pending_migrations(self):
         """Get list of pending migrations"""
         applied = self.get_applied_migrations()
-        all_migrations = sorted(self.migrations_dir.glob('*.sql'))
+        all_migrations = sorted(self.migrations_dir.glob("*.sql"))
         return [m for m in all_migrations if m.stem not in applied]
 
     def run_migration(self, migration_file):
@@ -65,10 +65,7 @@ class MigrationManager:
                 # Remove the INSERT statement for schema_migrations if present
                 # (we'll handle it separately)
                 sql = re.sub(
-                    r"INSERT INTO schema_migrations.*ON CONFLICT.*?;",
-                    "",
-                    sql,
-                    flags=re.DOTALL
+                    r"INSERT INTO schema_migrations.*ON CONFLICT.*?;", "", sql, flags=re.DOTALL
                 )
 
                 cur.execute(sql)
@@ -76,11 +73,14 @@ class MigrationManager:
                 # Record migration
                 version = migration_file.stem
                 description = f"Applied migration {version}"
-                cur.execute("""
+                cur.execute(
+                    """
                         INSERT INTO schema_migrations (version, description, executed_at)
                         VALUES (%s, %s, NOW())
                         ON CONFLICT (version) DO NOTHING
-                    """, (version, description))
+                    """,
+                    (version, description),
+                )
 
                 conn.commit()
                 print(f"✅ Applied migration: {migration_file.name}")
@@ -123,7 +123,7 @@ class MigrationManager:
 
     def create_migration(self, description):
         """Create new migration file"""
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"{timestamp}_{description.lower().replace(' ', '_')}.sql"
         filepath = self.migrations_dir / filename
 
@@ -147,21 +147,21 @@ ON CONFLICT (version) DO NOTHING;
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Database migration manager')
-    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+    parser = argparse.ArgumentParser(description="Database migration manager")
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # Up command
-    subparsers.add_parser('up', help='Run pending migrations')
+    subparsers.add_parser("up", help="Run pending migrations")
 
     # Down command
-    subparsers.add_parser('down', help='Rollback last migration')
+    subparsers.add_parser("down", help="Rollback last migration")
 
     # Status command
-    subparsers.add_parser('status', help='Show migration status')
+    subparsers.add_parser("status", help="Show migration status")
 
     # Create command
-    create_parser = subparsers.add_parser('create', help='Create new migration')
-    create_parser.add_argument('description', help='Migration description')
+    create_parser = subparsers.add_parser("create", help="Create new migration")
+    create_parser.add_argument("description", help="Migration description")
 
     args = parser.parse_args()
 
@@ -171,15 +171,15 @@ def main():
 
     manager = MigrationManager()
 
-    if args.command == 'up':
+    if args.command == "up":
         manager.migrate_up()
-    elif args.command == 'down':
+    elif args.command == "down":
         manager.migrate_down()
-    elif args.command == 'status':
+    elif args.command == "status":
         manager.show_status()
-    elif args.command == 'create':
+    elif args.command == "create":
         manager.create_migration(args.description)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -37,7 +37,7 @@ logging.basicConfig(
     handlers=[
         logging.StreamHandler(sys.stdout),
         logging.FileHandler("/tmp/pipeline_orchestrator.log"),
-    ]
+    ],
 )
 
 logger = logging.getLogger(__name__)
@@ -46,6 +46,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PipelineConfig:
     """Configuration for the pipeline"""
+
     # Directories
     base_dir: Path
     download_dir: Path
@@ -93,7 +94,9 @@ class PipelineConfig:
             enable_deduplication=data.get("enable_deduplication", True),
             auto_extract_zips=data.get("auto_extract_zips", True),
             max_ocr_workers=data.get("max_ocr_workers", 2),
-            ocr_quality_threshold=OCRQuality[data.get("ocr_quality_threshold", "ACCEPTABLE").upper()],
+            ocr_quality_threshold=OCRQuality[
+                data.get("ocr_quality_threshold", "ACCEPTABLE").upper()
+            ],
             skip_existing_ocr=data.get("skip_existing_ocr", True),
             tesseract_lang=data.get("tesseract_lang", "eng"),
             enable_dashboard=data.get("enable_dashboard", False),
@@ -234,10 +237,7 @@ class PipelineOrchestrator:
 
         # Could send notifications here (email, Slack, etc.)
 
-    def add_download_tasks_from_doj(
-        self,
-        dataset_numbers: list[int] | None = None
-    ) -> list[str]:
+    def add_download_tasks_from_doj(self, dataset_numbers: list[int] | None = None) -> list[str]:
         """
         Add download tasks for DOJ datasets
 
@@ -279,9 +279,7 @@ class PipelineOrchestrator:
 
         # Start monitoring
         self.monitor.start_operation(
-            OperationType.DOWNLOAD,
-            total_count=len(task_ids),
-            description="Downloading files"
+            OperationType.DOWNLOAD, total_count=len(task_ids), description="Downloading files"
         )
 
         # Start dashboard if enabled
@@ -291,8 +289,7 @@ class PipelineOrchestrator:
         try:
             # Download files
             results = self.download_manager.download_batch(
-                task_ids=task_ids,
-                verify_checksums=self.config.enable_checksums
+                task_ids=task_ids, verify_checksums=self.config.enable_checksums
             )
 
             # Update monitoring
@@ -304,7 +301,7 @@ class PipelineOrchestrator:
                         OperationType.DOWNLOAD,
                         completed=1,
                         bytes_processed=task.metrics.bytes_downloaded,
-                        duration_seconds=task.metrics.duration_seconds
+                        duration_seconds=task.metrics.duration_seconds,
                     )
                     self.pipeline_state["downloads_completed"] += 1
                 else:
@@ -312,7 +309,7 @@ class PipelineOrchestrator:
                     self.monitor.report_error(
                         OperationType.DOWNLOAD,
                         error or "Unknown error",
-                        metadata={"task_id": task_id, "url": task.url}
+                        metadata={"task_id": task_id, "url": task.url},
                     )
                     self.pipeline_state["total_errors"] += 1
 
@@ -326,14 +323,11 @@ class PipelineOrchestrator:
                 f"({stats['success_rate']:.1f}%)"
             )
 
-            return stats['success_rate'] > 0
+            return stats["success_rate"] > 0
 
         except Exception as e:
             logger.error(f"Download phase failed: {e}")
-            self.monitor.report_error(
-                OperationType.DOWNLOAD,
-                f"Phase failure: {str(e)}"
-            )
+            self.monitor.report_error(OperationType.DOWNLOAD, f"Phase failure: {str(e)}")
             return False
         finally:
             if self.config.enable_dashboard:
@@ -361,17 +355,13 @@ class PipelineOrchestrator:
             return True
 
         self.monitor.start_operation(
-            OperationType.ORGANIZE,
-            total_count=len(files),
-            description="Organizing files"
+            OperationType.ORGANIZE, total_count=len(files), description="Organizing files"
         )
 
         try:
             # Organize directory
             stats = self.file_organizer.organize_directory(
-                directory=self.config.download_dir,
-                source=source,
-                recursive=True
+                directory=self.config.download_dir, source=source, recursive=True
             )
 
             # Update monitoring
@@ -379,7 +369,7 @@ class PipelineOrchestrator:
                 OperationType.ORGANIZE,
                 completed=stats["success"],
                 failed=stats["failed"],
-                skipped=stats["duplicates"]
+                skipped=stats["duplicates"],
             )
 
             self.pipeline_state["files_organized"] = stats["success"]
@@ -396,10 +386,7 @@ class PipelineOrchestrator:
 
         except Exception as e:
             logger.error(f"Organization phase failed: {e}")
-            self.monitor.report_error(
-                OperationType.ORGANIZE,
-                f"Phase failure: {str(e)}"
-            )
+            self.monitor.report_error(OperationType.ORGANIZE, f"Phase failure: {str(e)}")
             return False
 
     def run_ocr_phase(self) -> bool:
@@ -426,16 +413,13 @@ class PipelineOrchestrator:
 
         # Start monitoring
         self.monitor.start_operation(
-            OperationType.OCR,
-            total_count=len(task_ids),
-            description="Processing OCR"
+            OperationType.OCR, total_count=len(task_ids), description="Processing OCR"
         )
 
         try:
             # Process OCR
             results = self.ocr_processor.process_batch(
-                task_ids=task_ids,
-                parallel=self.config.max_ocr_workers > 1
+                task_ids=task_ids, parallel=self.config.max_ocr_workers > 1
             )
 
             # Update monitoring
@@ -446,7 +430,7 @@ class PipelineOrchestrator:
                     self.monitor.update_progress(
                         OperationType.OCR,
                         completed=1,
-                        duration_seconds=task.metrics.duration_seconds
+                        duration_seconds=task.metrics.duration_seconds,
                     )
                     self.pipeline_state["ocr_completed"] += 1
                 else:
@@ -454,7 +438,7 @@ class PipelineOrchestrator:
                     self.monitor.report_error(
                         OperationType.OCR,
                         error or "Unknown error",
-                        metadata={"task_id": task_id, "file": str(task.input_path)}
+                        metadata={"task_id": task_id, "file": str(task.input_path)},
                     )
                     self.pipeline_state["total_errors"] += 1
 
@@ -468,21 +452,15 @@ class PipelineOrchestrator:
                 f"({stats['success_rate']:.1f}%)"
             )
 
-            return stats['success_rate'] > 0
+            return stats["success_rate"] > 0
 
         except Exception as e:
             logger.error(f"OCR phase failed: {e}")
-            self.monitor.report_error(
-                OperationType.OCR,
-                f"Phase failure: {str(e)}"
-            )
+            self.monitor.report_error(OperationType.OCR, f"Phase failure: {str(e)}")
             return False
 
     def run_full_pipeline(
-        self,
-        skip_download: bool = False,
-        skip_organize: bool = False,
-        skip_ocr: bool = False
+        self, skip_download: bool = False, skip_organize: bool = False, skip_ocr: bool = False
     ) -> bool:
         """
         Run the complete pipeline
@@ -600,45 +578,21 @@ Examples:
 
   # Enable dashboard
   python pipeline_orchestrator.py --dashboard
-        """
+        """,
     )
 
-    parser.add_argument(
-        "--config",
-        type=Path,
-        help="Path to configuration JSON file"
-    )
+    parser.add_argument("--config", type=Path, help="Path to configuration JSON file")
     parser.add_argument(
         "--base-dir",
         type=Path,
         default=Path("./epstein_pipeline"),
-        help="Base directory for pipeline (default: ./epstein_pipeline)"
+        help="Base directory for pipeline (default: ./epstein_pipeline)",
     )
-    parser.add_argument(
-        "--skip-download",
-        action="store_true",
-        help="Skip download phase"
-    )
-    parser.add_argument(
-        "--skip-organize",
-        action="store_true",
-        help="Skip organization phase"
-    )
-    parser.add_argument(
-        "--skip-ocr",
-        action="store_true",
-        help="Skip OCR phase"
-    )
-    parser.add_argument(
-        "--dashboard",
-        action="store_true",
-        help="Enable real-time dashboard"
-    )
-    parser.add_argument(
-        "--session-key",
-        type=str,
-        help="Session authentication key"
-    )
+    parser.add_argument("--skip-download", action="store_true", help="Skip download phase")
+    parser.add_argument("--skip-organize", action="store_true", help="Skip organization phase")
+    parser.add_argument("--skip-ocr", action="store_true", help="Skip OCR phase")
+    parser.add_argument("--dashboard", action="store_true", help="Enable real-time dashboard")
+    parser.add_argument("--session-key", type=str, help="Session authentication key")
 
     args = parser.parse_args()
 

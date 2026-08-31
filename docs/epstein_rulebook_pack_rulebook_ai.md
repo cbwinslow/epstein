@@ -213,4 +213,3 @@ make search Q="test query"
 GEMINI.md
 CODEX.md
 ```
-

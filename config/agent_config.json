@@ -6,7 +6,7 @@
       "version": "1.0.0",
       "capabilities": [
         "OCR processing",
-        "Text extraction", 
+        "Text extraction",
         "Named Entity Recognition",
         "Vector embeddings",
         "Semantic search"
@@ -187,7 +187,7 @@
       "version": "1.0.0",
       "tools": [
         "run_epstein_pipeline",
-        "query_epstein_database", 
+        "query_epstein_database",
         "search_vector_embeddings",
         "get_pipeline_status",
         "analyze_document_entities",
