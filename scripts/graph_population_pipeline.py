@@ -22,30 +22,32 @@ from pathlib import Path
 from neo4j import GraphDatabase
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # Entity type mapping from NER labels to Neo4j node types
 ENTITY_TYPE_MAPPING = {
-    'PERSON': 'Person',
-    'ORG': 'Organization',
-    'ORGANIZATION': 'Organization',
-    'LOC': 'Location',
-    'LOCATION': 'Location',
-    'GPE': 'Location',  # Geopolitical entity
-    'MISC': 'Organization',  # Fallback
+    "PERSON": "Person",
+    "ORG": "Organization",
+    "ORGANIZATION": "Organization",
+    "LOC": "Location",
+    "LOCATION": "Location",
+    "GPE": "Location",  # Geopolitical entity
+    "MISC": "Organization",  # Fallback
 }
+
 
 class GraphPopulationPipeline:
     def __init__(self, uri: str, user: str, password: str, entities_dir: str = "entities"):
         self.driver = GraphDatabase.driver(uri, auth=(user, password))
         self.entities_dir = Path(entities_dir)
         self.documents: dict[str, dict] = {}  # doc_id -> document data
-        self.entities: defaultdict[tuple[str, str], list[dict]] = defaultdict(list)  # (label, text) -> list of mentions
-        self.mention_counts: defaultdict[tuple[str, str], defaultdict[str, int]] = defaultdict(lambda: defaultdict(int))  # (entity_key, doc_id) -> count
+        self.entities: defaultdict[tuple[str, str], list[dict]] = defaultdict(
+            list
+        )  # (label, text) -> list of mentions
+        self.mention_counts: defaultdict[tuple[str, str], defaultdict[str, int]] = defaultdict(
+            lambda: defaultdict(int)
+        )  # (entity_key, doc_id) -> count
 
     def close(self):
         self.driver.close()
@@ -65,7 +67,7 @@ class GraphPopulationPipeline:
         for file_path in jsonl_files:
             logger.info(f"Processing {file_path}")
             try:
-                with open(file_path, encoding='utf-8') as f:
+                with open(file_path, encoding="utf-8") as f:
                     for line_num, line in enumerate(f, 1):
                         line = line.strip()
                         if not line:
@@ -80,11 +82,13 @@ class GraphPopulationPipeline:
                 logger.error(f"Error processing {file_path}: {e}")
                 continue
 
-        logger.info(f"Loaded data for {len(self.documents)} documents and {len(self.entities)} unique entities")
+        logger.info(
+            f"Loaded data for {len(self.documents)} documents and {len(self.entities)} unique entities"
+        )
 
     def _process_entity_mention(self, data: dict) -> None:
         """Process a single entity mention from JSONL."""
-        doc_id = data.get('doc_id')
+        doc_id = data.get("doc_id")
         if not doc_id:
             logger.warning("Entity mention missing doc_id, skipping")
             return
@@ -92,15 +96,15 @@ class GraphPopulationPipeline:
         # Store document info
         if doc_id not in self.documents:
             self.documents[doc_id] = {
-                'id': doc_id,
-                'title': data.get('pdf_path', doc_id),
-                'source_url': data.get('source_url', ''),
-                'type': 'court_filing',  # Default type
+                "id": doc_id,
+                "title": data.get("pdf_path", doc_id),
+                "source_url": data.get("source_url", ""),
+                "type": "court_filing",  # Default type
             }
 
-        label = data.get('label')
-        text = data.get('text')
-        confidence = data.get('confidence', 0.0)
+        label = data.get("label")
+        text = data.get("text")
+        confidence = data.get("confidence", 0.0)
 
         if not label or not text:
             logger.warning(f"Entity mention missing label or text in doc {doc_id}, skipping")
@@ -110,12 +114,14 @@ class GraphPopulationPipeline:
         entity_key = (label, text.strip())
 
         # Store mention
-        self.entities[entity_key].append({
-            'doc_id': doc_id,
-            'confidence': confidence,
-            'char_start': data.get('char_start'),
-            'char_end': data.get('char_end'),
-        })
+        self.entities[entity_key].append(
+            {
+                "doc_id": doc_id,
+                "confidence": confidence,
+                "char_start": data.get("char_start"),
+                "char_end": data.get("char_end"),
+            }
+        )
 
         # Count mentions per entity per document
         self.mention_counts[entity_key][doc_id] += 1
@@ -125,15 +131,15 @@ class GraphPopulationPipeline:
         aggregated = {}
 
         for (label, text), mentions in self.entities.items():
-            doc_ids = list(set(m['doc_id'] for m in mentions))
-            confidences = [m['confidence'] for m in mentions if m['confidence'] > 0]
+            doc_ids = list(set(m["doc_id"] for m in mentions))
+            confidences = [m["confidence"] for m in mentions if m["confidence"] > 0]
 
             aggregated[(label, text)] = {
-                'id': f"{label}_{text.replace(' ', '_').lower()}",
-                'name': text,
-                'type': ENTITY_TYPE_MAPPING.get(label, 'Organization'),  # Default fallback
-                'confidence_score': sum(confidences) / len(confidences) if confidences else 0.5,
-                'source_documents': doc_ids,
+                "id": f"{label}_{text.replace(' ', '_').lower()}",
+                "name": text,
+                "type": ENTITY_TYPE_MAPPING.get(label, "Organization"),  # Default fallback
+                "confidence_score": sum(confidences) / len(confidences) if confidences else 0.5,
+                "source_documents": doc_ids,
             }
 
         return aggregated
@@ -142,7 +148,9 @@ class GraphPopulationPipeline:
         """Populate the Neo4j graph with documents, entities, and relationships."""
         aggregated_entities = self.aggregate_entities()
 
-        logger.info(f"Starting graph population with {len(self.documents)} documents and {len(aggregated_entities)} entities")
+        logger.info(
+            f"Starting graph population with {len(self.documents)} documents and {len(aggregated_entities)} entities"
+        )
 
         # Create constraints if they don't exist
         self._create_constraints()
@@ -162,10 +170,18 @@ class GraphPopulationPipeline:
         """Create unique constraints for node IDs."""
         with self.driver.session() as session:
             try:
-                session.run("CREATE CONSTRAINT document_id IF NOT EXISTS FOR (d:Document) REQUIRE d.id IS UNIQUE")
-                session.run("CREATE CONSTRAINT person_id IF NOT EXISTS FOR (p:Person) REQUIRE p.id IS UNIQUE")
-                session.run("CREATE CONSTRAINT organization_id IF NOT EXISTS FOR (o:Organization) REQUIRE o.id IS UNIQUE")
-                session.run("CREATE CONSTRAINT location_id IF NOT EXISTS FOR (l:Location) REQUIRE l.id IS UNIQUE")
+                session.run(
+                    "CREATE CONSTRAINT document_id IF NOT EXISTS FOR (d:Document) REQUIRE d.id IS UNIQUE"
+                )
+                session.run(
+                    "CREATE CONSTRAINT person_id IF NOT EXISTS FOR (p:Person) REQUIRE p.id IS UNIQUE"
+                )
+                session.run(
+                    "CREATE CONSTRAINT organization_id IF NOT EXISTS FOR (o:Organization) REQUIRE o.id IS UNIQUE"
+                )
+                session.run(
+                    "CREATE CONSTRAINT location_id IF NOT EXISTS FOR (l:Location) REQUIRE l.id IS UNIQUE"
+                )
                 logger.info("Database constraints created/verified")
             except Exception as e:
                 logger.error(f"Error creating constraints: {e}")
@@ -176,7 +192,7 @@ class GraphPopulationPipeline:
         documents_list = list(self.documents.values())
 
         for i in range(0, len(documents_list), batch_size):
-            batch = documents_list[i:i + batch_size]
+            batch = documents_list[i : i + batch_size]
             with self.driver.session() as session:
                 try:
                     session.execute_write(self._create_documents_tx, batch)
@@ -204,7 +220,7 @@ class GraphPopulationPipeline:
         entities_list = list(aggregated_entities.values())
 
         for i in range(0, len(entities_list), batch_size):
-            batch = entities_list[i:i + batch_size]
+            batch = entities_list[i : i + batch_size]
             with self.driver.session() as session:
                 try:
                     session.execute_write(self._create_entities_tx, batch)
@@ -216,7 +232,7 @@ class GraphPopulationPipeline:
     def _create_entities_tx(tx, entities: list[dict]):
         """Transaction function to create Entity nodes."""
         for entity in entities:
-            node_type = entity['type']
+            node_type = entity["type"]
             query = f"""
             MERGE (e:{node_type} {{id: $id}})
             SET e.name = $name,
@@ -231,20 +247,22 @@ class GraphPopulationPipeline:
         relationships = []
 
         for (label, text), entity_data in aggregated_entities.items():
-            entity_id = entity_data['id']
-            node_type = entity_data['type']
+            entity_id = entity_data["id"]
+            node_type = entity_data["type"]
 
-            for doc_id in entity_data['source_documents']:
+            for doc_id in entity_data["source_documents"]:
                 frequency = self.mention_counts[(label, text)][doc_id]
-                relationships.append({
-                    'entity_id': entity_id,
-                    'entity_type': node_type,
-                    'doc_id': doc_id,
-                    'frequency': frequency,
-                })
+                relationships.append(
+                    {
+                        "entity_id": entity_id,
+                        "entity_type": node_type,
+                        "doc_id": doc_id,
+                        "frequency": frequency,
+                    }
+                )
 
         for i in range(0, len(relationships), batch_size):
-            batch = relationships[i:i + batch_size]
+            batch = relationships[i : i + batch_size]
             with self.driver.session() as session:
                 try:
                     session.execute_write(self._create_relationships_tx, batch)
@@ -265,13 +283,14 @@ class GraphPopulationPipeline:
         """
         tx.run(query, relationships=relationships)
 
+
 def main():
     """Main execution function."""
     # Configuration from environment variables
-    neo4j_uri = os.getenv('NEO4J_URI', 'bolt://localhost:7687')
-    neo4j_user = os.getenv('NEO4J_USER', 'neo4j')
-    neo4j_password = os.getenv('NEO4J_PASSWORD', 'password')
-    entities_dir = os.getenv('ENTITIES_DIR', 'entities')
+    neo4j_uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+    neo4j_user = os.getenv("NEO4J_USER", "neo4j")
+    neo4j_password = os.getenv("NEO4J_PASSWORD", "password")
+    entities_dir = os.getenv("ENTITIES_DIR", "entities")
 
     logger.info("Starting graph population pipeline")
 
@@ -286,6 +305,7 @@ def main():
         raise
     finally:
         pipeline.close()
+
 
 if __name__ == "__main__":
     main()

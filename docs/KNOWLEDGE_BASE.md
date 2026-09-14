@@ -22,9 +22,9 @@ uv run pytest                          # Run tests
 
 ## Project Overview
 
-**Project**: Epstein Files Document Analysis Pipeline  
-**Purpose**: Provenance-safe document analysis for government releases (DOJ, FBI, House Oversight)  
-**Data**: 14,676 documents, ~14.6 GB processed  
+**Project**: Epstein Files Document Analysis Pipeline
+**Purpose**: Provenance-safe document analysis for government releases (DOJ, FBI, House Oversight)
+**Data**: 14,676 documents, ~14.6 GB processed
 **Python**: 3.10+ (managed via `.python-version` and `pyproject.toml`)
 
 ---
@@ -110,7 +110,7 @@ uv run pytest                          # Run tests
 # Database
 EPSTEIN_DSN=postgresql://user:pass@localhost:5432/db
 
-# Vector DB  
+# Vector DB
 QDRANT_URL=http://localhost:6333
 
 # OpenTelemetry (optional)

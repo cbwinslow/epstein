@@ -12,6 +12,7 @@ from typing import Any
 @dataclass
 class ProcessingTask:
     """Represents a document processing task"""
+
     task_id: str
     file_path: str
     operations: list[str]
@@ -42,9 +43,7 @@ class EpsteinDataProcessor:
             Dictionary containing processing results
         """
         task = ProcessingTask(
-            task_id=f"task_{len(self.tasks)}",
-            file_path=file_path,
-            operations=operations
+            task_id=f"task_{len(self.tasks)}", file_path=file_path, operations=operations
         )
 
         self.tasks.append(task)
@@ -52,36 +51,28 @@ class EpsteinDataProcessor:
         try:
             results = {}
 
-            if 'ocr' in operations:
-                results['ocr'] = await self._perform_ocr(file_path)
+            if "ocr" in operations:
+                results["ocr"] = await self._perform_ocr(file_path)
 
-            if 'extract_text' in operations:
-                results['extracted_text'] = await self._extract_text(file_path)
+            if "extract_text" in operations:
+                results["extracted_text"] = await self._extract_text(file_path)
 
-            if 'ner' in operations:
-                text = results.get('extracted_text', await self._extract_text(file_path))
-                results['entities'] = await self._perform_ner(text)
+            if "ner" in operations:
+                text = results.get("extracted_text", await self._extract_text(file_path))
+                results["entities"] = await self._perform_ner(text)
 
-            if 'embeddings' in operations:
-                text = results.get('extracted_text', await self._extract_text(file_path))
-                results['embeddings'] = await self._generate_embeddings(text)
+            if "embeddings" in operations:
+                text = results.get("extracted_text", await self._extract_text(file_path))
+                results["embeddings"] = await self._generate_embeddings(text)
 
             task.status = "completed"
             self.results[task.task_id] = results
 
-            return {
-                "task_id": task.task_id,
-                "status": "success",
-                "results": results
-            }
+            return {"task_id": task.task_id, "status": "success", "results": results}
 
         except Exception as e:
             task.status = "failed"
-            return {
-                "task_id": task.task_id,
-                "status": "error",
-                "error": str(e)
-            }
+            return {"task_id": task.task_id, "status": "error", "error": str(e)}
 
     async def _perform_ocr(self, file_path: str) -> dict[str, Any]:
         """Perform OCR on the document"""
@@ -90,7 +81,7 @@ class EpsteinDataProcessor:
             "method": "tesseract",
             "confidence": 0.95,
             "pages_processed": 1,
-            "ocr_text": "OCR processed text would go here"
+            "ocr_text": "OCR processed text would go here",
         }
 
     async def _extract_text(self, file_path: str) -> str:
@@ -103,7 +94,7 @@ class EpsteinDataProcessor:
         # Placeholder for NER implementation
         return [
             {"entity": "PERSON", "text": "John Doe", "confidence": 0.9, "start": 0, "end": 8},
-            {"entity": "ORG", "text": "Acme Corp", "confidence": 0.85, "start": 15, "end": 24}
+            {"entity": "ORG", "text": "Acme Corp", "confidence": 0.85, "start": 15, "end": 24},
         ]
 
     async def _generate_embeddings(self, text: str) -> list[float]:
@@ -116,7 +107,7 @@ class EpsteinDataProcessor:
         # Placeholder for vector search
         return [
             {"document_id": "doc1", "similarity": 0.95, "snippet": "Matching text snippet"},
-            {"document_id": "doc2", "similarity": 0.87, "snippet": "Another matching snippet"}
+            {"document_id": "doc2", "similarity": 0.87, "snippet": "Another matching snippet"},
         ]
 
     def get_task_status(self, task_id: str) -> dict[str, Any]:
@@ -126,11 +117,7 @@ class EpsteinDataProcessor:
             return {"error": "Task not found"}
 
         result = self.results.get(task_id)
-        return {
-            "task_id": task_id,
-            "status": task.status,
-            "result": result if result else None
-        }
+        return {"task_id": task_id, "status": task.status, "result": result if result else None}
 
     def list_tasks(self) -> list[dict[str, Any]]:
         """List all processing tasks"""
@@ -140,7 +127,7 @@ class EpsteinDataProcessor:
                 "file_path": task.file_path,
                 "operations": task.operations,
                 "status": task.status,
-                "priority": task.priority
+                "priority": task.priority,
             }
             for task in self.tasks
         ]
@@ -158,18 +145,18 @@ TOOLS = [
                 "properties": {
                     "file_path": {
                         "type": "string",
-                        "description": "Path to the PDF document to process"
+                        "description": "Path to the PDF document to process",
                     },
                     "operations": {
                         "type": "array",
                         "items": {"type": "string"},
                         "description": "Operations to perform: ['ocr', 'extract_text', 'ner', 'embeddings']",
-                        "enum": ["ocr", "extract_text", "ner", "embeddings"]
-                    }
+                        "enum": ["ocr", "extract_text", "ner", "embeddings"],
+                    },
                 },
-                "required": ["file_path", "operations"]
-            }
-        }
+                "required": ["file_path", "operations"],
+            },
+        },
     },
     {
         "type": "function",
@@ -181,17 +168,17 @@ TOOLS = [
                 "properties": {
                     "query_text": {
                         "type": "string",
-                        "description": "Text query to search for similar documents"
+                        "description": "Text query to search for similar documents",
                     },
                     "limit": {
                         "type": "integer",
                         "description": "Maximum number of results to return",
-                        "default": 10
-                    }
+                        "default": 10,
+                    },
                 },
-                "required": ["query_text"]
-            }
-        }
+                "required": ["query_text"],
+            },
+        },
     },
     {
         "type": "function",
@@ -201,15 +188,12 @@ TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "task_id": {
-                        "type": "string",
-                        "description": "ID of the task to check"
-                    }
+                    "task_id": {"type": "string", "description": "ID of the task to check"}
                 },
-                "required": ["task_id"]
-            }
-        }
-    }
+                "required": ["task_id"],
+            },
+        },
+    },
 ]
 
 
@@ -223,9 +207,9 @@ AGENT_INFO = {
         "Text extraction",
         "Named Entity Recognition",
         "Vector embeddings",
-        "Semantic search"
+        "Semantic search",
     ],
-    "tools": TOOLS
+    "tools": TOOLS,
 }
 
 
@@ -235,8 +219,7 @@ if __name__ == "__main__":
 
     async def main():
         result = await agent.process_document(
-            "example.pdf",
-            ["ocr", "extract_text", "ner", "embeddings"]
+            "example.pdf", ["ocr", "extract_text", "ner", "embeddings"]
         )
         print(json.dumps(result, indent=2))
 

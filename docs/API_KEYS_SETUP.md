@@ -151,7 +151,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Your step
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -354,7 +354,7 @@ secrets/
 # Development
 .env.development
 
-# Staging  
+# Staging
 .env.staging
 
 # Production
@@ -533,5 +533,5 @@ If you need help with API key setup:
 
 ---
 
-**Last Updated**: 2026-02-01  
+**Last Updated**: 2026-02-01
 **Maintainer**: Epstein Project Team

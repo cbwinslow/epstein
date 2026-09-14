@@ -2,7 +2,7 @@
   "name": "Epstein Project Schema",
   "version": "1.0.0",
   "description": "JSON schema for Epstein document processing pipeline",
-  
+
   "document": {
     "type": "object",
     "properties": {
@@ -40,7 +40,7 @@
     },
     "required": ["document_id", "file_path", "file_name", "created_at", "status"]
   },
-  
+
   "entity": {
     "type": "object",
     "properties": {
@@ -82,7 +82,7 @@
     },
     "required": ["entity_id", "document_id", "entity_type", "text", "confidence"]
   },
-  
+
   "chunk": {
     "type": "object",
     "properties": {
@@ -126,7 +126,7 @@
     },
     "required": ["chunk_id", "document_id", "chunk_text", "chunk_order"]
   },
-  
+
   "processing_task": {
     "type": "object",
     "properties": {
@@ -178,7 +178,7 @@
     },
     "required": ["task_id", "task_type", "status"]
   },
-  
+
   "search_result": {
     "type": "object",
     "properties": {
@@ -220,7 +220,7 @@
     },
     "required": ["query", "search_type", "results"]
   },
-  
+
   "export_format": {
     "type": "object",
     "properties": {

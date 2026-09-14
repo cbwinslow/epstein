@@ -32,13 +32,13 @@ on:
         required: false
         default: false
         type: boolean
-  
+
   schedule:
     # Run weekly on Sunday at 2 AM UTC
     # Note: Users can modify this schedule or disable it by removing this section
     # Examples: '0 2 * * 0' (weekly), '0 2 * * *' (daily), '0 2 1 * *' (monthly)
     - cron: '0 2 * * 0'
-  
+
   # Allow manual trigger from other workflows
   repository_dispatch:
     types: [ocr-processing]
@@ -55,27 +55,27 @@ jobs:
     name: Download Documents
     runs-on: ubuntu-latest
     timeout-minutes: 120
-    
+
     outputs:
       download-count: ${{ steps.count.outputs.total }}
       manifest-path: ${{ steps.download.outputs.manifest }}
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.1.1
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5.0.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      
+
       - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             wget curl jq git ca-certificates
-      
+
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
@@ -86,17 +86,17 @@ jobs:
             lxml==5.1.0 \
             tqdm==4.66.1 \
             pydantic==2.6.0
-      
+
       - name: Start MCP Server
         run: |
           cd mcp_servers/epstein_files_downloader
           pip install -r requirements.txt
-          
+
           # Start server in background
           python server.py --port 8765 --download-dir ${ARTIFACTS_DIR}/downloads &
           SERVER_PID=$!
           echo "MCP_SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
-          
+
           # Wait for server to start
           for i in {1..30}; do
             if curl -s http://localhost:8765/health > /dev/null; then
@@ -107,20 +107,20 @@ jobs:
             sleep 2
           done
         timeout-minutes: 2
-      
+
       - name: Discover and download documents
         id: download
         run: |
           set -e
-          
+
           SOURCES="${{ github.event.inputs.sources || 'all' }}"
           MAX_DOCS="${{ github.event.inputs.max_documents || 0 }}"
-          
+
           echo "📥 Downloading documents from sources: $SOURCES"
           echo "📊 Max documents: $MAX_DOCS (0 = unlimited)"
-          
+
           mkdir -p ${ARTIFACTS_DIR}/downloads ${MANIFEST_DIR}
-          
+
           # Use the MCP server API to download documents
           python << 'PYTHON_SCRIPT'
           import os
@@ -129,61 +129,61 @@ jobs:
           import time
           import requests
           from pathlib import Path
-          
+
           MCP_URL = "http://localhost:8765"
           SOURCES = "${{ github.event.inputs.sources || 'all' }}".split(',')
           MAX_DOCS = int("${{ github.event.inputs.max_documents || 0 }}")
           MANIFEST_DIR = Path("${{ env.MANIFEST_DIR }}")
-          
+
           def get_collections():
               """Get available document collections"""
               response = requests.get(f"{MCP_URL}/collections")
               response.raise_for_status()
               return response.json()
-          
+
           def download_collection(collection_id, max_docs=0):
               """Download documents from a collection"""
               print(f"📦 Processing collection: {collection_id}")
-              
+
               # Get documents in collection
               response = requests.get(f"{MCP_URL}/collections/{collection_id}/documents")
               response.raise_for_status()
               documents = response.json()
-              
+
               print(f"   Found {len(documents)} documents")
-              
+
               # Limit documents if specified
               if max_docs > 0:
                   documents = documents[:max_docs]
                   print(f"   Limited to {len(documents)} documents")
-              
+
               # Start bulk download
               bulk_request = {
                   "collection_id": collection_id,
                   "destination": "${{ env.ARTIFACTS_DIR }}/downloads"
               }
-              
+
               response = requests.post(
                   f"{MCP_URL}/download/bulk",
                   json=bulk_request
               )
               response.raise_for_status()
               tasks = response.json()
-              
+
               print(f"   Started {len(tasks)} download tasks")
-              
+
               # Monitor download progress
               completed = 0
               failed = 0
-              
+
               for task in tasks:
                   task_id = task['task_id']
-                  
+
                   # Poll task status
                   while True:
                       status_response = requests.get(f"{MCP_URL}/download/status/{task_id}")
                       status = status_response.json()
-                      
+
                       if status['status'] == 'completed':
                           completed += 1
                           print(f"   ✅ Completed: {status['destination']}")
@@ -192,20 +192,20 @@ jobs:
                           failed += 1
                           print(f"   ❌ Failed: {status.get('error', 'Unknown error')}")
                           break
-                      
+
                       time.sleep(2)
-              
+
               print(f"   📊 Summary: {completed} completed, {failed} failed")
               return completed, failed
-          
+
           # Main download logic
           try:
               collections = get_collections()
               print(f"🔍 Found {len(collections)} collections")
-              
+
               total_downloaded = 0
               total_failed = 0
-              
+
               # Filter collections based on sources
               if "all" in SOURCES:
                   selected_collections = collections
@@ -214,16 +214,16 @@ jobs:
                       c for c in collections
                       if any(source.lower() in c['collection_id'].lower() for source in SOURCES)
                   ]
-              
+
               print(f"📋 Selected {len(selected_collections)} collections to process")
-              
+
               # Process each collection
               for collection in selected_collections:
                   collection_id = collection['collection_id']
                   completed, failed = download_collection(collection_id, MAX_DOCS)
                   total_downloaded += completed
                   total_failed += failed
-              
+
               # Save summary
               summary = {
                   "total_downloaded": total_downloaded,
@@ -231,37 +231,37 @@ jobs:
                   "sources": SOURCES,
                   "timestamp": time.time()
               }
-              
+
               manifest_path = MANIFEST_DIR / "download_summary.json"
               manifest_path.write_text(json.dumps(summary, indent=2))
-              
+
               print(f"\n📊 Final Summary:")
               print(f"   ✅ Total downloaded: {total_downloaded}")
               print(f"   ❌ Total failed: {total_failed}")
-              
+
               # Output for GitHub Actions
               with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
                   f.write(f"total={total_downloaded}\n")
                   f.write(f"manifest={manifest_path}\n")
-              
+
               # Exit with error if all downloads failed
               if total_downloaded == 0 and total_failed > 0:
                   sys.exit(1)
-              
+
           except Exception as e:
               print(f"❌ Error during download: {e}")
               import traceback
               traceback.print_exc()
               sys.exit(1)
           PYTHON_SCRIPT
-      
+
       - name: Count downloaded documents
         id: count
         run: |
           COUNT=$(find ${ARTIFACTS_DIR}/downloads -type f -name "*.pdf" | wc -l)
           echo "total=$COUNT" >> $GITHUB_OUTPUT
           echo "📊 Downloaded $COUNT PDF documents"
-      
+
       - name: Upload download artifacts
         uses: actions/upload-artifact@v4.3.1
         with:
@@ -271,14 +271,14 @@ jobs:
             ${{ env.MANIFEST_DIR }}/download_summary.json
           retention-days: 7
           if-no-files-found: warn
-      
+
       - name: Stop MCP Server
         if: always()
         run: |
           if [ ! -z "$MCP_SERVER_PID" ]; then
             kill $MCP_SERVER_PID || true
           fi
-  
+
   # Job 2: OCR Processing
   ocr-processing:
     name: OCR Processing
@@ -286,27 +286,27 @@ jobs:
     if: ${{ github.event.inputs.enable_ocr != 'false' && needs.download-documents.outputs.download-count > 0 }}
     runs-on: ubuntu-latest
     timeout-minutes: 240
-    
+
     outputs:
       processed-count: ${{ steps.ocr.outputs.processed }}
       manifest-path: ${{ steps.ocr.outputs.manifest }}
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.1.1
-      
+
       - name: Download artifacts from previous job
         uses: actions/download-artifact@v4.1.3
         with:
           name: downloaded-documents
           path: ${{ env.ARTIFACTS_DIR }}
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5.0.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      
+
       - name: Install system dependencies for OCR
         run: |
           sudo apt-get update
@@ -317,11 +317,11 @@ jobs:
             ghostscript \
             qpdf \
             poppler-utils
-          
+
           # Verify installations
           ocrmypdf --version
           tesseract --version
-      
+
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
@@ -335,7 +335,7 @@ jobs:
             pdfminer.six==20231228 \
             spacy==3.7.2
           python -m spacy download en_core_web_sm
-      
+
       - name: Create pipeline configuration
         run: |
           cat > ${ARTIFACTS_DIR}/config.json << 'EOF'
@@ -355,36 +355,36 @@ jobs:
             "polite_delay_seconds": 0
           }
           EOF
-          
+
           echo "📄 Created pipeline configuration"
           cat ${ARTIFACTS_DIR}/config.json
-      
+
       - name: Run OCR processing
         id: ocr
         run: |
           set -e
-          
+
           echo "🔧 Starting OCR processing pipeline"
-          
+
           mkdir -p ${RESULTS_DIR}/{ocr,text,entities}
-          
+
           # Copy the pipeline script
           cp epstein/epstein_files_download_ocr_ner_pipeline_python_optional_ts.py ./ocr_pipeline.py
-          
+
           # Process PDFs with OCR
           PROCESSED=0
           FAILED=0
-          
+
           for pdf in ${ARTIFACTS_DIR}/downloads/*.pdf; do
             if [ ! -f "$pdf" ]; then
               continue
             fi
-            
+
             FILENAME=$(basename "$pdf")
             BASENAME="${FILENAME%.*}"
-            
+
             echo "📄 Processing: $FILENAME"
-            
+
             # OCR the PDF
             ocrmypdf \
               --language eng \
@@ -396,25 +396,25 @@ jobs:
               "${RESULTS_DIR}/ocr/${FILENAME}" \
               && echo "   ✅ OCR completed" \
               || { echo "   ⚠️  OCR failed, using original"; cp "$pdf" "${RESULTS_DIR}/ocr/${FILENAME}"; }
-            
+
             # Extract text
             python -m pdfminer.six "$pdf" > "${RESULTS_DIR}/text/${BASENAME}.txt" 2>/dev/null \
               && echo "   ✅ Text extracted" \
               || echo "   ⚠️  Text extraction failed"
-            
+
             PROCESSED=$((PROCESSED + 1))
-            
+
             # Progress indicator
             if [ $((PROCESSED % 10)) -eq 0 ]; then
               echo "📊 Progress: $PROCESSED documents processed"
             fi
           done
-          
+
           echo "📊 OCR Processing Summary:"
           echo "   ✅ Processed: $PROCESSED documents"
           echo "   📁 OCR PDFs: $(find ${RESULTS_DIR}/ocr -type f | wc -l)"
           echo "   📝 Text files: $(find ${RESULTS_DIR}/text -type f | wc -l)"
-          
+
           # Generate manifest
           python << 'PYTHON_MANIFEST'
           import os
@@ -423,52 +423,52 @@ jobs:
           import hashlib
           import time
           from pathlib import Path
-          
+
           results_dir = Path("${{ env.RESULTS_DIR }}")
           manifest_dir = Path("${{ env.MANIFEST_DIR }}")
           manifest_dir.mkdir(exist_ok=True)
-          
+
           manifest = {
               "processing_date": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
               "workflow_run": "${{ github.run_id }}",
               "documents": []
           }
-          
+
           for ocr_file in sorted((results_dir / "ocr").glob("*.pdf")):
               # Calculate SHA-256
               sha256 = hashlib.sha256()
               with open(ocr_file, 'rb') as f:
                   for chunk in iter(lambda: f.read(8192), b''):
                       sha256.update(chunk)
-              
+
               doc_info = {
                   "filename": ocr_file.name,
                   "path": str(ocr_file.relative_to(results_dir)),
                   "size": ocr_file.stat().st_size,
                   "sha256": sha256.hexdigest()
               }
-              
+
               # Check for corresponding text file
               text_file = results_dir / "text" / f"{ocr_file.stem}.txt"
               if text_file.exists():
                   doc_info["text_file"] = str(text_file.relative_to(results_dir))
                   doc_info["text_size"] = text_file.stat().st_size
-              
+
               manifest["documents"].append(doc_info)
-          
+
           manifest["total_documents"] = len(manifest["documents"])
           manifest_path = manifest_dir / "ocr_manifest.json"
           manifest_path.write_text(json.dumps(manifest, indent=2))
-          
+
           print(f"📋 Manifest created: {manifest_path}")
           print(f"📊 Total documents in manifest: {manifest['total_documents']}")
-          
+
           # Output for GitHub Actions
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
               f.write(f"processed={manifest['total_documents']}\n")
               f.write(f"manifest={manifest_path}\n")
           PYTHON_MANIFEST
-      
+
       - name: Generate summary statistics
         run: |
           echo "## OCR Processing Results" > ${RESULTS_DIR}/SUMMARY.md
@@ -484,9 +484,9 @@ jobs:
           echo "### Download Locations" >> ${RESULTS_DIR}/SUMMARY.md
           echo "- GitHub Actions Artifacts (90-day retention)" >> ${RESULTS_DIR}/SUMMARY.md
           echo "- See workflow run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> ${RESULTS_DIR}/SUMMARY.md
-          
+
           cat ${RESULTS_DIR}/SUMMARY.md
-      
+
       - name: Upload OCR results as artifacts
         uses: actions/upload-artifact@v4.3.1
         with:
@@ -496,7 +496,7 @@ jobs:
             ${{ env.MANIFEST_DIR }}/ocr_manifest.json
           retention-days: 90
           compression-level: 9
-      
+
       - name: Create compressed archive
         run: |
           cd ${RESULTS_DIR}
@@ -504,14 +504,14 @@ jobs:
           cd ..
           echo "📦 Created archive: ocr-results-${{ github.run_id }}.tar.gz"
           ls -lh ocr-results-${{ github.run_id }}.tar.gz
-      
+
       - name: Upload compressed archive
         uses: actions/upload-artifact@v4.3.1
         with:
           name: ocr-results-archive
           path: ocr-results-${{ github.run_id }}.tar.gz
           retention-days: 90
-  
+
   # Job 3: Upload to Cloudflare R2 (Optional)
   upload-to-r2:
     name: Upload to Cloudflare R2
@@ -521,22 +521,22 @@ jobs:
       needs.ocr-processing.outputs.processed-count > 0
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.1.1
-      
+
       - name: Download OCR results
         uses: actions/download-artifact@v4.1.3
         with:
           name: ocr-results-archive
           path: ./
-      
+
       - name: Install Wrangler CLI
         run: |
           npm install -g wrangler
           wrangler --version
-      
+
       - name: Upload to Cloudflare R2
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -544,29 +544,29 @@ jobs:
           R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET || 'epstein-documents' }}
         run: |
           set -e
-          
+
           ARCHIVE_NAME="ocr-results-${{ github.run_id }}.tar.gz"
           R2_KEY="ocr-results/$(date +%Y%m%d)/${ARCHIVE_NAME}"
-          
+
           echo "📤 Uploading to Cloudflare R2..."
           echo "   Bucket: ${R2_BUCKET}"
           echo "   Key: ${R2_KEY}"
-          
+
           wrangler r2 object put "${R2_BUCKET}/${R2_KEY}" \
             --file "${ARCHIVE_NAME}" \
             --content-type "application/gzip"
-          
+
           echo "✅ Upload complete!"
           echo "🔗 Public URL: https://pub-${CLOUDFLARE_ACCOUNT_ID}.r2.dev/${R2_KEY}"
-          
+
           # Save URL for later use
           echo "R2_URL=https://pub-${CLOUDFLARE_ACCOUNT_ID}.r2.dev/${R2_KEY}" >> $GITHUB_ENV
-      
+
       - name: Update repository with R2 links
         if: success()
         run: |
           mkdir -p results/r2-links
-          
+
           cat > results/r2-links/latest.txt << EOF
           OCR Processing Results
           ======================
@@ -574,7 +574,7 @@ jobs:
           Workflow Run: ${{ github.run_id }}
           R2 URL: ${{ env.R2_URL }}
           EOF
-          
+
           # Note: This may fail on protected branches or with default GITHUB_TOKEN permissions
           # The failure is non-critical - R2 upload already succeeded
           # To enable: Grant workflow write permissions in repo settings or use PAT
@@ -582,7 +582,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add results/r2-links/latest.txt
           git commit -m "Add R2 link for OCR results from run ${{ github.run_id }}" || echo "No changes to commit"
-          
+
           # Try to push, log error if it fails but don't fail the workflow
           if ! git push; then
             echo "⚠️ Warning: Failed to push R2 link to repository"
@@ -590,7 +590,7 @@ jobs:
             echo "Manual push may be needed or check branch protection rules"
             echo "To fix: Enable workflow write permissions in repository settings"
           fi
-  
+
   # Job 4: Create GitHub Release (Optional)
   create-release:
     name: Create GitHub Release
@@ -599,57 +599,57 @@ jobs:
       github.event.inputs.create_release == 'true' &&
       needs.ocr-processing.outputs.processed-count > 0
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.1.1
-      
+
       - name: Download OCR results archive
         uses: actions/download-artifact@v4.1.3
         with:
           name: ocr-results-archive
           path: ./
-      
+
       - name: Download manifest
         uses: actions/download-artifact@v4.1.3
         with:
           name: ocr-processed-results
           path: ${{ env.RESULTS_DIR }}
-      
+
       - name: Generate release body
         id: release_body
         run: |
           CURRENT_DATE=$(date -u "+%Y-%m-%d %H:%M:%S UTC")
           cat > release_body.md << EOF
           # OCR Processing Results
-          
+
           **Processing Date:** ${CURRENT_DATE}
           **Workflow Run:** [${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
           **Documents Processed:** ${{ needs.ocr-processing.outputs.processed-count }}
-          
+
           ## Downloads
-          
+
           - \`ocr-results-${{ github.run_id }}.tar.gz\` - Complete OCR results archive
           - \`ocr_manifest.json\` - Document manifest with checksums
-          
+
           ## Source Information
-          
+
           These documents were downloaded from official government sources:
           - Department of Justice (DOJ)
           - FBI Vault
           - House Oversight Committee
-          
+
           All documents are public records.
-          
+
           ## Processing Details
-          
+
           - OCR Engine: OCRmyPDF + Tesseract
           - Language: English
           - Text extraction: PDFMiner.six
-          
+
           For more information, see: https://github.com/${{ github.repository }}
           EOF
-      
+
       - name: Create release
         uses: softprops/action-gh-release@v2.0.2
         with:
@@ -661,14 +661,14 @@ jobs:
             ${{ env.RESULTS_DIR }}/SUMMARY.md
           draft: false
           prerelease: false
-  
+
   # Job 5: Notification and Summary
   summary:
     name: Workflow Summary
     needs: [download-documents, ocr-processing]
     if: always()
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Generate workflow summary
         run: |
@@ -677,16 +677,16 @@ jobs:
           echo "**Workflow Run:** ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
           echo "**Started:** $(date -u)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           echo "## Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ "${{ needs.download-documents.result }}" == "success" ]; then
             echo "✅ **Download:** ${{ needs.download-documents.outputs.download-count }} documents downloaded" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ **Download:** Failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           if [ "${{ needs.ocr-processing.result }}" == "success" ]; then
             echo "✅ **OCR Processing:** ${{ needs.ocr-processing.outputs.processed-count }} documents processed" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ needs.ocr-processing.result }}" == "skipped" ]; then
@@ -694,7 +694,7 @@ jobs:
           else
             echo "❌ **OCR Processing:** Failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Artifacts" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

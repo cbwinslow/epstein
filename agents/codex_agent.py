@@ -20,7 +20,9 @@ class CodexAgent:
         self.config = config or {}
         self.history: list[dict[str, Any]] = []
 
-    async def generate_code(self, prompt: str, language: str = "python", max_tokens: int = 256) -> dict[str, Any]:
+    async def generate_code(
+        self, prompt: str, language: str = "python", max_tokens: int = 256
+    ) -> dict[str, Any]:
         """Generate code for a prompt.
 
         Returns a dictionary with generated `code` (string) and `metadata`.
@@ -58,7 +60,11 @@ class CodexAgent:
             "advice": ["Add docstrings", "Add input validation"],
         }
 
-        result = {"request_id": request_id, "explanation": explanation, "timestamp": datetime.now().isoformat()}
+        result = {
+            "request_id": request_id,
+            "explanation": explanation,
+            "timestamp": datetime.now().isoformat(),
+        }
         self.history.append(result)
         return result
 
@@ -76,7 +82,13 @@ class CodexAgent:
         self.history.append(result)
         return result
 
-    async def build_openai_request(self, prompt: str, model: str | None = None, functions: list | None = None, temperature: float | None = None) -> dict:
+    async def build_openai_request(
+        self,
+        prompt: str,
+        model: str | None = None,
+        functions: list | None = None,
+        temperature: float | None = None,
+    ) -> dict:
         """Return the kwargs that would be sent to OpenAI for function-calling flow.
 
         This helper is intentionally non-destructive and does not perform network calls. It is
@@ -88,7 +100,9 @@ class CodexAgent:
             "model": model,
             "messages": [{"role": "user", "content": prompt}],
             "functions": functions or OPENAI_FUNCTIONS,
-            "temperature": float(temperature if temperature is not None else self.config.get("temperature", 0.0)),
+            "temperature": float(
+                temperature if temperature is not None else self.config.get("temperature", 0.0)
+            ),
         }
 
     async def call_openai(self, prompt: str, allow_live: bool = False, **kwargs) -> dict:
@@ -132,11 +146,11 @@ TOOLS = [
                 "properties": {
                     "prompt": {"type": "string"},
                     "language": {"type": "string", "default": "python"},
-                    "max_tokens": {"type": "integer", "default": 256}
+                    "max_tokens": {"type": "integer", "default": 256},
                 },
-                "required": ["prompt"]
-            }
-        }
+                "required": ["prompt"],
+            },
+        },
     },
     {
         "type": "function",
@@ -145,18 +159,25 @@ TOOLS = [
             "description": "Return a human-readable explanation for supplied code",
             "parameters": {
                 "type": "object",
-                "properties": {"code": {"type": "string"}, "level": {"type": "string", "default": "high"}},
-                "required": ["code"]
-            }
-        }
+                "properties": {
+                    "code": {"type": "string"},
+                    "level": {"type": "string", "default": "high"},
+                },
+                "required": ["code"],
+            },
+        },
     },
     {
         "type": "function",
         "function": {
             "name": "suggest_tests",
             "description": "Generate suggested unit tests for provided code",
-            "parameters": {"type": "object", "properties": {"code": {"type": "string"}}, "required": ["code"]}
-        }
+            "parameters": {
+                "type": "object",
+                "properties": {"code": {"type": "string"}},
+                "required": ["code"],
+            },
+        },
     },
 ]
 
@@ -176,7 +197,13 @@ AGENT_INFO = {
 
 
 # Safe OpenAI helper: builds request payload and optionally performs a live call
-async def build_openai_request(self, prompt: str, model: str | None = None, functions: list | None = None, temperature: float | None = None) -> dict:
+async def build_openai_request(
+    self,
+    prompt: str,
+    model: str | None = None,
+    functions: list | None = None,
+    temperature: float | None = None,
+) -> dict:
     """Return the kwargs that would be sent to OpenAI for function-calling flow.
 
     This helper is intentionally non-destructive and does not perform network calls. It is
@@ -188,7 +215,9 @@ async def build_openai_request(self, prompt: str, model: str | None = None, func
         "model": model,
         "messages": [{"role": "user", "content": prompt}],
         "functions": functions or OPENAI_FUNCTIONS,
-        "temperature": float(temperature if temperature is not None else self.config.get("temperature", 0.0)),
+        "temperature": float(
+            temperature if temperature is not None else self.config.get("temperature", 0.0)
+        ),
     }
 
 
@@ -220,9 +249,16 @@ async def call_openai(self, prompt: str, allow_live: bool = False, **kwargs) -> 
     response = _openai.ChatCompletion.create(**payload)
     return {"live": True, "response": response}
 
-
-    async def build_openai_request(self, prompt: str, model: str | None = None, functions: list | None = None, temperature: float | None = None) -> dict:
-        return await build_openai_request(self, prompt, model=model, functions=functions, temperature=temperature)
+    async def build_openai_request(
+        self,
+        prompt: str,
+        model: str | None = None,
+        functions: list | None = None,
+        temperature: float | None = None,
+    ) -> dict:
+        return await build_openai_request(
+            self, prompt, model=model, functions=functions, temperature=temperature
+        )
 
     async def call_openai(self, prompt: str, allow_live: bool = False, **kwargs) -> dict:
         return await call_openai(self, prompt, allow_live=allow_live, **kwargs)
@@ -230,10 +266,11 @@ async def call_openai(self, prompt: str, allow_live: bool = False, **kwargs) -> 
 
 if __name__ == "__main__":
     import asyncio
+
     agent = CodexAgent()
 
     async def main():
-        gen = await agent.generate_code("Write a function that returns sum of list" )
+        gen = await agent.generate_code("Write a function that returns sum of list")
         print(gen["code"])
         expl = await agent.explain_code(gen["code"])
         print(expl["explanation"]["summary"])

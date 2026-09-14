@@ -1,7 +1,7 @@
 # Knowledge Graph Implementation Guide
 
-**Version**: 1.0  
-**Last Updated**: 2025-12-31  
+**Version**: 1.0
+**Last Updated**: 2025-12-31
 **Status**: Planning & Design Phase
 
 ## Overview
@@ -602,7 +602,7 @@ LIMIT 20;
 def sync_entity_to_graph(entity_id: str):
     # 1. Fetch from PostgreSQL
     entity = fetch_entity_from_postgres(entity_id)
-    
+
     # 2. Transform to graph node
     node_props = {
         'id': entity.id,
@@ -610,7 +610,7 @@ def sync_entity_to_graph(entity_id: str):
         'type': entity.entity_type,
         # ... other properties
     }
-    
+
     # 3. Upsert to Neo4j
     with neo4j_driver.session() as session:
         session.run(
@@ -637,7 +637,7 @@ class KnowledgeGraphTool:
         )
         RETURN [node in nodes(path) | node.name] as path
         """
-        
+
         with self.driver.session() as session:
             result = session.run(query, name1=person1, name2=person2)
             return result.single()['path']
@@ -654,12 +654,12 @@ class KnowledgeGraphMCP:
     async def query_graph(self, query: str, params: dict) -> dict:
         """Execute Cypher query on knowledge graph"""
         # ... implementation
-    
+
     @mcp_tool
     async def find_entity(self, name: str, entity_type: str) -> dict:
         """Find entity by name"""
         # ... implementation
-    
+
     @mcp_tool
     async def get_relationships(self, entity_id: str) -> list:
         """Get all relationships for an entity"""
@@ -741,10 +741,10 @@ from typing import List, Dict, Any
 class EpsteinGraphClient:
     def __init__(self, uri: str, user: str, password: str):
         self.driver = GraphDatabase.driver(uri, auth=(user, password))
-    
+
     def close(self):
         self.driver.close()
-    
+
     def create_person(self, person_data: Dict[str, Any]) -> str:
         """Create or update a person node"""
         with self.driver.session() as session:
@@ -759,7 +759,7 @@ class EpsteinGraphClient:
                 props=person_data
             )
             return result.single()['p.id']
-    
+
     def find_connections(
         self,
         person1_id: str,

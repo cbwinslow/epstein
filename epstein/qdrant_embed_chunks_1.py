@@ -41,6 +41,7 @@ DEFAULT_QDRANT = "http://localhost:6333"
 DEFAULT_COLLECTION = "epstein_chunks"
 DEFAULT_MODEL = "BAAI/bge-small-en-v1.5"
 
+
 @dataclass(frozen=True)
 class ChunkRow:
     chunk_id: int
@@ -51,8 +52,10 @@ class ChunkRow:
     chunk_text: str
     source_url: str | None
 
+
 def eprint(msg: str) -> None:
     print(msg, file=sys.stderr)
+
 
 def load_state(path: Path) -> dict[str, Any]:
     if not path.exists():
@@ -62,9 +65,11 @@ def load_state(path: Path) -> dict[str, Any]:
     except Exception:  # noqa: BLE001
         return {}
 
+
 def save_state(path: Path, state: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(state, indent=2), encoding="utf-8")
+
 
 def table_exists(conn: psycopg.Connection, fq_name: str) -> bool:
     schema, table = fq_name.split(".", 1)
@@ -78,6 +83,7 @@ def table_exists(conn: psycopg.Connection, fq_name: str) -> bool:
         cur.execute(q, (schema, table))
         return bool(cur.fetchone()["exists"])
 
+
 def ensure_collection(client: QdrantClient, collection: str, dim: int) -> None:
     cols = client.get_collections().collections
     if any(c.name == collection for c in cols):
@@ -87,7 +93,10 @@ def ensure_collection(client: QdrantClient, collection: str, dim: int) -> None:
         vectors_config=qm.VectorParams(size=dim, distance=qm.Distance.COSINE),
     )
 
-def fetch_chunks(conn: psycopg.Connection, resume_after: int | None, limit: int | None) -> Iterable[ChunkRow]:
+
+def fetch_chunks(
+    conn: psycopg.Connection, resume_after: int | None, limit: int | None
+) -> Iterable[ChunkRow]:
     base = """
     SELECT c.id AS chunk_id, c.doc_id, c.start_char, c.end_char, c.chunk_index, c.chunk_text,
            d.source_url
@@ -115,8 +124,11 @@ def fetch_chunks(conn: psycopg.Connection, resume_after: int | None, limit: int 
                 end_char=int(row["end_char"]),
                 chunk_index=int(row["chunk_index"]),
                 chunk_text=str(row.get("chunk_text") or ""),
-                source_url=(str(row.get("source_url")) if row.get("source_url") is not None else None),
+                source_url=(
+                    str(row.get("source_url")) if row.get("source_url") is not None else None
+                ),
             )
+
 
 def batched(it: Iterable[ChunkRow], n: int) -> Iterable[list[ChunkRow]]:
     batch: list[ChunkRow] = []
@@ -127,6 +139,7 @@ def batched(it: Iterable[ChunkRow], n: int) -> Iterable[list[ChunkRow]]:
             batch = []
     if batch:
         yield batch
+
 
 def main() -> int:
     ap = argparse.ArgumentParser()
@@ -148,7 +161,9 @@ def main() -> int:
 
     state_path = Path(args.state_file)
     state = load_state(state_path) if args.resume else {}
-    resume_after = int(state.get("last_chunk_id")) if args.resume and state.get("last_chunk_id") else None
+    resume_after = (
+        int(state.get("last_chunk_id")) if args.resume and state.get("last_chunk_id") else None
+    )
 
     embedder = TextEmbedding(args.model)
     qclient = QdrantClient(url=args.qdrant_url)
@@ -196,12 +211,16 @@ def main() -> int:
 
             total += len(points)
             last = batch[-1].chunk_id
-            save_state(state_path, {"last_chunk_id": last, "collection": args.collection, "model": args.model})
+            save_state(
+                state_path,
+                {"last_chunk_id": last, "collection": args.collection, "model": args.model},
+            )
             dt = time.time() - t0
             print(f"[embed] upserted {len(points)} (total {total}) in {dt:.2f}s; last={last}")
 
     print(f"[embed] DONE total_upserted={total}")
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

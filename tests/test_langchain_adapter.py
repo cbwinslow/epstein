@@ -20,6 +20,7 @@ def test_langchain_adapter_run_monkeypatched(monkeypatch):
 def test_langchain_adapter_missing():
     # Ensure adapter errors when langchain is not installed
     import sys
+
     sys.modules.pop("langchain", None)
     a = LangChainAdapter()
     with pytest.raises(RuntimeError):
