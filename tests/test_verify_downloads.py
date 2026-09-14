@@ -24,7 +24,7 @@ from unittest.mock import patch
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent / 'scripts'))
+sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 from verify_downloads import (
     VerificationReport,
     VerificationResult,
@@ -74,7 +74,7 @@ class TestComputeSHA256:
 
         # Verify hash is valid hex string of correct length
         assert len(actual_hash) == 64
-        assert all(c in '0123456789abcdef' for c in actual_hash)
+        assert all(c in "0123456789abcdef" for c in actual_hash)
 
     def test_compute_sha256_nonexistent_file(self, tmp_path):
         """Test computing SHA-256 of nonexistent file"""
@@ -94,7 +94,7 @@ class TestComputeSHA256:
 
         monkeypatch.setattr("builtins.open", mock_open)
 
-        with patch('pathlib.Path.open', side_effect=PermissionError):
+        with patch("pathlib.Path.open", side_effect=PermissionError):
             actual_hash = compute_sha256(test_file)
             assert actual_hash == ""
 
@@ -106,7 +106,7 @@ class TestVerifyZipIntegrity:
         """Test verifying a valid ZIP file"""
         zip_file = tmp_path / "test.zip"
 
-        with zipfile.ZipFile(zip_file, 'w') as zf:
+        with zipfile.ZipFile(zip_file, "w") as zf:
             zf.writestr("file1.txt", "content1")
             zf.writestr("file2.txt", "content2")
 
@@ -119,7 +119,7 @@ class TestVerifyZipIntegrity:
         """Test verifying an empty ZIP file"""
         zip_file = tmp_path / "empty.zip"
 
-        with zipfile.ZipFile(zip_file, 'w'):
+        with zipfile.ZipFile(zip_file, "w"):
             pass  # Create empty zip
 
         is_valid, error = verify_zip_integrity(zip_file)
@@ -142,14 +142,14 @@ class TestVerifyZipIntegrity:
         zip_file = tmp_path / "truncated.zip"
 
         # Create a valid zip
-        with zipfile.ZipFile(zip_file, 'w') as zf:
+        with zipfile.ZipFile(zip_file, "w") as zf:
             zf.writestr("file.txt", "content" * 1000)
 
         # Truncate it
-        with zip_file.open('rb') as f:
+        with zip_file.open("rb") as f:
             data = f.read()
 
-        zip_file.write_bytes(data[:len(data) // 2])
+        zip_file.write_bytes(data[: len(data) // 2])
 
         is_valid, error = verify_zip_integrity(zip_file)
 
@@ -206,6 +206,7 @@ class TestVerifyFile:
 
         # Compute correct checksum
         import hashlib
+
         correct_hash = hashlib.sha256(test_content).hexdigest()
         wrong_hash = "0" * 64
 
@@ -223,7 +224,7 @@ class TestVerifyFile:
         """Test verifying a valid ZIP file"""
         zip_file = tmp_path / "test.zip"
 
-        with zipfile.ZipFile(zip_file, 'w') as zf:
+        with zipfile.ZipFile(zip_file, "w") as zf:
             zf.writestr("file.txt", "content")
 
         result = verify_file(zip_file, verify_zip=True)
@@ -277,15 +278,15 @@ class TestLoadManifest:
             {"dest": "file2.txt", "sha256": "def456", "bytes": 200},
         ]
 
-        with manifest_file.open('w') as f:
+        with manifest_file.open("w") as f:
             for entry in entries:
-                f.write(json.dumps(entry) + '\n')
+                f.write(json.dumps(entry) + "\n")
 
         loaded = load_manifest(manifest_file)
 
         assert len(loaded) == 2
-        assert loaded[0]['dest'] == 'file1.txt'
-        assert loaded[1]['sha256'] == 'def456'
+        assert loaded[0]["dest"] == "file1.txt"
+        assert loaded[1]["sha256"] == "def456"
 
     def test_load_empty_manifest(self, tmp_path):
         """Test loading an empty manifest file"""
@@ -300,11 +301,11 @@ class TestLoadManifest:
         """Test loading manifest with blank lines"""
         manifest_file = tmp_path / "manifest.jsonl"
 
-        with manifest_file.open('w') as f:
+        with manifest_file.open("w") as f:
             f.write('{"dest": "file1.txt"}\n')
-            f.write('\n')
+            f.write("\n")
             f.write('{"dest": "file2.txt"}\n')
-            f.write('  \n')
+            f.write("  \n")
 
         loaded = load_manifest(manifest_file)
 
@@ -393,18 +394,29 @@ class TestVerifyFromManifest:
 
         # Create manifest
         import hashlib
+
         manifest_file = tmp_path / "manifest.jsonl"
-        with manifest_file.open('w') as f:
-            f.write(json.dumps({
-                "dest": str(file1),
-                "sha256": hashlib.sha256(b"content1").hexdigest(),
-                "bytes": 8
-            }) + '\n')
-            f.write(json.dumps({
-                "dest": str(file2),
-                "sha256": hashlib.sha256(b"content2").hexdigest(),
-                "bytes": 8
-            }) + '\n')
+        with manifest_file.open("w") as f:
+            f.write(
+                json.dumps(
+                    {
+                        "dest": str(file1),
+                        "sha256": hashlib.sha256(b"content1").hexdigest(),
+                        "bytes": 8,
+                    }
+                )
+                + "\n"
+            )
+            f.write(
+                json.dumps(
+                    {
+                        "dest": str(file2),
+                        "sha256": hashlib.sha256(b"content2").hexdigest(),
+                        "bytes": 8,
+                    }
+                )
+                + "\n"
+            )
 
         report = verify_from_manifest(manifest_file)
 
@@ -415,12 +427,13 @@ class TestVerifyFromManifest:
     def test_verify_from_manifest_with_missing_files(self, tmp_path):
         """Test verifying with missing files"""
         manifest_file = tmp_path / "manifest.jsonl"
-        with manifest_file.open('w') as f:
-            f.write(json.dumps({
-                "dest": str(tmp_path / "nonexistent.txt"),
-                "sha256": "abc123",
-                "bytes": 100
-            }) + '\n')
+        with manifest_file.open("w") as f:
+            f.write(
+                json.dumps(
+                    {"dest": str(tmp_path / "nonexistent.txt"), "sha256": "abc123", "bytes": 100}
+                )
+                + "\n"
+            )
 
         report = verify_from_manifest(manifest_file)
 
@@ -459,7 +472,9 @@ class TestGenerateReport:
         """Test generating report with failures"""
         results = [
             VerificationResult(filepath="file1.txt", exists=True, size_bytes=100, sha256="abc"),
-            VerificationResult(filepath="file2.txt", exists=False, size_bytes=0, errors=["missing"]),
+            VerificationResult(
+                filepath="file2.txt", exists=False, size_bytes=0, errors=["missing"]
+            ),
         ]
 
         report = generate_report(results)
@@ -471,13 +486,19 @@ class TestGenerateReport:
 
     def test_generate_report_with_mismatches(self):
         """Test generating report with checksum/size mismatches"""
-        result1 = VerificationResult(filepath="file1.txt", exists=True, size_bytes=100, sha256="abc")
+        result1 = VerificationResult(
+            filepath="file1.txt", exists=True, size_bytes=100, sha256="abc"
+        )
         result1.size_matches = False
 
-        result2 = VerificationResult(filepath="file2.txt", exists=True, size_bytes=200, sha256="def")
+        result2 = VerificationResult(
+            filepath="file2.txt", exists=True, size_bytes=200, sha256="def"
+        )
         result2.checksum_matches = False
 
-        result3 = VerificationResult(filepath="file3.zip", exists=True, size_bytes=300, sha256="ghi")
+        result3 = VerificationResult(
+            filepath="file3.zip", exists=True, size_bytes=300, sha256="ghi"
+        )
         result3.is_valid_zip = False
 
         report = generate_report([result1, result2, result3])
@@ -506,28 +527,21 @@ class TestVerificationResult:
             size_bytes=100,
             size_matches=True,
             sha256="abc",
-            checksum_matches=True
+            checksum_matches=True,
         )
 
         assert result.is_valid is True
 
     def test_is_valid_missing_file(self):
         """Test is_valid when file doesn't exist"""
-        result = VerificationResult(
-            filepath="test.txt",
-            exists=False,
-            size_bytes=0
-        )
+        result = VerificationResult(filepath="test.txt", exists=False, size_bytes=0)
 
         assert result.is_valid is False
 
     def test_is_valid_with_errors(self):
         """Test is_valid when errors present"""
         result = VerificationResult(
-            filepath="test.txt",
-            exists=True,
-            size_bytes=100,
-            errors=["some error"]
+            filepath="test.txt", exists=True, size_bytes=100, errors=["some error"]
         )
 
         assert result.is_valid is False
@@ -535,21 +549,14 @@ class TestVerificationResult:
     def test_is_valid_with_zip_failure(self):
         """Test is_valid when ZIP check fails"""
         result = VerificationResult(
-            filepath="test.zip",
-            exists=True,
-            size_bytes=100,
-            is_valid_zip=False
+            filepath="test.zip", exists=True, size_bytes=100, is_valid_zip=False
         )
 
         assert result.is_valid is False
 
     def test_timestamp_auto_generated(self):
         """Test that timestamp is auto-generated"""
-        result = VerificationResult(
-            filepath="test.txt",
-            exists=True,
-            size_bytes=100
-        )
+        result = VerificationResult(filepath="test.txt", exists=True, size_bytes=100)
 
         assert result.timestamp != ""
         assert "T" in result.timestamp  # ISO format
@@ -568,7 +575,7 @@ class TestVerificationReport:
             checksum_mismatches=0,
             size_mismatches=0,
             corrupted_zips=0,
-            results=[]
+            results=[],
         )
 
         assert report.timestamp != ""
@@ -583,7 +590,7 @@ class TestCLI:
         from verify_downloads import main
 
         with pytest.raises(SystemExit) as exc_info:
-            with patch('sys.argv', ['verify_downloads.py', '--help']):
+            with patch("sys.argv", ["verify_downloads.py", "--help"]):
                 main()
 
         assert exc_info.value.code == 0
@@ -592,9 +599,11 @@ class TestCLI:
         """Test that script requires --dir or --manifest"""
         from verify_downloads import main
 
-        with pytest.raises(SystemExit), patch('sys.argv', ['verify_downloads.py']):
+        with pytest.raises(SystemExit), patch("sys.argv", ["verify_downloads.py"]):
             main()
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v', '--cov=verify_downloads', '--cov-report=html', '--cov-report=term'])
+if __name__ == "__main__":
+    pytest.main(
+        [__file__, "-v", "--cov=verify_downloads", "--cov-report=html", "--cov-report=term"]
+    )

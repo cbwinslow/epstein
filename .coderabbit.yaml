@@ -7,20 +7,20 @@ language: python
 reviews:
   # Enable auto-reviews on all PRs
   auto_review: true
-  
+
   # Request reviews for all changes
   request_changes_workflow: true
-  
+
   # Enable early review for draft PRs
   high_level_summary: true
-  
+
   # Review limits
   path_filters:
     - "**/*.py"
     - "**/*.yml"
     - "**/*.yaml"
     - "**/*.md"
-  
+
   # Exclude patterns
   exclude_patterns:
     - "**/node_modules/**"
@@ -42,19 +42,19 @@ quality_checks:
   - sql_injection
   - xss_vulnerabilities
   - secrets_exposure
-  
+
   # Best practices
   - code_complexity
   - error_handling
   - resource_management
   - performance_issues
-  
+
   # Python specific
   - type_hints
   - docstring_coverage
   - pep8_compliance
   - import_organization
-  
+
   # Data handling
   - data_validation
   - sanitization
@@ -66,42 +66,42 @@ custom_rules:
   - pattern: "password|secret|api_key|token"
     severity: critical
     message: "Potential secret detected. Ensure secrets are not hardcoded."
-    
+
   - pattern: "eval|exec"
     severity: high
     message: "Use of eval/exec detected. Consider safer alternatives."
-    
+
   - pattern: "SELECT.*FROM.*WHERE.*=.*%s"
     severity: high
     message: "Potential SQL injection risk. Use parameterized queries."
-    
+
   # Data handling rules
   - pattern: "open\\(.*\\)"
     severity: medium
     message: "File operation detected. Ensure proper error handling and resource cleanup."
-    
+
   - pattern: "subprocess\\.run|subprocess\\.call"
     severity: high
     message: "Shell command execution detected. Validate and sanitize inputs."
-    
+
   # NLP/NER specific rules
   - pattern: "spacy\\.load"
     severity: low
     message: "spaCy model loading detected. Consider caching model for performance."
-    
+
   - pattern: "confidence\\s*=\\s*1\\.0"
     severity: medium
     message: "Fixed confidence of 1.0 detected. Consider using calculated confidence scores."
-    
+
   # Database rules
   - pattern: "cursor\\.execute"
     severity: medium
     message: "Database query detected. Ensure using parameterized queries and proper error handling."
-    
+
   - pattern: "TRUNCATE|DROP|DELETE.*FROM"
     severity: critical
     message: "Destructive database operation detected. Ensure proper safeguards and confirmation."
-    
+
   # Documentation rules
   - pattern: "def\\s+\\w+\\(.*\\):\\s*$"
     severity: low
@@ -116,7 +116,7 @@ focus_areas:
     - "Review SQL queries for injection vulnerabilities"
     - "Check file operations for path traversal risks"
     - "Verify proper error handling to avoid information leakage"
-  
+
   # Data integrity focus
   data_integrity:
     - "Verify data provenance is maintained"
@@ -124,7 +124,7 @@ focus_areas:
     - "Ensure entity resolution maintains audit trail"
     - "Verify confidence scores are calculated properly"
     - "Check that timestamps are properly recorded"
-  
+
   # NLP/AI focus
   nlp:
     - "Review entity extraction accuracy considerations"
@@ -132,7 +132,7 @@ focus_areas:
     - "Verify model loading and caching strategies"
     - "Review prompt engineering for LLM calls"
     - "Check for proper handling of ambiguous entities"
-  
+
   # Database focus
   database:
     - "Review query performance and indexing"
@@ -140,7 +140,7 @@ focus_areas:
     - "Verify connection pooling and resource cleanup"
     - "Review migration scripts for safety"
     - "Check for N+1 query problems"
-  
+
   # Agent focus
   agents:
     - "Review agent error handling and recovery"
@@ -174,7 +174,7 @@ knowledge_base:
     - "PostgreSQL is source of truth, Neo4j is computed view"
     - "Qdrant is used for vector embeddings and semantic search"
     - "spaCy is used for NER with custom fine-tuned models"
-  
+
   # Architecture patterns
   architecture:
     - "PostgreSQL stores structured data and provenance"
@@ -182,7 +182,7 @@ knowledge_base:
     - "Qdrant stores vector embeddings for semantic search"
     - "MCP servers provide agent tool interfaces"
     - "AI agents coordinate complex analysis workflows"
-  
+
   # Code standards
   standards:
     - "Use type hints for all function signatures"
@@ -198,10 +198,10 @@ integrations:
   github:
     # Block PR merge on critical issues
     block_on_critical: true
-    
+
     # Require review approval
     require_approval: false  # Use GitHub's review settings
-    
+
     # Auto-label PRs
     auto_label: true
     labels:
@@ -218,7 +218,7 @@ performance:
   # Code complexity
   max_function_lines: 50
   max_function_complexity: 10
-  
+
   # Review time
   review_timeout: 300  # 5 minutes
 
@@ -229,19 +229,19 @@ severity:
     - data_loss_risk
     - privacy_violation
     - destructive_operation
-  
+
   high:
     - potential_security_issue
     - data_integrity_risk
     - performance_issue
     - missing_error_handling
-  
+
   medium:
     - code_complexity
     - missing_documentation
     - code_duplication
     - suboptimal_pattern
-  
+
   low:
     - style_issue
     - minor_improvement
@@ -254,7 +254,7 @@ notifications:
     - critical_issues
     - high_priority_issues
     - review_complete
-  
+
   # Where to notify
   channels:
     - github_pr_comment
@@ -264,10 +264,10 @@ notifications:
 learning:
   # Learn from code patterns
   pattern_learning: true
-  
+
   # Adapt to project conventions
   convention_learning: true
-  
+
   # Track resolution of issues
   track_fixes: true
 
@@ -275,10 +275,10 @@ learning:
 documentation:
   # Generate summaries
   generate_summary: true
-  
+
   # Highlight key changes
   highlight_changes: true
-  
+
   # Suggest documentation updates
   suggest_doc_updates: true
 
@@ -286,10 +286,10 @@ documentation:
 testing:
   # Encourage test coverage
   check_test_coverage: true
-  
+
   # Minimum coverage threshold
   min_coverage: 80
-  
+
   # Test types
   required_tests:
     - unit_tests

@@ -36,10 +36,10 @@ from pydantic import BaseModel
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     handlers=[
         logging.StreamHandler(),
-    ]
+    ],
 )
 logger = logging.getLogger("epstein_ingestion")
 
@@ -48,9 +48,11 @@ logger = logging.getLogger("epstein_ingestion")
 # Configuration and Data Models
 # ============================================================================
 
+
 @dataclass
 class PipelineConfig:
     """Configuration for ingestion pipeline"""
+
     download_dir: str = "./downloads"
     processed_dir: str = "./processed"
     failed_dir: str = "./failed"
@@ -74,6 +76,7 @@ class PipelineConfig:
 @dataclass
 class DocumentMetadata:
     """Metadata for processed documents"""
+
     document_id: str
     source_id: str
     ingestion_run_id: str
@@ -94,6 +97,7 @@ class DocumentMetadata:
 @dataclass
 class ExtractedText:
     """Extracted text from documents"""
+
     document_id: str
     page_number: int
     text_content: str
@@ -106,6 +110,7 @@ class ExtractedText:
 @dataclass
 class ExtractedEntity:
     """Named entity extracted from text"""
+
     document_id: str
     extracted_text_id: str | None
     entity_type: str
@@ -120,6 +125,7 @@ class ExtractedEntity:
 @dataclass
 class IngestionRun:
     """Information about ingestion run"""
+
     run_id: str
     source_id: str
     status: str
@@ -135,6 +141,7 @@ class IngestionRun:
 
 class PipelineStatus(BaseModel):
     """Current pipeline status"""
+
     run_id: str
     status: str
     progress: float
@@ -149,6 +156,7 @@ class PipelineStatus(BaseModel):
 # ============================================================================
 # Ingestion Pipeline Implementation
 # ============================================================================
+
 
 class EpsteinIngestionPipeline:
     """Main document ingestion pipeline"""
@@ -205,8 +213,7 @@ class EpsteinIngestionPipeline:
             from psycopg2.extras import DictCursor
 
             self.db_connection = psycopg2.connect(
-                self.config.database_url,
-                cursor_factory=DictCursor
+                self.config.database_url, cursor_factory=DictCursor
             )
             logger.info("🗄️  Database connection established")
 
@@ -241,7 +248,7 @@ class EpsteinIngestionPipeline:
         """Calculate file hash for deduplication"""
         hash_func = hashlib.sha256()
 
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             while chunk := f.read(8192):
                 hash_func.update(chunk)
 
@@ -266,6 +273,7 @@ class EpsteinIngestionPipeline:
         """Detect text language"""
         try:
             from langdetect import detect
+
             return detect(text) if text.strip() else self.config.language
         except:
             return self.config.language
@@ -298,13 +306,11 @@ class EpsteinIngestionPipeline:
         try:
             # Convert to high resolution for better OCR
             image = Image.open(file_path)
-            image = image.convert('L')  # Convert to grayscale
+            image = image.convert("L")  # Convert to grayscale
 
             # Use pytesseract for OCR
             text = pytesseract.image_to_string(
-                image,
-                lang=self.config.ocr_language,
-                config=f'--dpi {self.config.ocr_dpi} --psm 6'
+                image, lang=self.config.ocr_language, config=f"--dpi {self.config.ocr_dpi} --psm 6"
             )
 
             return text.strip()
@@ -316,14 +322,14 @@ class EpsteinIngestionPipeline:
     def _extract_text_from_html(self, file_path: str) -> str:
         """Extract text from HTML"""
         try:
-            with open(file_path, encoding='utf-8') as f:
-                soup = BeautifulSoup(f.read(), 'html.parser')
+            with open(file_path, encoding="utf-8") as f:
+                soup = BeautifulSoup(f.read(), "html.parser")
 
             # Remove script and style elements
             for script in soup(["script", "style"]):
                 script.decompose()
 
-            return soup.get_text(separator='\n', strip=True)
+            return soup.get_text(separator="\n", strip=True)
 
         except Exception as e:
             logger.error(f"❌ HTML extraction failed: {e}")
@@ -337,22 +343,22 @@ class EpsteinIngestionPipeline:
         ocr_required = False
 
         try:
-            if file_ext == '.pdf':
+            if file_ext == ".pdf":
                 pages_text, page_count = self._extract_text_from_pdf(file_path)
                 if not any(pages_text):
                     ocr_required = True
 
-            elif file_ext in ['.jpg', '.jpeg', '.png', '.tiff', '.bmp']:
+            elif file_ext in [".jpg", ".jpeg", ".png", ".tiff", ".bmp"]:
                 text = self._extract_text_from_image(file_path)
                 pages_text = [text] if text else [""]
                 ocr_required = True
 
-            elif file_ext in ['.html', '.htm']:
+            elif file_ext in [".html", ".htm"]:
                 text = self._extract_text_from_html(file_path)
                 pages_text = [text] if text else [""]
 
-            elif file_ext == '.txt':
-                with open(file_path, encoding='utf-8') as f:
+            elif file_ext == ".txt":
+                with open(file_path, encoding="utf-8") as f:
                     pages_text = [f.read()]
 
             else:
@@ -365,7 +371,9 @@ class EpsteinIngestionPipeline:
             logger.error(f"❌ Text extraction failed for {file_path}: {e}")
             return [], 1, False
 
-    def _perform_ocr_if_needed(self, file_path: str, pages_text: list[str]) -> tuple[list[str], float]:
+    def _perform_ocr_if_needed(
+        self, file_path: str, pages_text: list[str]
+    ) -> tuple[list[str], float]:
         """Perform OCR on pages that need it"""
         if not self.config.ocr_enabled:
             return pages_text, None
@@ -376,22 +384,17 @@ class EpsteinIngestionPipeline:
         try:
             file_ext = Path(file_path).suffix.lower()
 
-            if file_ext == '.pdf':
+            if file_ext == ".pdf":
                 # Convert PDF to images and OCR
                 from pdf2image import convert_from_path
 
                 images = convert_from_path(
-                    file_path,
-                    dpi=self.config.ocr_dpi,
-                    timeout=self.config.ocr_timeout
+                    file_path, dpi=self.config.ocr_dpi, timeout=self.config.ocr_timeout
                 )
 
                 for i, image in enumerate(images):
                     if i < len(pages_text) and not pages_text[i].strip():
-                        text = pytesseract.image_to_string(
-                            image,
-                            lang=self.config.ocr_language
-                        )
+                        text = pytesseract.image_to_string(image, lang=self.config.ocr_language)
                         ocr_pages.append(text)
 
                         # Estimate confidence (simplified)
@@ -431,14 +434,15 @@ class EpsteinIngestionPipeline:
                         extracted_text_id=None,
                         entity_type=ent.label_,
                         entity_text=ent.text,
-                        confidence_score=min(1.0, ent._.confidence + 0.1) if hasattr(ent._, 'confidence') else 0.8,
+                        confidence_score=(
+                            min(1.0, ent._.confidence + 0.1)
+                            if hasattr(ent._, "confidence")
+                            else 0.8
+                        ),
                         start_position=ent.start_char,
                         end_position=ent.end_char,
                         page_number=page_number,
-                        metadata={
-                            "language": self.config.language,
-                            "model": self.config.ner_model
-                        }
+                        metadata={"language": self.config.language, "model": self.config.ner_model},
                     )
                     entities.append(entity)
 
@@ -456,16 +460,19 @@ class EpsteinIngestionPipeline:
         try:
             with self.db_connection.cursor() as cur:
                 # Insert or update source
-                cur.execute("""
+                cur.execute(
+                    """
                     INSERT INTO sources (name, type, description, config)
                     VALUES (%s, %s, %s, %s)
                     ON CONFLICT (name) DO NOTHING
-                """, (
-                    metadata.source_id,
-                    "govinfo",
-                    f"Source: {metadata.source_id}",
-                    json.dumps({"source_type": "govinfo"})
-                ))
+                """,
+                    (
+                        metadata.source_id,
+                        "govinfo",
+                        f"Source: {metadata.source_id}",
+                        json.dumps({"source_type": "govinfo"}),
+                    ),
+                )
 
                 # Get source ID
                 cur.execute("SELECT id FROM sources WHERE name = %s", (metadata.source_id,))
@@ -475,24 +482,28 @@ class EpsteinIngestionPipeline:
                 source_id = source_result[0]
 
                 # Insert ingestion run
-                cur.execute("""
+                cur.execute(
+                    """
                     INSERT INTO ingestion_runs
                     (source_id, status, started_at, files_processed, files_total, config, metadata)
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
                     ON CONFLICT (id) DO NOTHING
                     RETURNING id
-                """, (
-                    source_id,
-                    "running",
-                    metadata.ingestion_run_id,
-                    0,
-                    0,
-                    json.dumps({"pipeline": "epstein_ingestion"}),
-                    json.dumps({})
-                ))
+                """,
+                    (
+                        source_id,
+                        "running",
+                        metadata.ingestion_run_id,
+                        0,
+                        0,
+                        json.dumps({"pipeline": "epstein_ingestion"}),
+                        json.dumps({}),
+                    ),
+                )
 
                 # Insert document
-                cur.execute("""
+                cur.execute(
+                    """
                     INSERT INTO documents
                     (source_id, ingestion_run_id, external_id, title, description,
                      file_path, file_name, file_size, file_hash, mime_type,
@@ -501,26 +512,28 @@ class EpsteinIngestionPipeline:
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     ON CONFLICT (file_hash) DO NOTHING
                     RETURNING id
-                """, (
-                    source_id,
-                    metadata.ingestion_run_id,
-                    metadata.document_id,
-                    metadata.title or "Untitled",
-                    metadata.description or "",
-                    metadata.file_path,
-                    metadata.file_name,
-                    metadata.file_size,
-                    metadata.file_hash,
-                    metadata.mime_type,
-                    metadata.language,
-                    metadata.page_count,
-                    metadata.mime_type.startswith('image/'),
-                    metadata.ocr_required,
-                    metadata.ocr_confidence,
-                    metadata.processing_status,
-                    metadata.error_message,
-                    json.dumps(metadata.metadata or {})
-                ))
+                """,
+                    (
+                        source_id,
+                        metadata.ingestion_run_id,
+                        metadata.document_id,
+                        metadata.title or "Untitled",
+                        metadata.description or "",
+                        metadata.file_path,
+                        metadata.file_name,
+                        metadata.file_size,
+                        metadata.file_hash,
+                        metadata.mime_type,
+                        metadata.language,
+                        metadata.page_count,
+                        metadata.mime_type.startswith("image/"),
+                        metadata.ocr_required,
+                        metadata.ocr_confidence,
+                        metadata.processing_status,
+                        metadata.error_message,
+                        json.dumps(metadata.metadata or {}),
+                    ),
+                )
 
                 result = cur.fetchone()
                 if result:
@@ -541,22 +554,25 @@ class EpsteinIngestionPipeline:
 
         try:
             with self.db_connection.cursor() as cur:
-                cur.execute("""
+                cur.execute(
+                    """
                     INSERT INTO extracted_text
                     (document_id, page_number, text_content, extraction_method,
                      confidence_score, language, metadata)
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
                     ON CONFLICT (document_id, page_number) DO NOTHING
                     RETURNING id
-                """, (
-                    text_data.document_id,
-                    text_data.page_number,
-                    text_data.text_content,
-                    text_data.extraction_method,
-                    text_data.confidence_score,
-                    text_data.language,
-                    json.dumps(text_data.metadata or {})
-                ))
+                """,
+                    (
+                        text_data.document_id,
+                        text_data.page_number,
+                        text_data.text_content,
+                        text_data.extraction_method,
+                        text_data.confidence_score,
+                        text_data.language,
+                        json.dumps(text_data.metadata or {}),
+                    ),
+                )
 
                 result = cur.fetchone()
                 if result:
@@ -580,23 +596,26 @@ class EpsteinIngestionPipeline:
                 stored_count = 0
 
                 for entity in entities:
-                    cur.execute("""
+                    cur.execute(
+                        """
                         INSERT INTO entities
                         (document_id, extracted_text_id, entity_type, entity_text,
                          confidence_score, start_position, end_position, page_number, metadata)
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                         ON CONFLICT (document_id, entity_type, entity_text, page_number) DO NOTHING
-                    """, (
-                        entity.document_id,
-                        entity.extracted_text_id,
-                        entity.entity_type,
-                        entity.entity_text,
-                        entity.confidence_score,
-                        entity.start_position,
-                        entity.end_position,
-                        entity.page_number,
-                        json.dumps(entity.metadata or {})
-                    ))
+                    """,
+                        (
+                            entity.document_id,
+                            entity.extracted_text_id,
+                            entity.entity_type,
+                            entity.entity_text,
+                            entity.confidence_score,
+                            entity.start_position,
+                            entity.end_position,
+                            entity.page_number,
+                            json.dumps(entity.metadata or {}),
+                        ),
+                    )
                     stored_count += cur.rowcount
 
                 self.db_connection.commit()
@@ -649,7 +668,7 @@ class EpsteinIngestionPipeline:
             errors=self.error_count,
             start_time=self.start_time,
             current_time=current_time,
-            estimated_completion=estimated_completion
+            estimated_completion=estimated_completion,
         )
 
     async def _process_single_document(self, file_path: str, source_id: str) -> bool:
@@ -676,7 +695,7 @@ class EpsteinIngestionPipeline:
 
             # 4. Language detection
             if pages_text:
-                sample_text = ' '.join([t[:100] for t in pages_text if t.strip()][:3])
+                sample_text = " ".join([t[:100] for t in pages_text if t.strip()][:3])
                 language = self._detect_language(sample_text)
             else:
                 language = self.config.language
@@ -700,8 +719,8 @@ class EpsteinIngestionPipeline:
                 metadata={
                     "source": source_id,
                     "pipeline_run": self.run_id,
-                    "processing_time": time.time() - start_time
-                }
+                    "processing_time": time.time() - start_time,
+                },
             )
 
             # 6. Store document metadata
@@ -722,11 +741,7 @@ class EpsteinIngestionPipeline:
                         extraction_method="ocr" if ocr_required else "native",
                         confidence_score=ocr_confidence,
                         language=language,
-                        metadata={
-                            "source": source_id,
-                            "page": i + 1,
-                            "total_pages": page_count
-                        }
+                        metadata={"source": source_id, "page": i + 1, "total_pages": page_count},
                     )
                     text_entries.append(text_entry)
 
@@ -741,7 +756,9 @@ class EpsteinIngestionPipeline:
                     entities = self._perform_ner(text_content, i + 1)
                     for entity in entities:
                         entity.document_id = stored_doc_id or document_id
-                        entity.extracted_text_id = text_entries[i].extracted_text_id if i < len(text_entries) else None
+                        entity.extracted_text_id = (
+                            text_entries[i].extracted_text_id if i < len(text_entries) else None
+                        )
                     all_entities.extend(entities)
 
             # 9. Store extracted entities
@@ -752,15 +769,14 @@ class EpsteinIngestionPipeline:
             # 10. Update document status
             if stored_doc_id:
                 with self.db_connection.cursor() as cur:
-                    cur.execute("""
+                    cur.execute(
+                        """
                         UPDATE documents
                         SET processing_status = %s, entity_count = %s
                         WHERE id = %s
-                    """, (
-                        "completed",
-                        len(all_entities),
-                        stored_doc_id
-                    ))
+                    """,
+                        ("completed", len(all_entities), stored_doc_id),
+                    )
                     self.db_connection.commit()
 
             # 11. Move to processed directory
@@ -787,10 +803,20 @@ class EpsteinIngestionPipeline:
         documents = []
 
         try:
-            for file_path in Path(source_dir).glob('*'):
+            for file_path in Path(source_dir).glob("*"):
                 if file_path.is_file():
                     file_ext = file_path.suffix.lower()
-                    if file_ext in ['.pdf', '.jpg', '.jpeg', '.png', '.tiff', '.bmp', '.html', '.htm', '.txt']:
+                    if file_ext in [
+                        ".pdf",
+                        ".jpg",
+                        ".jpeg",
+                        ".png",
+                        ".tiff",
+                        ".bmp",
+                        ".html",
+                        ".htm",
+                        ".txt",
+                    ]:
                         documents.append(str(file_path))
 
             logger.info(f"🔍 Discovered {len(documents)} documents for processing")
@@ -820,7 +846,7 @@ class EpsteinIngestionPipeline:
 
             # 2. Process documents in batches
             for i in range(0, len(documents), self.config.batch_size):
-                batch = documents[i:i + self.config.batch_size]
+                batch = documents[i : i + self.config.batch_size]
 
                 # Process batch concurrently
                 tasks = [self._process_single_document(doc, source_id) for doc in batch]
@@ -828,7 +854,9 @@ class EpsteinIngestionPipeline:
 
                 # Update status
                 status = self._get_status()
-                logger.info(f"📊 Progress: {status.progress:.1f}% ({status.files_processed}/{status.files_total})")
+                logger.info(
+                    f"📊 Progress: {status.progress:.1f}% ({status.files_processed}/{status.files_total})"
+                )
 
                 # Small delay between batches to avoid overwhelming system
                 await asyncio.sleep(0.1)
@@ -836,18 +864,21 @@ class EpsteinIngestionPipeline:
             # 3. Complete ingestion run
             if self.db_connection:
                 with self.db_connection.cursor() as cur:
-                    cur.execute("""
+                    cur.execute(
+                        """
                         UPDATE ingestion_runs
                         SET status = %s, completed_at = %s,
                             files_processed = %s, error_count = %s
                         WHERE id = %s
-                    """, (
-                        "completed",
-                        time.time(),
-                        self.processed_count,
-                        self.error_count,
-                        self.run_id
-                    ))
+                    """,
+                        (
+                            "completed",
+                            time.time(),
+                            self.processed_count,
+                            self.error_count,
+                            self.run_id,
+                        ),
+                    )
                     self.db_connection.commit()
 
             # 4. Final status
@@ -880,59 +911,27 @@ class EpsteinIngestionPipeline:
 # Command Line Interface
 # ============================================================================
 
+
 def main():
-    parser = argparse.ArgumentParser(
-        description="Epstein Files Document Ingestion Pipeline"
-    )
+    parser = argparse.ArgumentParser(description="Epstein Files Document Ingestion Pipeline")
 
     parser.add_argument(
-        "--source-dir",
-        default="./downloads",
-        help="Directory containing documents to process"
+        "--source-dir", default="./downloads", help="Directory containing documents to process"
     )
 
-    parser.add_argument(
-        "--source-id",
-        default="govinfo",
-        help="Source identifier for documents"
-    )
+    parser.add_argument("--source-id", default="govinfo", help="Source identifier for documents")
 
-    parser.add_argument(
-        "--database-url",
-        help="Database connection URL"
-    )
+    parser.add_argument("--database-url", help="Database connection URL")
 
-    parser.add_argument(
-        "--max-workers",
-        type=int,
-        default=4,
-        help="Maximum concurrent workers"
-    )
+    parser.add_argument("--max-workers", type=int, default=4, help="Maximum concurrent workers")
 
-    parser.add_argument(
-        "--batch-size",
-        type=int,
-        default=10,
-        help="Batch size for processing"
-    )
+    parser.add_argument("--batch-size", type=int, default=10, help="Batch size for processing")
 
-    parser.add_argument(
-        "--no-ocr",
-        action="store_true",
-        help="Disable OCR processing"
-    )
+    parser.add_argument("--no-ocr", action="store_true", help="Disable OCR processing")
 
-    parser.add_argument(
-        "--no-ner",
-        action="store_true",
-        help="Disable NER processing"
-    )
+    parser.add_argument("--no-ner", action="store_true", help="Disable NER processing")
 
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Enable verbose logging"
-    )
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
 
     args = parser.parse_args()
 
@@ -946,7 +945,7 @@ def main():
         max_workers=args.max_workers,
         batch_size=args.batch_size,
         ocr_enabled=not args.no_ocr,
-        ner_enabled=not args.no_ner
+        ner_enabled=not args.no_ner,
     )
 
     # Create and run pipeline

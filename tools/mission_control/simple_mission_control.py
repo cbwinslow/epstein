@@ -13,9 +13,10 @@ from rich.table import Table
 from rich.text import Text
 
 # Add current directory to Python path
-sys.path.insert(0, '.')
+sys.path.insert(0, ".")
 
 console = Console()
+
 
 def print_header():
     """Print application header"""
@@ -25,6 +26,7 @@ def print_header():
     header.append("=" * 50, style="blue")
     console.print(header)
     console.print()
+
 
 def check_system_status():
     """Check system status and display status table"""
@@ -42,6 +44,7 @@ def check_system_status():
     # Check dependencies
     try:
         import textual
+
         table.add_row("Textual", "✅ Available", f"v{textual.__version__}")
     except ImportError:
         table.add_row("Textual", "❌ Missing", "Install with: uv add textual")
@@ -65,6 +68,7 @@ def check_system_status():
     console.print(table)
     console.print()
 
+
 def show_agent_status():
     """Display agent status information"""
 
@@ -77,11 +81,12 @@ def show_agent_status():
         "• Multi-Agent Orchestrator: [green]Ready[/green]",
         title="Available Agents",
         border_style="yellow",
-        padding=(1, 2)
+        padding=(1, 2),
     )
 
     console.print(agents_panel)
     console.print()
+
 
 def show_quick_commands():
     """Show quick command reference"""
@@ -103,11 +108,12 @@ def show_quick_commands():
         "• Help: [green]make help[/green]",
         title="Command Reference",
         border_style="magenta",
-        padding=(1, 2)
+        padding=(1, 2),
     )
 
     console.print(commands_panel)
     console.print()
+
 
 def interactive_menu():
     """Interactive command menu"""
@@ -139,7 +145,9 @@ def interactive_menu():
         elif choice == "5":
             console.print("\n🚀 Launching document processing pipeline...")
             console.print("[yellow]Note: Make sure to initialize config first with:[/yellow]")
-            console.print("[green]uv run python epstein/epstein_files_pipeline.py init-config --out config.json[/green]")
+            console.print(
+                "[green]uv run python epstein/epstein_files_pipeline.py init-config --out config.json[/green]"
+            )
         elif choice == "6":
             console.print("\n🤖 Starting multi-agent system...")
             os.system("uv run python agents/multi_agent_orchestrator.py")
@@ -147,6 +155,7 @@ def interactive_menu():
             console.print(f"\n[red]Invalid option: {choice}[/red]")
 
         console.input("\nPress Enter to continue...")
+
 
 def main():
     """Main application entry point"""
@@ -168,6 +177,7 @@ def main():
         return 1
 
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

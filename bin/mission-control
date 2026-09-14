@@ -2,6 +2,7 @@
 """CLI launcher for Mission Control TUI"""
 
 import sys
+
 from tools.mission_control.app import main
 
 if __name__ == "__main__":

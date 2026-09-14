@@ -17,6 +17,7 @@ from psycopg2.extras import RealDictCursor
 @dataclass
 class DatabaseHealth:
     """Database health metrics"""
+
     connection_status: str
     active_connections: int
     idle_connections: int
@@ -30,6 +31,7 @@ class DatabaseHealth:
 @dataclass
 class IndexInfo:
     """Index information and statistics"""
+
     table_name: str
     index_name: str
     index_type: str
@@ -43,6 +45,7 @@ class IndexInfo:
 @dataclass
 class QueryPerformance:
     """Query performance metrics"""
+
     query_text: str
     execution_time: float
     rows_affected: int
@@ -64,23 +67,25 @@ class DatabaseTroubleshooter:
         self.health_metrics = {}
 
         # Load configuration
-        self.postgres_dsn = self.config.get('postgres_dsn',
-                                           'postgresql://analysis:analysis@localhost:5432/analysis')
-        self.monitoring_interval = self.config.get('monitoring_interval', 60)
-        self.slow_query_threshold = self.config.get('slow_query_threshold', 1000)
-        self.connection_timeout = self.config.get('connection_timeout', 30)
+        self.postgres_dsn = self.config.get(
+            "postgres_dsn", "postgresql://analysis:analysis@localhost:5432/analysis"
+        )
+        self.monitoring_interval = self.config.get("monitoring_interval", 60)
+        self.slow_query_threshold = self.config.get("slow_query_threshold", 1000)
+        self.connection_timeout = self.config.get("connection_timeout", 30)
 
         # Analysis configuration
-        self.enable_execution_plans = self.config.get('enable_execution_plans', True)
-        self.enable_index_analysis = self.config.get('enable_index_analysis', True)
-        self.enable_table_statistics = self.config.get('enable_table_statistics', True)
-        self.enable_vacuum_recommendations = self.config.get('enable_vacuum_recommendations', True)
+        self.enable_execution_plans = self.config.get("enable_execution_plans", True)
+        self.enable_index_analysis = self.config.get("enable_index_analysis", True)
+        self.enable_table_statistics = self.config.get("enable_table_statistics", True)
+        self.enable_vacuum_recommendations = self.config.get("enable_vacuum_recommendations", True)
 
     def _create_connection_pool(self) -> bool:
         """Create connection pool for database operations"""
         try:
             # Parse DSN to extract connection parameters
             import urllib.parse as urlparse
+
             parsed = urlparse.urlparse(self.postgres_dsn)
 
             # Create connection pool
@@ -92,7 +97,7 @@ class DatabaseTroubleshooter:
                 database=parsed.path[1:],
                 user=parsed.username,
                 password=parsed.password,
-                connect_timeout=self.connection_timeout
+                connect_timeout=self.connection_timeout,
             )
 
             # Test connection
@@ -123,7 +128,7 @@ class DatabaseTroubleshooter:
                 slow_queries=0,
                 response_time=0.0,
                 uptime="unknown",
-                last_check=datetime.now().isoformat()
+                last_check=datetime.now().isoformat(),
             )
 
             with self.db_pool.getconn() as conn:
@@ -152,8 +157,8 @@ class DatabaseTroubleshooter:
                         WHERE pid != pg_backend_pid()
                     """)
                     conn_stats = cur.fetchone()
-                    health_metrics.active_connections = conn_stats['active_connections']
-                    health_metrics.idle_connections = conn_stats['idle_connections']
+                    health_metrics.active_connections = conn_stats["active_connections"]
+                    health_metrics.idle_connections = conn_stats["idle_connections"]
 
                     # Check for blocked queries
                     cur.execute("""
@@ -172,16 +177,19 @@ class DatabaseTroubleshooter:
                             AND blocked.pid != blocking.pid
                     """)
                     blocked_stats = cur.fetchone()
-                    health_metrics.blocked_queries = blocked_stats['blocked_queries']
+                    health_metrics.blocked_queries = blocked_stats["blocked_queries"]
 
                     # Check for slow queries
-                    cur.execute("""
+                    cur.execute(
+                        """
                         SELECT count(*) as slow_queries
                         FROM pg_stat_statements
                         WHERE mean_time > %s
-                    """, (self.slow_query_threshold,))
+                    """,
+                        (self.slow_query_threshold,),
+                    )
                     slow_stats = cur.fetchone()
-                    health_metrics.slow_queries = slow_stats['slow_queries']
+                    health_metrics.slow_queries = slow_stats["slow_queries"]
 
                     # Get database uptime
                     cur.execute("""
@@ -193,7 +201,7 @@ class DatabaseTroubleshooter:
                     """)
                     uptime_result = cur.fetchone()
                     if uptime_result:
-                        uptime_start = uptime_result['query_start']
+                        uptime_start = uptime_result["query_start"]
                         uptime = datetime.now() - uptime_start
                         health_metrics.uptime = str(uptime)
 
@@ -207,11 +215,11 @@ class DatabaseTroubleshooter:
                     "idle_connections": health_metrics.idle_connections,
                     "blocked_queries": health_metrics.blocked_queries,
                     "slow_queries": health_metrics.slow_queries,
-                    "uptime": health_metrics.uptime
+                    "uptime": health_metrics.uptime,
                 },
                 "health_score": self._calculate_health_score(health_metrics),
                 "recommendations": self._generate_health_recommendations(health_metrics),
-                "check_timestamp": datetime.now().isoformat()
+                "check_timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
@@ -260,35 +268,39 @@ class DatabaseTroubleshooter:
                     for row in index_rows:
                         index_info = IndexInfo(
                             table_name=f"{row['schemaname']}.{row['tablename']}",
-                            index_name=row['indexname'],
+                            index_name=row["indexname"],
                             index_type="B-tree",  # Default, could be parsed from indexdef
-                            size_mb=float(row['size'].split()[0]) if ' ' in row['size'] else 0.0,
-                            scans=row['idx_scan'],
-                            tuples_read=row['idx_tup_read'],
-                            tuples_fetched=row['idx_tup_fetch'],
-                            efficiency=row['efficiency'] if row['efficiency'] else 0.0
+                            size_mb=float(row["size"].split()[0]) if " " in row["size"] else 0.0,
+                            scans=row["idx_scan"],
+                            tuples_read=row["idx_tup_read"],
+                            tuples_fetched=row["idx_tup_fetch"],
+                            efficiency=row["efficiency"] if row["efficiency"] else 0.0,
                         )
                         indexes.append(index_info)
 
                     # Generate recommendations
                     for index in indexes:
                         if index.efficiency < 10.0 and index.scans > 100:
-                            recommendations.append({
-                                "type": "inefficient_index",
-                                "index_name": index.index_name,
-                                "table_name": index.table_name,
-                                "issue": f"Low efficiency ({index.efficiency:.1f}%) with high usage ({index.scans} scans)",
-                                "recommendation": "Consider dropping or rebuilding this index"
-                            })
+                            recommendations.append(
+                                {
+                                    "type": "inefficient_index",
+                                    "index_name": index.index_name,
+                                    "table_name": index.table_name,
+                                    "issue": f"Low efficiency ({index.efficiency:.1f}%) with high usage ({index.scans} scans)",
+                                    "recommendation": "Consider dropping or rebuilding this index",
+                                }
+                            )
 
                         if index.size_mb > 100:  # Large indexes
-                            recommendations.append({
-                                "type": "large_index",
-                                "index_name": index.index_name,
-                                "table_name": index.table_name,
-                                "issue": f"Large index size ({index.size_mb:.1f}MB)",
-                                "recommendation": "Consider partitioning or optimizing index structure"
-                            })
+                            recommendations.append(
+                                {
+                                    "type": "large_index",
+                                    "index_name": index.index_name,
+                                    "table_name": index.table_name,
+                                    "issue": f"Large index size ({index.size_mb:.1f}MB)",
+                                    "recommendation": "Consider partitioning or optimizing index structure",
+                                }
+                            )
 
                     # Check for missing indexes
                     cur.execute("""
@@ -307,14 +319,16 @@ class DatabaseTroubleshooter:
                     table_stats = cur.fetchall()
 
                     for stat in table_stats:
-                        if stat['n_distinct'] > 1000 and stat['correlation'] < 0.3:
-                            recommendations.append({
-                                "type": "missing_index",
-                                "table_name": f"{stat['schemaname']}.{stat['tablename']}",
-                                "column": stat['attname'],
-                                "issue": f"High cardinality ({stat['n_distinct']}) with low correlation ({stat['correlation']:.2f})",
-                                "recommendation": f"Consider creating index on {stat['attname']}"
-                            })
+                        if stat["n_distinct"] > 1000 and stat["correlation"] < 0.3:
+                            recommendations.append(
+                                {
+                                    "type": "missing_index",
+                                    "table_name": f"{stat['schemaname']}.{stat['tablename']}",
+                                    "column": stat["attname"],
+                                    "issue": f"High cardinality ({stat['n_distinct']}) with low correlation ({stat['correlation']:.2f})",
+                                    "recommendation": f"Consider creating index on {stat['attname']}",
+                                }
+                            )
 
             return {
                 "indexes": [
@@ -325,14 +339,14 @@ class DatabaseTroubleshooter:
                         "size_mb": idx.size_mb,
                         "scans": idx.scans,
                         "efficiency": idx.efficiency,
-                        "status": "good" if idx.efficiency > 50 else "needs_attention"
+                        "status": "good" if idx.efficiency > 50 else "needs_attention",
                     }
                     for idx in indexes
                 ],
                 "recommendations": recommendations,
                 "total_indexes": len(indexes),
                 "recommendation_count": len(recommendations),
-                "analysis_timestamp": datetime.now().isoformat()
+                "analysis_timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
@@ -384,49 +398,55 @@ class DatabaseTroubleshooter:
                     for row in table_rows:
                         table_info = {
                             "table_name": f"{row['schemaname']}.{row['tablename']}",
-                            "total_size": row['total_size'],
-                            "table_size": row['table_size'],
-                            "index_size": row['index_size'],
-                            "seq_scan": row['seq_scan'],
-                            "seq_tup_read": row['seq_tup_read'],
-                            "idx_scan": row['idx_scan'],
-                            "idx_tup_fetch": row['idx_tup_fetch'],
-                            "n_tup_ins": row['n_tup_ins'],
-                            "n_tup_upd": row['n_tup_upd'],
-                            "n_tup_del": row['n_tup_del'],
-                            "n_live_tup": row['n_live_tup'],
-                            "n_dead_tup": row['n_dead_tup'],
-                            "last_vacuum": row['last_vacuum'],
-                            "last_autovacuum": row['last_autovacuum'],
-                            "last_analyze": row['last_analyze'],
-                            "last_autoanalyze": row['last_autoanalyze'],
-                            "health_status": self._assess_table_health(row)
+                            "total_size": row["total_size"],
+                            "table_size": row["table_size"],
+                            "index_size": row["index_size"],
+                            "seq_scan": row["seq_scan"],
+                            "seq_tup_read": row["seq_tup_read"],
+                            "idx_scan": row["idx_scan"],
+                            "idx_tup_fetch": row["idx_tup_fetch"],
+                            "n_tup_ins": row["n_tup_ins"],
+                            "n_tup_upd": row["n_tup_upd"],
+                            "n_tup_del": row["n_tup_del"],
+                            "n_live_tup": row["n_live_tup"],
+                            "n_dead_tup": row["n_dead_tup"],
+                            "last_vacuum": row["last_vacuum"],
+                            "last_autovacuum": row["last_autovacuum"],
+                            "last_analyze": row["last_analyze"],
+                            "last_autoanalyze": row["last_autoanalyze"],
+                            "health_status": self._assess_table_health(row),
                         }
                         tables.append(table_info)
 
                     # Check for tables needing maintenance
                     maintenance_needed = []
                     for table in tables:
-                        if table['n_dead_tup'] > table['n_live_tup'] * 0.1:  # More than 10% dead tuples
-                            maintenance_needed.append({
-                                "table_name": table['table_name'],
-                                "issue": f"High dead tuple ratio ({table['n_dead_tup']} dead tuples)",
-                                "recommendation": "VACUUM this table"
-                            })
+                        if (
+                            table["n_dead_tup"] > table["n_live_tup"] * 0.1
+                        ):  # More than 10% dead tuples
+                            maintenance_needed.append(
+                                {
+                                    "table_name": table["table_name"],
+                                    "issue": f"High dead tuple ratio ({table['n_dead_tup']} dead tuples)",
+                                    "recommendation": "VACUUM this table",
+                                }
+                            )
 
-                        if table['seq_scan'] > table['idx_scan'] * 10:  # Heavy sequential scanning
-                            maintenance_needed.append({
-                                "table_name": table['table_name'],
-                                "issue": f"High sequential scanning ({table['seq_scan']} seq scans vs {table['idx_scan']} idx scans)",
-                                "recommendation": "Consider adding indexes"
-                            })
+                        if table["seq_scan"] > table["idx_scan"] * 10:  # Heavy sequential scanning
+                            maintenance_needed.append(
+                                {
+                                    "table_name": table["table_name"],
+                                    "issue": f"High sequential scanning ({table['seq_scan']} seq scans vs {table['idx_scan']} idx scans)",
+                                    "recommendation": "Consider adding indexes",
+                                }
+                            )
 
             return {
                 "tables": tables,
                 "maintenance_needed": maintenance_needed,
                 "total_tables": len(tables),
                 "tables_needing_maintenance": len(maintenance_needed),
-                "analysis_timestamp": datetime.now().isoformat()
+                "analysis_timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
@@ -478,38 +498,48 @@ class DatabaseTroubleshooter:
 
                     for row in query_rows:
                         query_info = QueryPerformance(
-                            query_text=row['query'][:200] + "..." if len(row['query']) > 200 else row['query'],
-                            execution_time=row['mean_time'] / 1000.0,  # Convert to seconds
-                            rows_affected=row['rows'],
+                            query_text=(
+                                row["query"][:200] + "..."
+                                if len(row["query"]) > 200
+                                else row["query"]
+                            ),
+                            execution_time=row["mean_time"] / 1000.0,  # Convert to seconds
+                            rows_affected=row["rows"],
                             index_used="unknown",
-                            cost=row['total_time'] / row['calls'] if row['calls'] > 0 else 0,
-                            rows=row['rows'],
-                            planning_time=0.0
+                            cost=row["total_time"] / row["calls"] if row["calls"] > 0 else 0,
+                            rows=row["rows"],
+                            planning_time=0.0,
                         )
                         slow_queries.append(query_info)
 
                         # Generate recommendations for slow queries
                         if query_info.execution_time > 1.0:  # Queries taking more than 1 second
-                            recommendations.append({
-                                "type": "slow_query",
-                                "query_preview": query_info.query_text,
-                                "execution_time": f"{query_info.execution_time:.2f}s",
-                                "calls": row['calls'],
-                                "recommendation": "Consider adding indexes or rewriting query"
-                            })
+                            recommendations.append(
+                                {
+                                    "type": "slow_query",
+                                    "query_preview": query_info.query_text,
+                                    "execution_time": f"{query_info.execution_time:.2f}s",
+                                    "calls": row["calls"],
+                                    "recommendation": "Consider adding indexes or rewriting query",
+                                }
+                            )
 
                         # Check for cache misses
-                        if row['shared_blks_read'] > row['shared_blks_hit']:
-                            recommendations.append({
-                                "type": "cache_miss",
-                                "query_preview": query_info.query_text,
-                                "issue": "High cache miss ratio",
-                                "recommendation": "Consider increasing shared_buffers or optimizing query"
-                            })
+                        if row["shared_blks_read"] > row["shared_blks_hit"]:
+                            recommendations.append(
+                                {
+                                    "type": "cache_miss",
+                                    "query_preview": query_info.query_text,
+                                    "issue": "High cache miss ratio",
+                                    "recommendation": "Consider increasing shared_buffers or optimizing query",
+                                }
+                            )
 
                     # Get query execution plans for slow queries
                     if self.enable_execution_plans and slow_queries:
-                        cur.execute("SELECT query FROM pg_stat_statements ORDER BY mean_time DESC LIMIT 5")
+                        cur.execute(
+                            "SELECT query FROM pg_stat_statements ORDER BY mean_time DESC LIMIT 5"
+                        )
                         plan_queries = cur.fetchall()
 
                         execution_plans = []
@@ -517,10 +547,12 @@ class DatabaseTroubleshooter:
                             try:
                                 cur.execute(f"EXPLAIN (ANALYZE, BUFFERS) {query_row['query']}")
                                 plan_result = cur.fetchall()
-                                execution_plans.append({
-                                    "query": query_row['query'][:100] + "...",
-                                    "plan": [str(row) for row in plan_result]
-                                })
+                                execution_plans.append(
+                                    {
+                                        "query": query_row["query"][:100] + "...",
+                                        "plan": [str(row) for row in plan_result],
+                                    }
+                                )
                             except Exception as e:
                                 self.logger.warning(f"Failed to get execution plan: {e}")
 
@@ -530,7 +562,11 @@ class DatabaseTroubleshooter:
                                     "query": q.query_text,
                                     "execution_time": q.execution_time,
                                     "rows_affected": q.rows_affected,
-                                    "status": "needs_optimization" if q.execution_time > 1.0 else "acceptable"
+                                    "status": (
+                                        "needs_optimization"
+                                        if q.execution_time > 1.0
+                                        else "acceptable"
+                                    ),
                                 }
                                 for q in slow_queries
                             ],
@@ -538,7 +574,7 @@ class DatabaseTroubleshooter:
                             "execution_plans": execution_plans,
                             "total_slow_queries": len(slow_queries),
                             "recommendation_count": len(recommendations),
-                            "analysis_timestamp": datetime.now().isoformat()
+                            "analysis_timestamp": datetime.now().isoformat(),
                         }
 
             return {
@@ -547,14 +583,14 @@ class DatabaseTroubleshooter:
                         "query": q.query_text,
                         "execution_time": q.execution_time,
                         "rows_affected": q.rows_affected,
-                        "status": "needs_optimization" if q.execution_time > 1.0 else "acceptable"
+                        "status": "needs_optimization" if q.execution_time > 1.0 else "acceptable",
                     }
                     for q in slow_queries
                 ],
                 "recommendations": recommendations,
                 "total_slow_queries": len(slow_queries),
                 "recommendation_count": len(recommendations),
-                "analysis_timestamp": datetime.now().isoformat()
+                "analysis_timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
@@ -586,7 +622,7 @@ class DatabaseTroubleshooter:
                 "estimated_impact": self._estimate_optimization_impact(
                     health_result, index_result, table_result, query_result
                 ),
-                "optimization_timestamp": datetime.now().isoformat()
+                "optimization_timestamp": datetime.now().isoformat(),
             }
 
             return optimization_results
@@ -620,114 +656,128 @@ class DatabaseTroubleshooter:
         recommendations = []
 
         if health.connection_status == "slow":
-            recommendations.append({
-                "type": "performance",
-                "priority": "high",
-                "action": "Optimize database configuration",
-                "description": "Database response time is slow"
-            })
+            recommendations.append(
+                {
+                    "type": "performance",
+                    "priority": "high",
+                    "action": "Optimize database configuration",
+                    "description": "Database response time is slow",
+                }
+            )
 
         if health.blocked_queries > 0:
-            recommendations.append({
-                "type": "blocking",
-                "priority": "critical",
-                "action": "Investigate blocked queries",
-                "description": f"Found {health.blocked_queries} blocked queries"
-            })
+            recommendations.append(
+                {
+                    "type": "blocking",
+                    "priority": "critical",
+                    "action": "Investigate blocked queries",
+                    "description": f"Found {health.blocked_queries} blocked queries",
+                }
+            )
 
         if health.slow_queries > 10:
-            recommendations.append({
-                "type": "query_optimization",
-                "priority": "medium",
-                "action": "Optimize slow queries",
-                "description": f"Found {health.slow_queries} slow queries"
-            })
+            recommendations.append(
+                {
+                    "type": "query_optimization",
+                    "priority": "medium",
+                    "action": "Optimize slow queries",
+                    "description": f"Found {health.slow_queries} slow queries",
+                }
+            )
 
         return recommendations
 
     def _assess_table_health(self, table_stats: dict[str, Any]) -> str:
         """Assess individual table health"""
-        dead_ratio = table_stats['n_dead_tup'] / max(table_stats['n_live_tup'], 1)
+        dead_ratio = table_stats["n_dead_tup"] / max(table_stats["n_live_tup"], 1)
 
         if dead_ratio > 0.2:  # More than 20% dead tuples
             return "critical"
         elif dead_ratio > 0.1:  # More than 10% dead tuples
             return "warning"
-        elif table_stats['seq_scan'] > table_stats['idx_scan'] * 20:
+        elif table_stats["seq_scan"] > table_stats["idx_scan"] * 20:
             return "needs_indexes"
         else:
             return "healthy"
 
-    def _generate_optimization_plan(self, health_result: dict, index_result: dict,
-                                  table_result: dict, query_result: dict) -> dict[str, Any]:
+    def _generate_optimization_plan(
+        self, health_result: dict, index_result: dict, table_result: dict, query_result: dict
+    ) -> dict[str, Any]:
         """Generate comprehensive optimization plan"""
         plan = {
             "immediate_actions": [],
             "short_term_actions": [],
             "long_term_actions": [],
-            "estimated_impact": {}
+            "estimated_impact": {},
         }
 
         # Analyze health issues
-        if 'database_health' in health_result:
-            db_health = health_result['database_health']
-            if db_health.get('connection_status') == 'critical':
-                plan['immediate_actions'].append("Investigate critical connection issues")
+        if "database_health" in health_result:
+            db_health = health_result["database_health"]
+            if db_health.get("connection_status") == "critical":
+                plan["immediate_actions"].append("Investigate critical connection issues")
 
-            if db_health.get('blocked_queries', 0) > 0:
-                plan['immediate_actions'].append(f"Resolve {db_health['blocked_queries']} blocked queries")
+            if db_health.get("blocked_queries", 0) > 0:
+                plan["immediate_actions"].append(
+                    f"Resolve {db_health['blocked_queries']} blocked queries"
+                )
 
         # Analyze index issues
-        if 'recommendations' in index_result:
-            for rec in index_result['recommendations']:
-                if rec['type'] == 'inefficient_index':
-                    plan['short_term_actions'].append(f"Rebuild or drop inefficient index: {rec['index_name']}")
-                elif rec['type'] == 'missing_index':
-                    plan['short_term_actions'].append(f"Create missing index on {rec['column']}")
+        if "recommendations" in index_result:
+            for rec in index_result["recommendations"]:
+                if rec["type"] == "inefficient_index":
+                    plan["short_term_actions"].append(
+                        f"Rebuild or drop inefficient index: {rec['index_name']}"
+                    )
+                elif rec["type"] == "missing_index":
+                    plan["short_term_actions"].append(f"Create missing index on {rec['column']}")
 
         # Analyze table issues
-        if 'maintenance_needed' in table_result:
-            for maintenance in table_result['maintenance_needed']:
-                if 'VACUUM' in maintenance['recommendation']:
-                    plan['immediate_actions'].append(maintenance['recommendation'])
+        if "maintenance_needed" in table_result:
+            for maintenance in table_result["maintenance_needed"]:
+                if "VACUUM" in maintenance["recommendation"]:
+                    plan["immediate_actions"].append(maintenance["recommendation"])
                 else:
-                    plan['short_term_actions'].append(maintenance['recommendation'])
+                    plan["short_term_actions"].append(maintenance["recommendation"])
 
         # Analyze query issues
-        if 'recommendations' in query_result:
-            for rec in query_result['recommendations']:
-                if rec['type'] == 'slow_query':
-                    plan['short_term_actions'].append(f"Optimize slow query: {rec['query_preview']}")
+        if "recommendations" in query_result:
+            for rec in query_result["recommendations"]:
+                if rec["type"] == "slow_query":
+                    plan["short_term_actions"].append(
+                        f"Optimize slow query: {rec['query_preview']}"
+                    )
 
         return plan
 
-    def _estimate_optimization_impact(self, health_result: dict, index_result: dict,
-                                    table_result: dict, query_result: dict) -> dict[str, Any]:
+    def _estimate_optimization_impact(
+        self, health_result: dict, index_result: dict, table_result: dict, query_result: dict
+    ) -> dict[str, Any]:
         """Estimate potential impact of optimizations"""
         impact = {
             "performance_improvement": "unknown",
             "query_speed_improvement": "unknown",
             "storage_savings": "unknown",
-            "maintenance_reduction": "unknown"
+            "maintenance_reduction": "unknown",
         }
 
         # Estimate based on issues found
         total_issues = (
-            health_result.get('database_health', {}).get('blocked_queries', 0) +
-            len(index_result.get('recommendations', [])) +
-            len(table_result.get('maintenance_needed', [])) +
-            len(query_result.get('recommendations', []))
+            health_result.get("database_health", {}).get("blocked_queries", 0)
+            + len(index_result.get("recommendations", []))
+            + len(table_result.get("maintenance_needed", []))
+            + len(query_result.get("recommendations", []))
         )
 
         if total_issues > 20:
-            impact['performance_improvement'] = "30-50%"
-            impact['query_speed_improvement'] = "40-60%"
+            impact["performance_improvement"] = "30-50%"
+            impact["query_speed_improvement"] = "40-60%"
         elif total_issues > 10:
-            impact['performance_improvement'] = "15-30%"
-            impact['query_speed_improvement'] = "20-40%"
+            impact["performance_improvement"] = "15-30%"
+            impact["query_speed_improvement"] = "20-40%"
         else:
-            impact['performance_improvement'] = "5-15%"
-            impact['query_speed_improvement'] = "10-25%"
+            impact["performance_improvement"] = "5-15%"
+            impact["query_speed_improvement"] = "10-25%"
 
         return impact
 
@@ -739,56 +789,41 @@ TOOLS = [
         "function": {
             "name": "check_database_health",
             "description": "Perform comprehensive database health check",
-            "parameters": {
-                "type": "object",
-                "properties": {}
-            }
-        }
+            "parameters": {"type": "object", "properties": {}},
+        },
     },
     {
         "type": "function",
         "function": {
             "name": "check_indexes",
             "description": "Analyze database indexes and provide optimization recommendations",
-            "parameters": {
-                "type": "object",
-                "properties": {}
-            }
-        }
+            "parameters": {"type": "object", "properties": {}},
+        },
     },
     {
         "type": "function",
         "function": {
             "name": "check_table_statistics",
             "description": "Analyze table statistics and performance metrics",
-            "parameters": {
-                "type": "object",
-                "properties": {}
-            }
-        }
+            "parameters": {"type": "object", "properties": {}},
+        },
     },
     {
         "type": "function",
         "function": {
             "name": "analyze_query_performance",
             "description": "Analyze query performance and identify optimization opportunities",
-            "parameters": {
-                "type": "object",
-                "properties": {}
-            }
-        }
+            "parameters": {"type": "object", "properties": {}},
+        },
     },
     {
         "type": "function",
         "function": {
             "name": "optimize_database",
             "description": "Provide comprehensive database optimization recommendations",
-            "parameters": {
-                "type": "object",
-                "properties": {}
-            }
-        }
-    }
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
 ]
 
 
@@ -803,9 +838,9 @@ AGENT_INFO = {
         "Index optimization recommendations",
         "Connection pool management",
         "Dead tuple detection",
-        "Slow query identification"
+        "Slow query identification",
     ],
-    "tools": TOOLS
+    "tools": TOOLS,
 }
 
 

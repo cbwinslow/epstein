@@ -1,5 +1,5 @@
 ## Summary
-- 
+-
 
 ## Testing
 - [ ] `uv run pytest -q`
