@@ -433,4 +433,3 @@ Info "done"; Write-Host "Edit .\\config.json then run make pipeline-run (or dock
 ## rulebook_packs/epstein-pipeline-pack/
 
 *(Entire pack included in zip; see previous pack canvas for full contents.)*
-

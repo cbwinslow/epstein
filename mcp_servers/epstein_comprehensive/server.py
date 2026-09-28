@@ -13,13 +13,16 @@ from fastapi import FastAPI
 
 app = FastAPI(title="Epstein Comprehensive MCP Server", version="1.0.0")
 
+
 @app.get("/")
 async def root():
     return {"message": "Epstein MCP Server", "version": "1.0.0"}
 
+
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -28,6 +31,7 @@ def main():
     args = parser.parse_args()
 
     uvicorn.run(app, host=args.host, port=args.port)
+
 
 if __name__ == "__main__":
     main()

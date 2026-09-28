@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 class FileType(Enum):
     """Supported file types"""
+
     PDF = "pdf"
     ZIP = "zip"
     IMAGE = "image"
@@ -36,6 +37,7 @@ class FileType(Enum):
 
 class FileCategory(Enum):
     """File categories for organization"""
+
     COURT_RECORDS = "court_records"
     DOJ_DISCLOSURES = "doj_disclosures"
     FBI_RECORDS = "fbi_records"
@@ -50,6 +52,7 @@ class FileCategory(Enum):
 @dataclass
 class FileMetadata:
     """Metadata for organized files"""
+
     original_path: Path
     organized_path: Path
     file_type: FileType
@@ -115,7 +118,7 @@ class FileOrganizer:
         base_dir: Path,
         organized_dir: Path | None = None,
         dedup_enabled: bool = True,
-        auto_extract_zips: bool = True
+        auto_extract_zips: bool = True,
     ):
         """
         Initialize file organizer
@@ -232,7 +235,7 @@ class FileOrganizer:
         original_filename: str,
         source: str = "default",
         dataset_number: int | None = None,
-        index: int = 0
+        index: int = 0,
     ) -> str:
         """
         Generate normalized filename following naming conventions
@@ -251,8 +254,8 @@ class FileOrganizer:
         ext = Path(original_filename).suffix
 
         # Remove special characters and normalize
-        name = re.sub(r'[^\w\s-]', '', name)
-        name = re.sub(r'\s+', '_', name)
+        name = re.sub(r"[^\w\s-]", "", name)
+        name = re.sub(r"\s+", "_", name)
         name = name[:50]  # Limit length
 
         # Get current date
@@ -265,24 +268,15 @@ class FileOrganizer:
         try:
             if source == "doj_disclosures" and dataset_number is not None:
                 normalized = pattern.format(
-                    dataset=dataset_number,
-                    date=date_str,
-                    index=index,
-                    name=name
+                    dataset=dataset_number, date=date_str, index=index, name=name
                 )
             elif source == "fbi_vault" and dataset_number is not None:
                 normalized = pattern.format(
-                    part=dataset_number,
-                    date=date_str,
-                    index=index,
-                    name=name
+                    part=dataset_number, date=date_str, index=index, name=name
                 )
             else:
                 normalized = pattern.format(
-                    source=source.upper(),
-                    date=date_str,
-                    index=index,
-                    name=name
+                    source=source.upper(), date=date_str, index=index, name=name
                 )
         except Exception as e:
             logger.warning(f"Failed to format filename with pattern: {e}")
@@ -321,10 +315,7 @@ class FileOrganizer:
         return False, None
 
     def extract_zip(
-        self,
-        zip_path: Path,
-        extract_dir: Path | None = None,
-        organize_extracted: bool = True
+        self, zip_path: Path, extract_dir: Path | None = None, organize_extracted: bool = True
     ) -> tuple[bool, list[Path], str | None]:
         """
         Extract ZIP file with safety checks
@@ -394,7 +385,7 @@ class FileOrganizer:
         file_path: Path,
         source: str = "",
         dataset_number: int | None = None,
-        force: bool = False
+        force: bool = False,
     ) -> tuple[bool, Path | None, str | None]:
         """
         Organize a single file
@@ -419,7 +410,9 @@ class FileOrganizer:
             is_dup, existing_path = self.is_duplicate(file_hash)
 
             if is_dup and not force:
-                logger.info(f"Duplicate file detected: {file_path.name} (existing: {existing_path})")
+                logger.info(
+                    f"Duplicate file detected: {file_path.name} (existing: {existing_path})"
+                )
 
                 # Move to duplicates folder
                 dup_dir = self.organized_dir / "duplicates"
@@ -440,7 +433,9 @@ class FileOrganizer:
 
             # Auto-extract ZIP files if enabled
             if file_type == FileType.ZIP and self.auto_extract_zips:
-                success, extracted_files, error = self.extract_zip(file_path, organize_extracted=True)
+                success, extracted_files, error = self.extract_zip(
+                    file_path, organize_extracted=True
+                )
                 if not success:
                     logger.warning(f"Failed to extract ZIP {file_path.name}: {error}")
 
@@ -450,10 +445,7 @@ class FileOrganizer:
             self.file_counters[counter_key] = index + 1
 
             normalized_name = self.normalize_filename(
-                file_path.name,
-                source=source,
-                dataset_number=dataset_number,
-                index=index
+                file_path.name, source=source, dataset_number=dataset_number, index=index
             )
 
             # Determine organized path
@@ -492,7 +484,9 @@ class FileOrganizer:
 
             self._save_metadata(metadata)
 
-            logger.info(f"Organized: {file_path.name} -> {organized_path.relative_to(self.organized_dir)}")
+            logger.info(
+                f"Organized: {file_path.name} -> {organized_path.relative_to(self.organized_dir)}"
+            )
 
             return True, organized_path, None
 
@@ -512,10 +506,7 @@ class FileOrganizer:
             return False, None, error_msg
 
     def organize_directory(
-        self,
-        directory: Path,
-        source: str = "",
-        recursive: bool = True
+        self, directory: Path, source: str = "", recursive: bool = True
     ) -> dict[str, int]:
         """
         Organize all files in a directory

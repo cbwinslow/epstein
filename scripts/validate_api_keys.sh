@@ -128,7 +128,7 @@ if [ -n "$OPENROUTER_API_KEY" ]; then
         -H "Authorization: Bearer $OPENROUTER_API_KEY" \
         -H "Content-Type: application/json" \
         https://openrouter.ai/api/v1/models 2>/dev/null || echo "000")
-    
+
     if [ "$HTTP_CODE" = "200" ]; then
         echo "   ✅ OpenRouter API connection successful"
     elif [ "$HTTP_CODE" = "401" ]; then
@@ -146,14 +146,14 @@ fi
 # Test Database connection (if docker is running)
 if command -v docker &> /dev/null; then
     echo "🔌 Testing Database connection..."
-    
+
     # Check if postgres container is running
     if docker ps --format '{{.Names}}' | grep -q postgres; then
         DB_HOST=${POSTGRES_HOST:-localhost}
         DB_PORT=${POSTGRES_PORT:-5432}
         DB_NAME=${POSTGRES_DB:-analysis}
         DB_USER=${POSTGRES_USER:-analysis}
-        
+
         # Try to connect (using docker exec if available)
         if docker exec -i $(docker ps --format '{{.Names}}' | grep postgres | head -1) \
             psql -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1" &> /dev/null; then
