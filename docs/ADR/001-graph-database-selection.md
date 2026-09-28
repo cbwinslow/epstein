@@ -1,8 +1,8 @@
 # ADR 001: Graph Database Selection for Knowledge Graph
 
-**Date**: 2025-12-31  
-**Status**: Proposed  
-**Deciders**: Technical Team  
+**Date**: 2025-12-31
+**Status**: Proposed
+**Deciders**: Technical Team
 **Context**: Knowledge Graph Implementation (Phase 3)
 
 ## Context and Problem Statement

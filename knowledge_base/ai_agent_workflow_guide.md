@@ -4,8 +4,8 @@
 
 This guide provides step-by-step workflows for AI agents to download, process, and analyze Epstein-related documents using the MCP server and PydanticAI framework.
 
-**Last Updated**: 2024-12-31  
-**Target Audience**: AI agents, developers, automated systems  
+**Last Updated**: 2024-12-31
+**Target Audience**: AI agents, developers, automated systems
 **Prerequisites**: MCP server running, Python 3.10+, PydanticAI installed
 
 ## Table of Contents
@@ -110,13 +110,13 @@ def discover_collections() -> List[Dict]:
     response = requests.get('http://localhost:8765/collections')
     response.raise_for_status()
     collections = response.json()
-    
+
     print(f"Found {len(collections)} collections:")
     for coll in collections:
         print(f"  - {coll['name']} ({coll['document_count']} documents)")
         print(f"    Source: {coll['source']}")
         print(f"    URL: {coll['url']}")
-    
+
     return collections
 
 # Usage
@@ -132,17 +132,17 @@ def list_documents(collection_id: str, limit: int = 100) -> List[Dict]:
     """List documents in a collection with pagination"""
     url = f'http://localhost:8765/collections/{collection_id}/documents'
     params = {'limit': limit, 'offset': 0}
-    
+
     response = requests.get(url, params=params)
     response.raise_for_status()
     documents = response.json()
-    
+
     print(f"Found {len(documents)} documents in '{collection_id}':")
     for doc in documents[:5]:  # Show first 5
         print(f"  - {doc['title']}")
         print(f"    Size: {doc.get('file_size', 'Unknown')} bytes")
         print(f"    URL: {doc['url']}")
-    
+
     return documents
 
 # Usage
@@ -166,7 +166,7 @@ def download_document(url: str, destination: str = None) -> Dict:
             'source': 'manual_request'
         }
     }
-    
+
     # Initiate download
     response = requests.post(
         'http://localhost:8765/download',
@@ -175,23 +175,23 @@ def download_document(url: str, destination: str = None) -> Dict:
     response.raise_for_status()
     task = response.json()
     task_id = task['task_id']
-    
+
     print(f"Download started: {task_id}")
-    
+
     # Poll for completion
     while True:
         status_response = requests.get(
             f'http://localhost:8765/download/status/{task_id}'
         )
         status = status_response.json()
-        
+
         print(f"Status: {status['status']} - Progress: {status['progress']:.1f}%")
-        
+
         if status['status'] in ['completed', 'failed']:
             break
-        
+
         time.sleep(2)
-    
+
     return status
 
 # Usage
@@ -217,7 +217,7 @@ def bulk_download_collection(collection_id: str, destination: str = None) -> Lis
             'requested_at': time.time()
         }
     }
-    
+
     # Initiate bulk download
     response = requests.post(
         'http://localhost:8765/download/bulk',
@@ -225,25 +225,25 @@ def bulk_download_collection(collection_id: str, destination: str = None) -> Lis
     )
     response.raise_for_status()
     tasks = response.json()
-    
+
     print(f"Started {len(tasks)} downloads")
-    
+
     # Track progress of all downloads
     task_ids = [task['task_id'] for task in tasks]
     completed = 0
-    
+
     while completed < len(task_ids):
         status_response = requests.get('http://localhost:8765/download/status')
         all_statuses = status_response.json()
-        
+
         completed = sum(
-            1 for s in all_statuses 
+            1 for s in all_statuses
             if s['task_id'] in task_ids and s['status'] == 'completed'
         )
-        
+
         print(f"Progress: {completed}/{len(task_ids)} completed")
         time.sleep(5)
-    
+
     print("All downloads completed!")
     return tasks
 
@@ -269,7 +269,7 @@ class DownloadRequest(BaseModel):
 
 class DownloadAgent:
     """AI agent for automated document downloads"""
-    
+
     def __init__(self, mcp_server_url: str = 'http://localhost:8765'):
         self.mcp_url = mcp_server_url
         self.agent = Agent(
@@ -280,16 +280,16 @@ class DownloadAgent:
             collections, list documents, and initiate downloads.'''
         )
         self._register_tools()
-    
+
     def _register_tools(self):
         """Register MCP server tools with the agent"""
-        
+
         @self.agent.tool
         def list_collections() -> list[dict]:
             """List all available document collections"""
             response = requests.get(f'{self.mcp_url}/collections')
             return response.json()
-        
+
         @self.agent.tool
         def download_collection(request: DownloadRequest) -> dict:
             """Download all documents from a collection"""
@@ -298,7 +298,7 @@ class DownloadAgent:
                 json=request.model_dump()
             )
             return response.json()
-        
+
         @self.agent.tool
         def check_download_status(task_id: str) -> dict:
             """Check the status of a download task"""
@@ -306,7 +306,7 @@ class DownloadAgent:
                 f'{self.mcp_url}/download/status/{task_id}'
             )
             return response.json()
-    
+
     async def run(self, user_request: str) -> str:
         """Run the agent with a user request"""
         result = await self.agent.run(user_request)
@@ -337,15 +337,15 @@ def verify_download(file_path: Path, expected_sha256: str = None) -> bool:
     """Verify downloaded file integrity"""
     if not file_path.exists():
         return False
-    
+
     # Calculate SHA-256
     sha256_hash = hashlib.sha256()
     with open(file_path, 'rb') as f:
         for chunk in iter(lambda: f.read(4096), b''):
             sha256_hash.update(chunk)
-    
+
     calculated = sha256_hash.hexdigest()
-    
+
     if expected_sha256:
         return calculated == expected_sha256
     else:
@@ -360,18 +360,18 @@ def download_and_verify_collection(collection_id: str) -> Dict:
         json={'collection_id': collection_id}
     )
     tasks = response.json()
-    
+
     # Wait for completion
     task_ids = [t['task_id'] for t in tasks]
     results = {}
-    
+
     for task_id in task_ids:
         # Wait for completion
         while True:
             status = requests.get(
                 f'http://localhost:8765/download/status/{task_id}'
             ).json()
-            
+
             if status['status'] == 'completed':
                 # Verify file
                 file_path = Path(status['destination'])
@@ -387,14 +387,14 @@ def download_and_verify_collection(collection_id: str) -> Dict:
                     'verified': False
                 }
                 break
-            
+
             time.sleep(2)
-    
+
     # Summary
     total = len(results)
     verified = sum(1 for r in results.values() if r.get('verified'))
     print(f"Download complete: {verified}/{total} files verified")
-    
+
     return results
 
 # Usage
@@ -414,11 +414,11 @@ def get_download_history() -> List[Dict]:
 def resume_failed_downloads(destination: str = None) -> List[Dict]:
     """Resume any failed downloads"""
     history = get_download_history()
-    
+
     # Find failed downloads
     failed = [h for h in history if h['status'] == 'failed']
     print(f"Found {len(failed)} failed downloads")
-    
+
     # Retry each failed download
     retried = []
     for task in failed:
@@ -435,7 +435,7 @@ def resume_failed_downloads(destination: str = None) -> List[Dict]:
             }
         )
         retried.append(response.json())
-    
+
     return retried
 
 # Usage
@@ -498,12 +498,12 @@ def check_disk_space(path: str, required_bytes: int) -> bool:
     """Check if enough disk space is available"""
     stat = shutil.disk_usage(path)
     available = stat.free
-    
+
     if available < required_bytes:
         print(f"Insufficient disk space: {available / 1e9:.2f} GB available")
         print(f"Required: {required_bytes / 1e9:.2f} GB")
         return False
-    
+
     return True
 
 # Usage before bulk download
@@ -521,24 +521,24 @@ from datetime import datetime, timedelta
 
 class RateLimiter:
     """Simple rate limiter for API calls"""
-    
+
     def __init__(self, calls_per_minute: int = 60):
         self.calls_per_minute = calls_per_minute
         self.calls = []
-    
+
     def wait_if_needed(self):
         """Wait if rate limit would be exceeded"""
         now = datetime.now()
         # Remove calls older than 1 minute
         self.calls = [c for c in self.calls if now - c < timedelta(minutes=1)]
-        
+
         if len(self.calls) >= self.calls_per_minute:
             # Wait until oldest call is 1 minute old
             wait_until = self.calls[0] + timedelta(minutes=1)
             wait_seconds = (wait_until - now).total_seconds()
             if wait_seconds > 0:
                 time.sleep(wait_seconds)
-        
+
         self.calls.append(now)
 
 # Usage
@@ -557,13 +557,13 @@ from tqdm import tqdm
 def download_with_progress(urls: List[str]) -> List[Dict]:
     """Download multiple URLs with progress bar"""
     results = []
-    
+
     with tqdm(total=len(urls), desc="Downloading") as pbar:
         for url in urls:
             result = download_document(url)
             results.append(result)
             pbar.update(1)
-    
+
     return results
 ```
 
@@ -587,7 +587,7 @@ logger = logging.getLogger(__name__)
 def logged_download(url: str) -> Dict:
     """Download with comprehensive logging"""
     logger.info(f"Starting download: {url}")
-    
+
     try:
         result = download_document(url)
         logger.info(f"Completed: {result['destination']}")
@@ -656,6 +656,6 @@ def logged_download(url: str) -> Dict:
 
 ---
 
-**Last Updated**: 2024-12-31  
-**Version**: 1.0.0  
+**Last Updated**: 2024-12-31
+**Version**: 1.0.0
 **Maintainer**: Epstein Project Team

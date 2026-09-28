@@ -27,20 +27,25 @@ except ImportError:
     # Fallback if tqdm not available
     class tqdm:
         def __init__(self, *args, **kwargs):
-            self.total = kwargs.get('total', 0)
-            self.n = kwargs.get('initial', 0)
+            self.total = kwargs.get("total", 0)
+            self.n = kwargs.get("initial", 0)
+
         def update(self, n):
             self.n += n
+
         def __enter__(self):
             return self
+
         def __exit__(self, *args):
             pass
+
 
 logger = logging.getLogger(__name__)
 
 
 class DownloadStatus(Enum):
     """Status of a download operation"""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -51,6 +56,7 @@ class DownloadStatus(Enum):
 
 class DownloadSource(Enum):
     """Supported download sources"""
+
     DOJ_DISCLOSURES = "doj_disclosures"
     FBI_VAULT = "fbi_vault"
     HOUSE_OVERSIGHT = "house_oversight"
@@ -61,6 +67,7 @@ class DownloadSource(Enum):
 @dataclass
 class DownloadMetrics:
     """Metrics for a download operation"""
+
     start_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     end_time: datetime | None = None
     bytes_downloaded: int = 0
@@ -92,6 +99,7 @@ class DownloadMetrics:
 @dataclass
 class DownloadTask:
     """Represents a single download task"""
+
     url: str
     destination: Path
     source: DownloadSource
@@ -120,13 +128,14 @@ class DownloadTask:
                 "download_speed": self.metrics.download_speed,
                 "retry_count": self.metrics.retry_count,
                 "error_count": self.metrics.error_count,
-            }
+            },
         }
 
 
 @dataclass
 class SessionConfig:
     """Configuration for HTTP sessions"""
+
     user_agent: str = "Epstein-Project-Downloader/2.0"
     timeout: int = 60
     max_retries: int = 8
@@ -156,7 +165,7 @@ class DownloadManager:
         max_concurrent: int = 3,
         chunk_size: int = 8 * 1024 * 1024,
         session_config: SessionConfig | None = None,
-        progress_callback: Callable[[DownloadTask], None] | None = None
+        progress_callback: Callable[[DownloadTask], None] | None = None,
     ):
         """
         Initialize download manager
@@ -186,7 +195,9 @@ class DownloadManager:
         # Manifest file for tracking
         self.manifest_file = self.output_dir / "download_manifest.jsonl"
 
-        logger.info(f"Download manager initialized: output_dir={output_dir}, max_concurrent={max_concurrent}")
+        logger.info(
+            f"Download manager initialized: output_dir={output_dir}, max_concurrent={max_concurrent}"
+        )
 
     def _get_session(self) -> requests.Session:
         """Get or create HTTP session with authentication"""
@@ -205,9 +216,9 @@ class DownloadManager:
 
             # Add session key authentication if provided
             if self.session_config.session_key:
-                self._session.headers.update({
-                    "Authorization": f"Bearer {self.session_config.session_key}"
-                })
+                self._session.headers.update(
+                    {"Authorization": f"Bearer {self.session_config.session_key}"}
+                )
 
             logger.info("HTTP session created with authentication")
 
@@ -241,11 +252,7 @@ class DownloadManager:
         """Get all tasks"""
         return self.tasks.copy()
 
-    def download_file(
-        self,
-        task_id: str,
-        verify_checksum: bool = True
-    ) -> tuple[bool, str | None]:
+    def download_file(self, task_id: str, verify_checksum: bool = True) -> tuple[bool, str | None]:
         """
         Download a single file
 
@@ -271,9 +278,7 @@ class DownloadManager:
 
             # Get remote file size
             head_response = session.head(
-                task.url,
-                timeout=self.session_config.timeout,
-                allow_redirects=True
+                task.url, timeout=self.session_config.timeout, allow_redirects=True
             )
 
             remote_size = None
@@ -308,7 +313,7 @@ class DownloadManager:
                 headers=headers,
                 stream=True,
                 timeout=self.session_config.timeout,
-                allow_redirects=True
+                allow_redirects=True,
             )
             response.raise_for_status()
 
@@ -321,13 +326,16 @@ class DownloadManager:
             # Download with progress tracking
             task.metrics.bytes_downloaded = existing_size
 
-            with open(task.destination, mode) as f, tqdm(
-                total=task.metrics.total_bytes,
-                initial=existing_size,
-                unit="B",
-                unit_scale=True,
-                desc=task.name
-            ) as pbar:
+            with (
+                open(task.destination, mode) as f,
+                tqdm(
+                    total=task.metrics.total_bytes,
+                    initial=existing_size,
+                    unit="B",
+                    unit_scale=True,
+                    desc=task.name,
+                ) as pbar,
+            ):
                 for chunk in response.iter_content(chunk_size=self.chunk_size):
                     if chunk:
                         f.write(chunk)
@@ -342,12 +350,13 @@ class DownloadManager:
             # Verify checksum if provided
             if verify_checksum and task.checksum:
                 calculated_checksum = self._calculate_checksum(
-                    task.destination,
-                    task.checksum_algorithm
+                    task.destination, task.checksum_algorithm
                 )
 
                 if calculated_checksum != task.checksum:
-                    error = f"Checksum mismatch: expected {task.checksum}, got {calculated_checksum}"
+                    error = (
+                        f"Checksum mismatch: expected {task.checksum}, got {calculated_checksum}"
+                    )
                     logger.error(error)
                     task.status = DownloadStatus.FAILED
                     task.metrics.end_time = datetime.now(timezone.utc)
@@ -355,10 +364,7 @@ class DownloadManager:
 
             # Calculate checksum if not provided
             if not task.checksum:
-                task.checksum = self._calculate_checksum(
-                    task.destination,
-                    task.checksum_algorithm
-                )
+                task.checksum = self._calculate_checksum(task.destination, task.checksum_algorithm)
 
             # Mark as completed
             task.status = DownloadStatus.COMPLETED
@@ -385,10 +391,7 @@ class DownloadManager:
             return False, error_msg
 
     def download_with_retry(
-        self,
-        task_id: str,
-        max_retries: int | None = None,
-        verify_checksum: bool = True
+        self, task_id: str, max_retries: int | None = None, verify_checksum: bool = True
     ) -> tuple[bool, str | None]:
         """
         Download file with automatic retries
@@ -430,9 +433,7 @@ class DownloadManager:
         return False, last_error
 
     def download_batch(
-        self,
-        task_ids: list[str],
-        verify_checksums: bool = True
+        self, task_ids: list[str], verify_checksums: bool = True
     ) -> dict[str, tuple[bool, str | None]]:
         """
         Download multiple files concurrently
@@ -477,10 +478,7 @@ class DownloadManager:
 
     def _save_to_manifest(self, task: DownloadTask) -> None:
         """Save task to manifest file"""
-        record = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "task": task.to_dict()
-        }
+        record = {"timestamp": datetime.now(timezone.utc).isoformat(), "task": task.to_dict()}
 
         with open(self.manifest_file, "a") as f:
             f.write(json.dumps(record) + "\n")
