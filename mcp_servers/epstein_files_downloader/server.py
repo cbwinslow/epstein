@@ -46,10 +46,10 @@ from pydantic import BaseModel, HttpUrl
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     handlers=[
         logging.StreamHandler(),
-    ]
+    ],
 )
 logger = logging.getLogger("epstein_files_downloader")
 
@@ -65,9 +65,11 @@ def _require_aiohttp():
 # Configuration and Data Models
 # ============================================================================
 
+
 @dataclass
 class ServerConfig:
     """Configuration for the MCP server"""
+
     host: str = "0.0.0.0"
     port: int = 8765
     base_url: str = "http://localhost:8765"
@@ -87,6 +89,7 @@ class ServerConfig:
 @dataclass
 class DownloadTask:
     """Represents a download task"""
+
     task_id: str
     url: str
     destination: str
@@ -101,6 +104,7 @@ class DownloadTask:
 @dataclass
 class CollectionInfo:
     """Information about a document collection"""
+
     collection_id: str
     name: str
     description: str
@@ -113,6 +117,7 @@ class CollectionInfo:
 @dataclass
 class DocumentInfo:
     """Metadata about a document"""
+
     document_id: str
     collection_id: str
     title: str
@@ -127,6 +132,7 @@ class DocumentInfo:
 # Pydantic models for API
 class CollectionResponse(BaseModel):
     """API response for collection information"""
+
     collection_id: str
     name: str
     description: str
@@ -138,6 +144,7 @@ class CollectionResponse(BaseModel):
 
 class DocumentResponse(BaseModel):
     """API response for document information"""
+
     document_id: str
     collection_id: str
     title: str
@@ -151,6 +158,7 @@ class DocumentResponse(BaseModel):
 
 class DownloadStatus(BaseModel):
     """API response for download status"""
+
     task_id: str
     url: HttpUrl
     destination: str
@@ -164,6 +172,7 @@ class DownloadStatus(BaseModel):
 
 class DownloadRequest(BaseModel):
     """API request for download"""
+
     url: HttpUrl
     destination: str | None = None
     metadata: dict[str, Any] = None
@@ -171,6 +180,7 @@ class DownloadRequest(BaseModel):
 
 class BulkDownloadRequest(BaseModel):
     """API request for bulk download"""
+
     collection_id: str
     destination: str | None = None
     filter_criteria: dict[str, Any] = None
@@ -179,6 +189,7 @@ class BulkDownloadRequest(BaseModel):
 # ============================================================================
 # MCP Server Implementation
 # ============================================================================
+
 
 class EpsteinFilesDownloader:
     """Main MCP server for downloading Epstein files"""
@@ -199,7 +210,7 @@ class EpsteinFilesDownloader:
             description="MCP Server for downloading Epstein-related documents from government sources",
             version="1.0.0",
             docs_url="/docs",
-            redoc_url="/redoc"
+            redoc_url="/redoc",
         )
 
         # Configure CORS
@@ -220,10 +231,12 @@ class EpsteinFilesDownloader:
     def _init_http_session(self):
         """Initialize HTTP session with retry configuration"""
         self.session = requests.Session()
-        self.session.headers.update({
-            'User-Agent': self.config.user_agent,
-            'Accept': 'application/json',
-        })
+        self.session.headers.update(
+            {
+                "User-Agent": self.config.user_agent,
+                "Accept": "application/json",
+            }
+        )
 
     def _register_endpoints(self):
         """Register all API endpoints"""
@@ -244,8 +257,8 @@ class EpsteinFilesDownloader:
                     "/download/status": "Check download status",
                     "/download/status/{task_id}": "Check specific download status",
                     "/download/history": "Get download history",
-                    "/health": "Health check endpoint"
-                }
+                    "/health": "Health check endpoint",
+                },
             }
 
         @self.app.get("/health")
@@ -256,7 +269,7 @@ class EpsteinFilesDownloader:
                 "timestamp": time.time(),
                 "active_downloads": len(self.active_tasks),
                 "completed_downloads": len(self.completed_tasks),
-                "queue_size": self.download_queue.qsize()
+                "queue_size": self.download_queue.qsize(),
             }
 
         @self.app.get("/collections", response_model=list[CollectionResponse])
@@ -272,7 +285,7 @@ class EpsteinFilesDownloader:
                         document_count=coll.document_count,
                         url=coll.url,
                         source=coll.source,
-                        last_updated=coll.last_updated
+                        last_updated=coll.last_updated,
                     )
                     for coll in collections
                 ]
@@ -294,14 +307,16 @@ class EpsteinFilesDownloader:
                             document_count=coll.document_count,
                             url=coll.url,
                             source=coll.source,
-                            last_updated=coll.last_updated
+                            last_updated=coll.last_updated,
                         )
                 raise HTTPException(status_code=404, detail="Collection not found")
             except Exception as e:
                 logger.error(f"Failed to get collection {collection_id}: {e}")
                 raise HTTPException(status_code=500, detail=str(e))
 
-        @self.app.get("/collections/{collection_id}/documents", response_model=list[DocumentResponse])
+        @self.app.get(
+            "/collections/{collection_id}/documents", response_model=list[DocumentResponse]
+        )
         async def list_collection_documents(collection_id: str, limit: int = 100, offset: int = 0):
             """List documents in a collection"""
             try:
@@ -316,7 +331,7 @@ class EpsteinFilesDownloader:
                         publish_date=doc.publish_date,
                         mime_type=doc.mime_type,
                         file_name=doc.file_name,
-                        metadata=doc.metadata or {}
+                        metadata=doc.metadata or {},
                     )
                     for doc in documents
                 ]
@@ -336,7 +351,7 @@ class EpsteinFilesDownloader:
                     url=str(request.url),
                     destination=destination,
                     status="queued",
-                    metadata=request.metadata or {}
+                    metadata=request.metadata or {},
                 )
 
                 self.active_tasks[task_id] = task
@@ -388,8 +403,8 @@ class EpsteinFilesDownloader:
                             "document_id": doc.document_id,
                             "collection_id": doc.collection_id,
                             "title": doc.title,
-                            **(request.metadata or {})
-                        }
+                            **(request.metadata or {}),
+                        },
                     )
 
                     self.active_tasks[task_id] = task
@@ -423,7 +438,9 @@ class EpsteinFilesDownloader:
         async def get_download_history(limit: int = 100):
             """Get download history"""
             # Return most recent completed tasks
-            completed = sorted(self.completed_tasks.values(), key=lambda x: x.updated_at, reverse=True)
+            completed = sorted(
+                self.completed_tasks.values(), key=lambda x: x.updated_at, reverse=True
+            )
             return [DownloadStatus(**asdict(task)) for task in completed[:limit]]
 
     async def _process_download_queue(self):
@@ -465,23 +482,31 @@ class EpsteinFilesDownloader:
                 # Use aiohttp for async download
                 _require_aiohttp()
                 async with aiohttp.ClientSession() as session:
-                    async with session.get(task.url, timeout=self.config.timeout_seconds) as response:
+                    async with session.get(
+                        task.url, timeout=self.config.timeout_seconds
+                    ) as response:
                         if response.status != 200:
-                            raise HTTPException(status_code=response.status, detail=f"HTTP {response.status}")
+                            raise HTTPException(
+                                status_code=response.status, detail=f"HTTP {response.status}"
+                            )
 
-                        total_size = int(response.headers.get('content-length', 0))
+                        total_size = int(response.headers.get("content-length", 0))
                         downloaded = 0
 
-                        with open(final_path, 'wb') as f:
+                        with open(final_path, "wb") as f:
                             async for chunk in response.content.iter_chunked(8192):
                                 f.write(chunk)
                                 downloaded += len(chunk)
-                                task.progress = (downloaded / total_size * 100) if total_size > 0 else 0
+                                task.progress = (
+                                    (downloaded / total_size * 100) if total_size > 0 else 0
+                                )
                                 task.updated_at = time.time()
 
                                 # Update progress periodically
                                 if downloaded % (1024 * 1024) < 8192:  # Every ~1MB
-                                    logger.debug(f"Download {task.task_id}: {task.progress:.1f}% ({downloaded}/{total_size} bytes)")
+                                    logger.debug(
+                                        f"Download {task.task_id}: {task.progress:.1f}% ({downloaded}/{total_size} bytes)"
+                                    )
 
                         # Complete task
                         task.status = "completed"
@@ -531,12 +556,12 @@ class EpsteinFilesDownloader:
         filename = Path(parsed.path).name
 
         # Use metadata title if available
-        if metadata and metadata.get('title'):
-            title = metadata['title']
+        if metadata and metadata.get("title"):
+            title = metadata["title"]
             # Clean title for filename
-            safe_title = re.sub(r'[^\w\s\-_.]', '_', title)[:50]
+            safe_title = re.sub(r"[^\w\s\-_.]", "_", title)[:50]
             filename = f"{safe_title}_{filename}"
-        elif metadata and metadata.get('document_id'):
+        elif metadata and metadata.get("document_id"):
             filename = f"{metadata['document_id']}_{filename}"
 
         # Ensure unique filename
@@ -563,7 +588,7 @@ class EpsteinFilesDownloader:
                 description="Court filings, motions, and rulings related to Jeffrey Epstein case",
                 url="https://www.govinfo.gov/search/results?search=Jeffrey%20Epstein",
                 source="govinfo.gov",
-                document_count=0
+                document_count=0,
             ),
             CollectionInfo(
                 collection_id="docket_materials",
@@ -571,7 +596,7 @@ class EpsteinFilesDownloader:
                 description="Docket entries and case materials from federal courts",
                 url="https://www.govinfo.gov/bulkdata",
                 source="govinfo.gov",
-                document_count=0
+                document_count=0,
             ),
             CollectionInfo(
                 collection_id="fbi_vault",
@@ -579,7 +604,7 @@ class EpsteinFilesDownloader:
                 description="FBI records and documents related to Jeffrey Epstein investigation",
                 url="https://vault.fbi.gov/jeffrey-epstein",
                 source="fbi.gov",
-                document_count=0
+                document_count=0,
             ),
             CollectionInfo(
                 collection_id="doj_releases",
@@ -587,7 +612,7 @@ class EpsteinFilesDownloader:
                 description="Department of Justice releases regarding Epstein case",
                 url="https://www.justice.gov/search/results?search=Epstein",
                 source="justice.gov",
-                document_count=0
+                document_count=0,
             ),
             CollectionInfo(
                 collection_id="southern_district_ny",
@@ -595,8 +620,8 @@ class EpsteinFilesDownloader:
                 description="Southern District of New York court documents related to Epstein",
                 url="https://www.nysd.uscourts.gov/cases-opinions",
                 source="nysd.uscourts.gov",
-                document_count=0
-            )
+                document_count=0,
+            ),
         ]
 
         collections.extend(known_collections)
@@ -607,33 +632,36 @@ class EpsteinFilesDownloader:
             response = self.session.get(search_url, timeout=self.config.timeout_seconds)
             response.raise_for_status()
 
-            soup = BeautifulSoup(response.text, 'html.parser')
+            soup = BeautifulSoup(response.text, "html.parser")
 
             # Look for document links
             doc_links = []
-            for link in soup.find_all('a', href=True):
-                href = link.get('href', '')
-                if '/content/pkg/' in href:
-                    title = link.get_text('').strip()
+            for link in soup.find_all("a", href=True):
+                href = link.get("href", "")
+                if "/content/pkg/" in href:
+                    title = link.get_text("").strip()
                     if title and len(title) > 10:  # Filter out short/empty titles
-                        doc_links.append({
-                            'url': f"{self.config.govinfo_base_url}{href}",
-                            'title': title
-                        })
+                        doc_links.append(
+                            {"url": f"{self.config.govinfo_base_url}{href}", "title": title}
+                        )
 
             if doc_links:
                 # Add discovered documents as a collection
-                collections.append(CollectionInfo(
-                    collection_id="discovered_documents",
-                    name="Discovered Epstein Documents",
-                    description=f"Documents discovered from govinfo.gov search ({len(doc_links)} items)",
-                    url=search_url,
-                    source="govinfo.gov",
-                    document_count=len(doc_links),
-                    last_updated=time.strftime("%Y-%m-%d")
-                ))
+                collections.append(
+                    CollectionInfo(
+                        collection_id="discovered_documents",
+                        name="Discovered Epstein Documents",
+                        description=f"Documents discovered from govinfo.gov search ({len(doc_links)} items)",
+                        url=search_url,
+                        source="govinfo.gov",
+                        document_count=len(doc_links),
+                        last_updated=time.strftime("%Y-%m-%d"),
+                    )
+                )
 
-            logger.info(f"Discovered {len(collections)} total collections (including {len(doc_links)} documents)")
+            logger.info(
+                f"Discovered {len(collections)} total collections (including {len(doc_links)} documents)"
+            )
 
         except Exception as e:
             logger.warning(f"Failed to discover additional collections from govinfo.gov: {e}")
@@ -655,18 +683,19 @@ class EpsteinFilesDownloader:
                 # FBI Vault - scrape for document count
                 response = self.session.get(collection.url, timeout=self.config.timeout_seconds)
                 response.raise_for_status()
-                soup = BeautifulSoup(response.text, 'html.parser')
+                soup = BeautifulSoup(response.text, "html.parser")
 
                 # Look for document count indicators
-                count_text = soup.find('span', class_='results-count')
+                count_text = soup.find("span", class_="results-count")
                 if count_text:
                     import re
-                    numbers = re.findall(r'\d+', count_text.get_text())
+
+                    numbers = re.findall(r"\d+", count_text.get_text())
                     if numbers:
                         return int(numbers[0])
 
                 # Alternative: count document links
-                doc_links = soup.find_all('a', href=lambda x: x and '/jeffrey-epstein/' in x)
+                doc_links = soup.find_all("a", href=lambda x: x and "/jeffrey-epstein/" in x)
                 return len(doc_links)
 
             elif collection.source == "govinfo.gov":
@@ -674,43 +703,46 @@ class EpsteinFilesDownloader:
                 search_url = f"{self.config.govinfo_base_url}/search/results?search=Jeffrey%20Epstein&pageSize=1"
                 response = self.session.get(search_url, timeout=self.config.timeout_seconds)
                 response.raise_for_status()
-                soup = BeautifulSoup(response.text, 'html.parser')
+                soup = BeautifulSoup(response.text, "html.parser")
 
                 # Look for result count
-                results_text = soup.find('div', class_='results-summary')
+                results_text = soup.find("div", class_="results-summary")
                 if results_text:
                     import re
-                    numbers = re.findall(r'(\d+,?\d*)', results_text.get_text())
+
+                    numbers = re.findall(r"(\d+,?\d*)", results_text.get_text())
                     if numbers:
-                        return int(numbers[0].replace(',', ''))
+                        return int(numbers[0].replace(",", ""))
 
                 # Alternative: count links
-                doc_links = soup.find_all('a', href=lambda x: x and '/content/pkg/' in x)
+                doc_links = soup.find_all("a", href=lambda x: x and "/content/pkg/" in x)
                 return len(doc_links)
 
             elif collection.source == "justice.gov":
                 # DOJ - similar approach
                 response = self.session.get(collection.url, timeout=self.config.timeout_seconds)
                 response.raise_for_status()
-                soup = BeautifulSoup(response.text, 'html.parser')
+                soup = BeautifulSoup(response.text, "html.parser")
 
                 # Count document links
-                doc_links = soup.find_all('a', href=lambda x: x and 'epstein' in x.lower())
+                doc_links = soup.find_all("a", href=lambda x: x and "epstein" in x.lower())
                 return len(doc_links)
 
             else:
                 # Generic approach - try to count links
                 response = self.session.get(collection.url, timeout=self.config.timeout_seconds)
                 response.raise_for_status()
-                soup = BeautifulSoup(response.text, 'html.parser')
-                links = soup.find_all('a', href=True)
-                return len([link for link in links if 'pdf' in link.get('href', '').lower()])
+                soup = BeautifulSoup(response.text, "html.parser")
+                links = soup.find_all("a", href=True)
+                return len([link for link in links if "pdf" in link.get("href", "").lower()])
 
         except Exception as e:
             logger.debug(f"Could not get document count for {collection.collection_id}: {e}")
             return 0
 
-    async def get_collection_documents(self, collection_id: str, limit: int = 100, offset: int = 0) -> list[DocumentInfo]:
+    async def get_collection_documents(
+        self, collection_id: str, limit: int = 100, offset: int = 0
+    ) -> list[DocumentInfo]:
         """Get documents from a specific collection"""
         documents = []
 
@@ -738,22 +770,22 @@ class EpsteinFilesDownloader:
 
             data = response.json()
 
-            if 'packages' in data:
-                for pkg_data in data['packages']:
+            if "packages" in data:
+                for pkg_data in data["packages"]:
                     doc = DocumentInfo(
-                        document_id=pkg_data.get('packageId', str(uuid4())),
+                        document_id=pkg_data.get("packageId", str(uuid4())),
                         collection_id=collection_id,
-                        title=pkg_data.get('title', 'Untitled Document'),
-                        url=pkg_data.get('downloadUrl', ''),
-                        file_size=pkg_data.get('size'),
-                        publish_date=pkg_data.get('publishDate'),
-                        mime_type=pkg_data.get('mimeType'),
-                        file_name=pkg_data.get('fileName'),
+                        title=pkg_data.get("title", "Untitled Document"),
+                        url=pkg_data.get("downloadUrl", ""),
+                        file_size=pkg_data.get("size"),
+                        publish_date=pkg_data.get("publishDate"),
+                        mime_type=pkg_data.get("mimeType"),
+                        file_name=pkg_data.get("fileName"),
                         metadata={
-                            'granuleId': pkg_data.get('granuleId'),
-                            'granuleTitle': pkg_data.get('granuleTitle'),
-                            'collectionName': pkg_data.get('collectionName')
-                        }
+                            "granuleId": pkg_data.get("granuleId"),
+                            "granuleTitle": pkg_data.get("granuleTitle"),
+                            "collectionName": pkg_data.get("collectionName"),
+                        },
                     )
                     documents.append(doc)
 
@@ -782,7 +814,7 @@ class EpsteinFilesDownloader:
             host=self.config.host,
             port=self.config.port,
             log_level="info",
-            access_log=True
+            access_log=True,
         )
 
     async def shutdown(self):
@@ -817,103 +849,88 @@ MCP_SERVER_TOOLS = {
                 "parameters": {},
                 "returns": {
                     "type": "array",
-                    "description": "List of available collections with metadata"
-                }
+                    "description": "List of available collections with metadata",
+                },
             },
             "list_collection_documents": {
                 "description": "List documents available in a specific collection",
                 "parameters": {
                     "collection_id": {
                         "type": "string",
-                        "description": "ID of the collection to list documents from"
+                        "description": "ID of the collection to list documents from",
                     },
                     "limit": {
                         "type": "integer",
                         "description": "Maximum number of documents to return",
-                        "default": 100
+                        "default": 100,
                     },
                     "offset": {
                         "type": "integer",
                         "description": "Offset for pagination",
-                        "default": 0
-                    }
+                        "default": 0,
+                    },
                 },
-                "returns": {
-                    "type": "array",
-                    "description": "List of documents with metadata"
-                }
+                "returns": {"type": "array", "description": "List of documents with metadata"},
             },
             "download_document": {
                 "description": "Download a single document from a URL",
                 "parameters": {
-                    "url": {
-                        "type": "string",
-                        "description": "URL of the document to download"
-                    },
+                    "url": {"type": "string", "description": "URL of the document to download"},
                     "destination": {
                         "type": "string",
                         "description": "Destination path for the downloaded file",
-                        "optional": True
+                        "optional": True,
                     },
                     "metadata": {
                         "type": "object",
                         "description": "Additional metadata to associate with the download",
-                        "optional": True
-                    }
+                        "optional": True,
+                    },
                 },
                 "returns": {
                     "type": "object",
-                    "description": "Download task status and information"
-                }
+                    "description": "Download task status and information",
+                },
             },
             "bulk_download": {
                 "description": "Download all documents from a collection",
                 "parameters": {
                     "collection_id": {
                         "type": "string",
-                        "description": "ID of the collection to download"
+                        "description": "ID of the collection to download",
                     },
                     "destination": {
                         "type": "string",
                         "description": "Base destination directory for downloaded files",
-                        "optional": True
+                        "optional": True,
                     },
                     "filter_criteria": {
                         "type": "object",
                         "description": "Criteria to filter documents before downloading",
-                        "optional": True
+                        "optional": True,
                     },
                     "metadata": {
                         "type": "object",
                         "description": "Additional metadata to associate with all downloads",
-                        "optional": True
-                    }
+                        "optional": True,
+                    },
                 },
-                "returns": {
-                    "type": "array",
-                    "description": "List of download task statuses"
-                }
+                "returns": {"type": "array", "description": "List of download task statuses"},
             },
             "get_download_status": {
                 "description": "Get status of a download task",
                 "parameters": {
-                    "task_id": {
-                        "type": "string",
-                        "description": "ID of the download task to check"
-                    }
+                    "task_id": {"type": "string", "description": "ID of the download task to check"}
                 },
-                "returns": {
-                    "type": "object",
-                    "description": "Current status of the download task"
-                }
+                "returns": {"type": "object", "description": "Current status of the download task"},
             },
             "get_all_download_status": {
                 "description": "Get status of all active download tasks",
                 "parameters": {},
                 "returns": {
                     "type": "array",
-                    "description": "List of all active download task statuses"
-                }
+                    "description": "List of all active download task statuses",
+                },
             },
             "get_download_history": {
                 "description": "Get history of completed download tasks",
@@ -921,23 +938,23 @@ MCP_SERVER_TOOLS = {
                     "limit": {
                         "type": "integer",
                         "description": "Maximum number of historical tasks to return",
-                        "default": 100
+                        "default": 100,
                     }
                 },
                 "returns": {
                     "type": "array",
-                    "description": "List of completed download task statuses"
-                }
+                    "description": "List of completed download task statuses",
+                },
             },
             "get_server_health": {
                 "description": "Check server health and status",
                 "parameters": {},
                 "returns": {
                     "type": "object",
-                    "description": "Server health information and statistics"
-                }
-            }
-        }
+                    "description": "Server health information and statistics",
+                },
+            },
+        },
     }
 }
 
@@ -946,37 +963,18 @@ MCP_SERVER_TOOLS = {
 # Main Entry Point
 # ============================================================================
 
+
 def main():
-    parser = argparse.ArgumentParser(
-        description="Epstein Files Downloader MCP Server"
+    parser = argparse.ArgumentParser(description="Epstein Files Downloader MCP Server")
+    parser.add_argument("--host", default="0.0.0.0", help="Host address to bind to")
+    parser.add_argument("--port", type=int, default=8765, help="Port to listen on")
+    parser.add_argument(
+        "--download-dir", default="./downloads", help="Directory to store downloaded files"
     )
     parser.add_argument(
-        "--host",
-        default="0.0.0.0",
-        help="Host address to bind to"
+        "--max-concurrent", type=int, default=5, help="Maximum concurrent downloads"
     )
-    parser.add_argument(
-        "--port",
-        type=int,
-        default=8765,
-        help="Port to listen on"
-    )
-    parser.add_argument(
-        "--download-dir",
-        default="./downloads",
-        help="Directory to store downloaded files"
-    )
-    parser.add_argument(
-        "--max-concurrent",
-        type=int,
-        default=5,
-        help="Maximum concurrent downloads"
-    )
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Enable verbose logging"
-    )
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
 
     args = parser.parse_args()
 
@@ -989,7 +987,7 @@ def main():
         host=args.host,
         port=args.port,
         download_dir=args.download_dir,
-        max_concurrent_downloads=args.max_concurrent
+        max_concurrent_downloads=args.max_concurrent,
     )
 
     # Create and run server

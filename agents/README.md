@@ -1,7 +1,7 @@
 # AI Agents - README
 
-**Purpose**: Guide for working with AI agents in the Epstein document analysis system  
-**Version**: 1.0  
+**Purpose**: Guide for working with AI agents in the Epstein document analysis system
+**Version**: 1.0
 **Last Updated**: 2025-12-31
 
 ## Overview
@@ -106,16 +106,16 @@ This directory contains AI agent implementations for automating document analysi
 ```python
 class BaseAgent:
     """Base class for all agents"""
-    
+
     def __init__(self, config: AgentConfig):
         self.config = config
         self.tools = self._register_tools()
         self.memory = AgentMemory()
-    
+
     async def execute(self, task: Task) -> Result:
         """Execute agent task"""
         pass
-    
+
     def _register_tools(self) -> List[Tool]:
         """Register agent tools"""
         pass
@@ -217,12 +217,12 @@ agents:
     confidence_threshold: 0.85
     batch_size: 32
     enable_disambiguation: true
-  
+
   relationship_discovery:
     max_distance: 6
     min_confidence: 0.75
     enable_inference: true
-  
+
   verification:
     require_multiple_sources: true
     min_sources: 2
@@ -262,11 +262,11 @@ from typing import Dict, Any
 
 class MyNewAgent(BaseAgent):
     """Agent description"""
-    
+
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
         # Initialize agent-specific components
-    
+
     async def process(self, input_data: Dict) -> Dict:
         """Main processing method"""
         # Agent logic here
@@ -400,7 +400,7 @@ class MyAgentMCP(MCPServer):
     def __init__(self):
         super().__init__()
         self.agent = MyNewAgent(config)
-    
+
     @mcp_tool
     async def process_document(self, doc_id: str) -> dict:
         """Process document with agent"""
@@ -534,6 +534,6 @@ print(agent.get_state())
 
 ---
 
-**Version**: 1.0  
-**Maintainer**: Epstein Project Team  
+**Version**: 1.0
+**Maintainer**: Epstein Project Team
 **Last Updated**: 2025-12-31

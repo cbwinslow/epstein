@@ -84,6 +84,7 @@ from tqdm import tqdm
 # Configuration / Models
 # -----------------------------
 
+
 class PipelineConfig(BaseModel):
     """Runtime configuration.
 
@@ -117,7 +118,9 @@ class PipelineConfig(BaseModel):
     # OCR behavior
     enable_ocr: bool = True
     ocrmypdf_lang: str = "eng"
-    ocrmypdf_extra_args: list[str] = Field(default_factory=lambda: ["--skip-text", "--rotate-pages"])
+    ocrmypdf_extra_args: list[str] = Field(
+        default_factory=lambda: ["--skip-text", "--rotate-pages"]
+    )
 
     # NER behavior
     spacy_model: str = "en_core_web_sm"
@@ -133,6 +136,7 @@ class PipelineConfig(BaseModel):
 # -----------------------------
 # Logging
 # -----------------------------
+
 
 def setup_logging(log_path: Path, verbose: bool = False) -> None:
     log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -151,6 +155,7 @@ def setup_logging(log_path: Path, verbose: bool = False) -> None:
 # -----------------------------
 # Utilities
 # -----------------------------
+
 
 def sha256_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
     h = hashlib.sha256()
@@ -171,7 +176,7 @@ def safe_filename(name: str) -> str:
 
 def url_domain(url: str) -> str:
     m = re.match(r"https?://([^/]+)", url.strip())
-    return (m.group(1).lower() if m else "")
+    return m.group(1).lower() if m else ""
 
 
 def is_allowed(url: str, allow_domains: list[str]) -> bool:
@@ -196,7 +201,10 @@ def ensure_dirs(base: Path) -> dict[str, Path]:
 # Link discovery
 # -----------------------------
 
-def discover_pdf_links(session: requests.Session, seed_url: str, allow_domains: list[str], timeout: int) -> set[str]:
+
+def discover_pdf_links(
+    session: requests.Session, seed_url: str, allow_domains: list[str], timeout: int
+) -> set[str]:
     """Fetch a seed URL and extract direct PDF links.
 
     Handles:
@@ -227,7 +235,11 @@ def discover_pdf_links(session: requests.Session, seed_url: str, allow_domains: 
             continue
 
         # Keep PDFs and DOJ media download endpoints
-        if (".pdf" in href.lower()) or ("/dl?inline=" in href.lower()) or ("/dl?" in href.lower() and "pdf" in href.lower()):
+        if (
+            (".pdf" in href.lower())
+            or ("/dl?inline=" in href.lower())
+            or ("/dl?" in href.lower() and "pdf" in href.lower())
+        ):
             if is_allowed(href, allow_domains):
                 links.add(href)
 
@@ -238,6 +250,7 @@ def discover_pdf_links(session: requests.Session, seed_url: str, allow_domains: 
 # -----------------------------
 # Download manager
 # -----------------------------
+
 
 @dataclass
 class DownloadResult:
@@ -292,7 +305,9 @@ def download_one(
     return DownloadResult(url=url, path=out_path, sha256=digest, bytes=total)
 
 
-def download_all(cfg: PipelineConfig, paths: dict[str, Path], pdf_urls: list[str]) -> list[DownloadResult]:
+def download_all(
+    cfg: PipelineConfig, paths: dict[str, Path], pdf_urls: list[str]
+) -> list[DownloadResult]:
     session = requests.Session()
     session.headers.update({"User-Agent": cfg.user_agent})
 
@@ -313,7 +328,9 @@ def download_all(cfg: PipelineConfig, paths: dict[str, Path], pdf_urls: list[str
             for url in pdf_urls
         }
 
-        for fut in tqdm(concurrent.futures.as_completed(futures), total=len(futures), desc="Downloading"):
+        for fut in tqdm(
+            concurrent.futures.as_completed(futures), total=len(futures), desc="Downloading"
+        ):
             url = futures[fut]
             try:
                 res = fut.result()
@@ -346,6 +363,7 @@ def append_manifest(manifest_path: Path, downloads: list[DownloadResult]) -> Non
 # -----------------------------
 # OCR + Text Extraction
 # -----------------------------
+
 
 def has_tool(name: str) -> bool:
     return shutil.which(name) is not None
@@ -392,6 +410,7 @@ def write_text(out_path: Path, text: str) -> None:
 # -----------------------------
 # Chunking (overlap)
 # -----------------------------
+
 
 def chunk_text(text: str, chunk_chars: int, overlap_chars: int) -> list[str]:
     """Simple character-based chunking with overlap.
@@ -445,6 +464,7 @@ def redact_text(text: str, cfg: PipelineConfig) -> str:
 # NER
 # -----------------------------
 
+
 def load_spacy(model_name: str):
     import spacy
 
@@ -473,12 +493,18 @@ def write_entities_jsonl(out_jsonl: Path, pdf_name: str, entity_counts: dict[str
     with out_jsonl.open("w", encoding="utf-8") as f:
         for k, c in sorted(entity_counts.items(), key=lambda x: (-x[1], x[0])):
             label, text = k.split(":", 1)
-            f.write(json.dumps({"pdf": pdf_name, "label": label, "text": text, "count": c}, ensure_ascii=False) + "\n")
+            f.write(
+                json.dumps(
+                    {"pdf": pdf_name, "label": label, "text": text, "count": c}, ensure_ascii=False
+                )
+                + "\n"
+            )
 
 
 # -----------------------------
 # Pipeline
 # -----------------------------
+
 
 def run_pipeline(cfg: PipelineConfig, verbose: bool = False) -> None:
     base = Path(cfg.output_dir).expanduser().resolve()
@@ -557,6 +583,7 @@ def run_pipeline(cfg: PipelineConfig, verbose: bool = False) -> None:
 # CLI
 # -----------------------------
 
+
 def init_config(path: Path) -> None:
     """Write a starter config with reputable seed URLs.
 
@@ -584,9 +611,13 @@ def init_config(path: Path) -> None:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Download + OCR + NER pipeline for public document dumps.")
+    ap = argparse.ArgumentParser(
+        description="Download + OCR + NER pipeline for public document dumps."
+    )
     ap.add_argument("--config", type=str, default="", help="Path to config JSON")
-    ap.add_argument("--init-config", type=str, default="", help="Write a starter config JSON to this path")
+    ap.add_argument(
+        "--init-config", type=str, default="", help="Write a starter config JSON to this path"
+    )
     ap.add_argument("--verbose", action="store_true", help="Verbose logging")
 
     sub = ap.add_subparsers(dest="cmd")

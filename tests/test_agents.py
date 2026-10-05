@@ -312,13 +312,15 @@ class TestMultiAgentOrchestrator:
     async def test_run_comprehensive_analysis(self, orchestrator, telemetry):
         """Test comprehensive analysis orchestration"""
         # Mock agent methods
-        with patch.object(
-            orchestrator.agents["vector_db_analyzer"], "analyze_all_collections"
-        ) as mock_vector, patch.object(
-            orchestrator.agents["db_troubleshooter"], "optimize_database"
-        ) as mock_db, patch.object(
-            orchestrator.agents["pipeline_monitor"], "monitor_pipeline_health"
-        ) as mock_pipeline:
+        with (
+            patch.object(
+                orchestrator.agents["vector_db_analyzer"], "analyze_all_collections"
+            ) as mock_vector,
+            patch.object(orchestrator.agents["db_troubleshooter"], "optimize_database") as mock_db,
+            patch.object(
+                orchestrator.agents["pipeline_monitor"], "monitor_pipeline_health"
+            ) as mock_pipeline,
+        ):
             # Setup mock results
             mock_vector.return_value = {"qdrant_status": "healthy", "collections": {}}
             mock_db.return_value = {"database_health": {"connection_status": "healthy"}}
@@ -358,13 +360,17 @@ class TestMultiAgentOrchestrator:
     async def test_run_health_check(self, orchestrator, telemetry):
         """Test health check workflow"""
         # Mock agent methods
-        with patch.object(
-            orchestrator.agents["pipeline_monitor"], "monitor_pipeline_health"
-        ) as mock_pipeline, patch.object(
-            orchestrator.agents["vector_db_analyzer"], "analyze_all_collections"
-        ) as mock_vector, patch.object(
-            orchestrator.agents["db_troubleshooter"], "check_database_health"
-        ) as mock_db:
+        with (
+            patch.object(
+                orchestrator.agents["pipeline_monitor"], "monitor_pipeline_health"
+            ) as mock_pipeline,
+            patch.object(
+                orchestrator.agents["vector_db_analyzer"], "analyze_all_collections"
+            ) as mock_vector,
+            patch.object(
+                orchestrator.agents["db_troubleshooter"], "check_database_health"
+            ) as mock_db,
+        ):
             # Setup mock results
             mock_pipeline.return_value = {"health_status": "healthy"}
             mock_vector.return_value = {"qdrant_status": "healthy"}
@@ -491,13 +497,15 @@ class TestIntegration:
         orchestrator = MultiAgentOrchestrator()
 
         # Mock all agent methods
-        with patch.object(
-            orchestrator.agents["vector_db_analyzer"], "analyze_all_collections"
-        ) as mock_vector, patch.object(
-            orchestrator.agents["db_troubleshooter"], "optimize_database"
-        ) as mock_db, patch.object(
-            orchestrator.agents["pipeline_monitor"], "monitor_pipeline_health"
-        ) as mock_pipeline:
+        with (
+            patch.object(
+                orchestrator.agents["vector_db_analyzer"], "analyze_all_collections"
+            ) as mock_vector,
+            patch.object(orchestrator.agents["db_troubleshooter"], "optimize_database") as mock_db,
+            patch.object(
+                orchestrator.agents["pipeline_monitor"], "monitor_pipeline_health"
+            ) as mock_pipeline,
+        ):
             # Setup mock results
             mock_vector.return_value = {
                 "qdrant_status": "healthy",
