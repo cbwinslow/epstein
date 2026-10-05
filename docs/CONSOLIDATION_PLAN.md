@@ -132,12 +132,12 @@ agents/
 # agents/core/document_processor.py
 class DocumentProcessorAgent:
     """Unified document processing agent"""
-    
+
     def __init__(self):
         # Import from epstein_files_pipeline for core functionality
         from epstein.epstein_files_pipeline import EpsteinIngestionPipeline
         self.pipeline = EpsteinIngestionPipeline()
-    
+
     async def process_document(self, document_path: str):
         """Process document through pipeline"""
         return await self.pipeline.process_single_document(document_path)
@@ -171,7 +171,7 @@ docs/
 system:
   name: "Epstein Files Project"
   version: "1.0.0"
-  
+
 agents:
   document_processor:
     enabled: true
@@ -179,12 +179,12 @@ agents:
   downloader:
     enabled: true
     max_concurrent: 5
-    
+
 mcp_servers:
   epstein_files_downloader:
     enabled: true
     port: 8765
-    
+
 observability:
   enabled: true
   otel_endpoint: "http://localhost:4318"

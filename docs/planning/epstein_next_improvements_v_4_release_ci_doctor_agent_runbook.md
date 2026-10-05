@@ -77,4 +77,3 @@ Contains:
 
 **File:** `docs/INDEX.md`
 - now includes `docs/AI_AGENT_RUNBOOK.md`
-

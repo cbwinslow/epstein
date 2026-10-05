@@ -3,6 +3,7 @@ Minimal Alembic scaffold.
 
 We start from db/schema.sql and evolve toward migrations later.
 """
+
 from __future__ import annotations
 
 import os
