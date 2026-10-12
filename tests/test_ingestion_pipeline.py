@@ -18,12 +18,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-from scripts.ingestion_utils import (
-    detect_file_type,
-    generate_file_hash,
-    get_file_metadata,
-    safe_filename,
-)
 
 # Import pipeline components
 from scripts.ingestion_pipeline import (
@@ -32,6 +26,12 @@ from scripts.ingestion_pipeline import (
     ExtractedEntity,
     ExtractedText,
     PipelineConfig,
+)
+from scripts.ingestion_utils import (
+    detect_file_type,
+    generate_file_hash,
+    get_file_metadata,
+    safe_filename,
 )
 
 # Test Configuration
@@ -43,7 +43,7 @@ TEST_CONFIG = PipelineConfig(
     max_workers=2,
     batch_size=5,
     ocr_enabled=True,
-    ner_enabled=True
+    ner_enabled=True,
 )
 
 
@@ -57,6 +57,7 @@ def test_pipeline():
 # ============================================================================
 # Pipeline Initialization Tests
 # ============================================================================
+
 
 class TestPipelineInitialization:
     """Test pipeline initialization and configuration"""
@@ -85,6 +86,7 @@ class TestPipelineInitialization:
 # ============================================================================
 # Utility Function Tests
 # ============================================================================
+
 
 class TestUtilityFunctions:
     """Test utility functions"""
@@ -126,7 +128,7 @@ class TestUtilityFunctions:
             ("test.jpg", "image"),
             ("test.txt", "text"),
             ("test.html", "text"),
-            ("test.unknown", "unknown")
+            ("test.unknown", "unknown"),
         ]
 
         for filename, expected_type in test_cases:
@@ -144,18 +146,19 @@ class TestUtilityFunctions:
             "Test File (Special).txt",
             "file/with/slashes.txt",
             "file:with:colons.txt",
-            "file*with*asterisks.txt"
+            "file*with*asterisks.txt",
         ]
 
         for unsafe_name in unsafe_names:
             safe_name = safe_filename(unsafe_name)
-            assert all(c.isalnum() or c in ['_', '-', '.'] for c in safe_name)
+            assert all(c.isalnum() or c in ["_", "-", "."] for c in safe_name)
             assert safe_name.endswith(".txt")
 
 
 # ============================================================================
 # Document Processing Tests
 # ============================================================================
+
 
 class TestDocumentProcessing:
     """Test document processing functionality"""
@@ -177,7 +180,7 @@ class TestDocumentProcessing:
             ocr_confidence=None,
             processing_status="pending",
             error_message=None,
-            metadata={"test": "data"}
+            metadata={"test": "data"},
         )
 
         assert metadata.document_id == "test_doc_1"
@@ -194,7 +197,7 @@ class TestDocumentProcessing:
             extraction_method="native",
             confidence_score=0.95,
             language="en",
-            metadata={"source": "test"}
+            metadata={"source": "test"},
         )
 
         assert text.document_id == "test_doc_1"
@@ -213,7 +216,7 @@ class TestDocumentProcessing:
             start_position=10,
             end_position=18,
             page_number=1,
-            metadata={"model": "test"}
+            metadata={"model": "test"},
         )
 
         assert entity.entity_type == "PERSON"
@@ -225,6 +228,7 @@ class TestDocumentProcessing:
 # File Processing Tests
 # ============================================================================
 
+
 class TestFileProcessing:
     """Test file processing functionality"""
 
@@ -235,7 +239,9 @@ class TestFileProcessing:
         test_file.write_text("This is test content for processing.")
 
         # Process file
-        pages_text, page_count, ocr_required = test_pipeline._extract_text_from_document(str(test_file))
+        pages_text, page_count, ocr_required = test_pipeline._extract_text_from_document(
+            str(test_file)
+        )
 
         assert len(pages_text) == 1
         assert page_count == 1
@@ -257,8 +263,10 @@ class TestFileProcessing:
         mock_page.extract_text.return_value = "Extracted PDF text"
         mock_pdf.pages = [mock_page]
 
-        with patch('pdfplumber.open', return_value=mock_pdf):
-            pages_text, page_count, ocr_required = test_pipeline._extract_text_from_document(str(test_file))
+        with patch("pdfplumber.open", return_value=mock_pdf):
+            pages_text, page_count, ocr_required = test_pipeline._extract_text_from_document(
+                str(test_file)
+            )
 
         assert len(pages_text) == 1
         assert page_count == 1
@@ -291,13 +299,16 @@ class TestFileProcessing:
 # Error Handling Tests
 # ============================================================================
 
+
 class TestErrorHandling:
     """Test error handling and edge cases"""
 
     def test_invalid_file_processing(self, test_pipeline):
         """Test processing of invalid file"""
         # Try to process non-existent file
-        pages_text, page_count, ocr_required = test_pipeline._extract_text_from_document("/nonexistent/file.txt")
+        pages_text, page_count, ocr_required = test_pipeline._extract_text_from_document(
+            "/nonexistent/file.txt"
+        )
 
         assert len(pages_text) == 0
         assert page_count == 1  # Default fallback
@@ -309,7 +320,9 @@ class TestErrorHandling:
         test_file = Path(TEST_CONFIG.download_dir) / "corrupt.pdf"
         test_file.write_bytes(b"\x00\x01\x02\x03 invalid pdf content")
 
-        pages_text, page_count, ocr_required = test_pipeline._extract_text_from_document(str(test_file))
+        pages_text, page_count, ocr_required = test_pipeline._extract_text_from_document(
+            str(test_file)
+        )
 
         assert len(pages_text) == 0
         assert page_count == 0  # Failed to read
@@ -324,7 +337,9 @@ class TestErrorHandling:
         large_content = "Large content line\n" * 10000
         test_file.write_text(large_content)
 
-        pages_text, page_count, ocr_required = test_pipeline._extract_text_from_document(str(test_file))
+        pages_text, page_count, ocr_required = test_pipeline._extract_text_from_document(
+            str(test_file)
+        )
 
         assert len(pages_text) == 1
         assert page_count == 1
@@ -337,6 +352,7 @@ class TestErrorHandling:
 # ============================================================================
 # Performance Tests
 # ============================================================================
+
 
 class TestPerformance:
     """Test performance and memory management"""
@@ -352,16 +368,10 @@ class TestPerformance:
 
         # Mock processing to avoid actual OCR/NER
         mocker.patch.object(
-            EpsteinIngestionPipeline,
-            '_perform_ocr_if_needed',
-            return_value=(["test text"], 0.9)
+            EpsteinIngestionPipeline, "_perform_ocr_if_needed", return_value=(["test text"], 0.9)
         )
 
-        mocker.patch.object(
-            EpsteinIngestionPipeline,
-            '_perform_ner',
-            return_value=[]
-        )
+        mocker.patch.object(EpsteinIngestionPipeline, "_perform_ner", return_value=[])
 
         # Process files
         async def process_files():
@@ -405,6 +415,7 @@ class TestPerformance:
 # Integration Tests
 # ============================================================================
 
+
 class TestIntegration:
     """Test integration between components"""
 
@@ -419,16 +430,10 @@ class TestIntegration:
 
         # Mock OCR and NER to avoid dependencies
         mocker.patch.object(
-            EpsteinIngestionPipeline,
-            '_perform_ocr_if_needed',
-            return_value=(["test text"], 0.9)
+            EpsteinIngestionPipeline, "_perform_ocr_if_needed", return_value=(["test text"], 0.9)
         )
 
-        mocker.patch.object(
-            EpsteinIngestionPipeline,
-            '_perform_ner',
-            return_value=[]
-        )
+        mocker.patch.object(EpsteinIngestionPipeline, "_perform_ner", return_value=[])
 
         # Run pipeline
         asyncio.run(test_pipeline.run_pipeline(TEST_CONFIG.download_dir, "test_source"))
@@ -465,9 +470,7 @@ class TestIntegration:
             return True
 
         mocker.patch.object(
-            EpsteinIngestionPipeline,
-            '_process_single_document',
-            side_effect=mock_process
+            EpsteinIngestionPipeline, "_process_single_document", side_effect=mock_process
         )
 
         # Run pipeline
@@ -496,10 +499,6 @@ class TestIntegration:
 
 if __name__ == "__main__":
     # Run tests with pytest
-    pytest.main([
-        "--verbose",
-        "--color=yes",
-        "-x",  # Stop on first failure
-        "-s",  # Show output
-        __file__
-    ])
+    pytest.main(
+        ["--verbose", "--color=yes", "-x", "-s", __file__]  # Stop on first failure  # Show output
+    )
