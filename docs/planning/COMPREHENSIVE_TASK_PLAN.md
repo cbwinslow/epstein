@@ -1,9 +1,9 @@
 # Epstein Files Project - Comprehensive Task Plan
 
-**Generated**: January 7, 2026  
-**Status**: Active Implementation Plan  
-**Current Collection**: 14,753 files (14,672 DOJ + 81 Congressional)  
-**Target**: 25,000+ files with full processing pipeline operational  
+**Generated**: January 7, 2026
+**Status**: Active Implementation Plan
+**Current Collection**: 14,753 files (14,672 DOJ + 81 Congressional)
+**Target**: 25,000+ files with full processing pipeline operational
 
 ---
 
@@ -13,7 +13,7 @@ This plan outlines the complete path from current state (14,753 files) to a full
 
 **Key Milestones**:
 - **Week 1**: Complete Congressional downloads + Execute main pipeline
-- **Week 2**: Full processing completion + Infrastructure improvements  
+- **Week 2**: Full processing completion + Infrastructure improvements
 - **Week 3**: Advanced features + Future source preparation
 
 ---
@@ -21,9 +21,9 @@ This plan outlines the complete path from current state (14,753 files) to a full
 ## 📋 PRIORITY 1: DATA COLLECTION EXPANSION
 
 ### Task 1.1: Complete Congressional File Downloads
-**Priority**: P0 (Critical)  
-**Estimated Time**: 4-6 hours  
-**Current Status**: 81/200-400 files collected  
+**Priority**: P0 (Critical)
+**Estimated Time**: 4-6 hours
+**Current Status**: 81/200-400 files collected
 
 #### Microgoals:
 - **1.1.1**: Complete DOJ-OGR file download (manual browser access)
@@ -58,7 +58,7 @@ ls -la epstein_project/raw/congressional_oversight/
 # Expected: Organized folders with proper naming convention
 ```
 
-**Acceptance Criteria**: 
+**Acceptance Criteria**:
 - [ ] Total Congressional files reach 200-400
 - [ ] All files verified as readable and complete
 - [ ] Directory structure maintains organization standards
@@ -67,9 +67,9 @@ ls -la epstein_project/raw/congressional_oversight/
 ---
 
 ### Task 1.2: Prepare Next Data Sources
-**Priority**: P1 (High)  
-**Estimated Time**: 8-12 hours  
-**Dependencies**: Congressional downloads complete  
+**Priority**: P1 (High)
+**Estimated Time**: 8-12 hours
+**Dependencies**: Congressional downloads complete
 
 #### Microgoals:
 - **1.2.1**: Research FBI Vault access procedures
@@ -116,9 +116,9 @@ cat legal_requests/follow_up_schedule.md
 ## 🔄 PRIORITY 2: CORE PROCESSING PIPELINE
 
 ### Task 2.1: Database Infrastructure Setup
-**Priority**: P0 (Critical)  
-**Estimated Time**: 2-3 hours  
-**Dependencies**: Environment verification complete  
+**Priority**: P0 (Critical)
+**Estimated Time**: 2-3 hours
+**Dependencies**: Environment verification complete
 
 #### Microgoals:
 - **2.1.1**: Create and configure PostgreSQL database
@@ -150,7 +150,7 @@ conn.close()
 "
 # Expected: No connection errors
 
-# Test 2: Qdrant connectivity  
+# Test 2: Qdrant connectivity
 python3 -c "
 import qdrant_client
 client = qdrant_client.QdrantClient(host='localhost', port=6333)
@@ -175,9 +175,9 @@ python3 db/migrate.py --dry-run
 ---
 
 ### Task 2.2: Execute Main Document Processing Pipeline
-**Priority**: P0 (Critical)  
-**Estimated Time**: 8-16 hours  
-**Dependencies**: Database infrastructure ready  
+**Priority**: P0 (Critical)
+**Estimated Time**: 8-16 hours
+**Dependencies**: Database infrastructure ready
 
 #### Microgoals:
 - **2.2.1**: Process DOJ disclosure documents (14,672 PDFs)
@@ -213,7 +213,7 @@ print(f'Failed documents: {stats.failed_count}')
 
 # Test 2: Database content verification
 psql epstein_db -c "
-SELECT 
+SELECT
     COUNT(*) as total_documents,
     COUNT(DISTINCT source_type) as source_types,
     AVG(text_length) as avg_text_length
@@ -249,9 +249,9 @@ curl -X GET "http://localhost:8000/api/v1/documents/search?q=Epstein" | jq '.tot
 ## 🛠️ PRIORITY 3: INFRASTRUCTURE IMPROVEMENTS
 
 ### Task 3.1: Fix Critical Test Failures
-**Priority**: P1 (High)  
-**Estimated Time**: 4-6 hours  
-**Dependencies**: Core processing pipeline functional  
+**Priority**: P1 (High)
+**Estimated Time**: 4-6 hours
+**Dependencies**: Core processing pipeline functional
 
 #### Microgoals:
 - **3.1.1**: Fix async error recovery test
@@ -306,9 +306,9 @@ else:
 ---
 
 ### Task 3.2: Security and Vulnerability Assessment
-**Priority**: P1 (High)  
-**Estimated Time**: 6-8 hours  
-**Dependencies**: Core system stable  
+**Priority**: P1 (High)
+**Estimated Time**: 6-8 hours
+**Dependencies**: Core system stable
 
 #### Microgoals:
 - **3.2.1**: Add dependency vulnerability scanning
@@ -379,9 +379,9 @@ test -f .github/workflows/security.yml && echo "Security workflow exists" || ech
 ---
 
 ### Task 3.3: Observability and Monitoring Setup
-**Priority**: P2 (Medium)  
-**Estimated Time**: 12-16 hours  
-**Dependencies**: Core processing pipeline operational  
+**Priority**: P2 (Medium)
+**Estimated Time**: 12-16 hours
+**Dependencies**: Core processing pipeline operational
 
 #### Microgoals:
 - **3.3.1**: Implement structured logging
@@ -447,5 +447,5 @@ curl -s http://localhost:16686/api/services | grep -q "epstein" && echo "Jaeger:
 ## 🚀 PRIORITY 4: ADVANCED FEATURES
 
 ### Task 4.1: Enhanced Search and Analysis
-**Priority**: P2 (Medium)  
+**Priority**: P2 (Medium)
 **Estimated Time**: 8-12 hours

@@ -93,6 +93,7 @@ from tqdm import tqdm
 # Configuration
 # =============================================================================
 
+
 class PipelineConfig(BaseModel):
     """Runtime configuration.
 
@@ -128,7 +129,9 @@ class PipelineConfig(BaseModel):
     enable_ocr: bool = True
     ocrmypdf_lang: str = "eng"
     # Conservative defaults; tweak per corpus if needed.
-    ocrmypdf_extra_args: list[str] = Field(default_factory=lambda: ["--skip-text", "--rotate-pages"])
+    ocrmypdf_extra_args: list[str] = Field(
+        default_factory=lambda: ["--skip-text", "--rotate-pages"]
+    )
 
     # Chunking behavior
     chunk_chars: int = 10_000
@@ -150,6 +153,7 @@ class PipelineConfig(BaseModel):
 # Logging
 # =============================================================================
 
+
 def setup_logging(log_path: Path, verbose: bool = False) -> None:
     log_path.parent.mkdir(parents=True, exist_ok=True)
     level = logging.DEBUG if verbose else logging.INFO
@@ -167,6 +171,7 @@ def setup_logging(log_path: Path, verbose: bool = False) -> None:
 # =============================================================================
 # Utilities
 # =============================================================================
+
 
 def sha256_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
     h = hashlib.sha256()
@@ -190,7 +195,7 @@ def safe_filename(name: str) -> str:
 
 def url_domain(url: str) -> str:
     m = re.match(r"https?://([^/]+)", url.strip())
-    return (m.group(1).lower() if m else "")
+    return m.group(1).lower() if m else ""
 
 
 def is_allowed(url: str, allow_domains: list[str]) -> bool:
@@ -232,6 +237,7 @@ def stable_config_hash(cfg: PipelineConfig) -> str:
 # Manifest + Run Tracking
 # =============================================================================
 
+
 @dataclass
 class DownloadResult:
     url: str
@@ -269,7 +275,9 @@ def load_manifest_index(manifest_path: Path) -> dict[str, dict]:
     return idx
 
 
-def doc_source_url(doc_id: str, downloads: list[DownloadResult], manifest_idx: dict[str, dict]) -> str:
+def doc_source_url(
+    doc_id: str, downloads: list[DownloadResult], manifest_idx: dict[str, dict]
+) -> str:
     for d in downloads:
         if d.sha256 == doc_id:
             return d.url
@@ -285,7 +293,13 @@ def doc_source_url(doc_id: str, downloads: list[DownloadResult], manifest_idx: d
 PDF_HINTS = (".pdf", "/dl?inline=", "/dl?")
 
 
-def discover_pdf_links(session: requests.Session, seed_url: str, allow_domains: list[str], timeout: int, verify_tls: bool) -> set[str]:
+def discover_pdf_links(
+    session: requests.Session,
+    seed_url: str,
+    allow_domains: list[str],
+    timeout: int,
+    verify_tls: bool,
+) -> set[str]:
     """Fetch a seed URL and extract PDF-ish links.
 
     Only returns links permitted by allow_domains.
@@ -374,7 +388,9 @@ def download_one(
         return DownloadResult(url=url, path=out_path, sha256=digest, bytes=out_path.stat().st_size)
 
     s = build_session(cfg)
-    with s.get(url, stream=True, timeout=cfg.timeout_seconds, verify=cfg.verify_tls, allow_redirects=True) as r:
+    with s.get(
+        url, stream=True, timeout=cfg.timeout_seconds, verify=cfg.verify_tls, allow_redirects=True
+    ) as r:
         r.raise_for_status()
 
         # Redirect safety: final URL must still be allowlisted.
@@ -392,7 +408,9 @@ def download_one(
                 f.write(chunk)
                 total += len(chunk)
                 if total > cfg.max_bytes_per_file:
-                    raise RuntimeError(f"File exceeds max_bytes safety cap ({cfg.max_bytes_per_file}): {url}")
+                    raise RuntimeError(
+                        f"File exceeds max_bytes safety cap ({cfg.max_bytes_per_file}): {url}"
+                    )
 
         tmp_path.replace(out_path)
 
@@ -400,7 +418,9 @@ def download_one(
     return DownloadResult(url=url, path=out_path, sha256=digest, bytes=total)
 
 
-def download_all(cfg: PipelineConfig, downloads_dir: Path, pdf_urls: list[str]) -> tuple[list[DownloadResult], list[dict]]:
+def download_all(
+    cfg: PipelineConfig, downloads_dir: Path, pdf_urls: list[str]
+) -> tuple[list[DownloadResult], list[dict]]:
     """Download all URLs concurrently.
 
     Returns:
@@ -414,7 +434,9 @@ def download_all(cfg: PipelineConfig, downloads_dir: Path, pdf_urls: list[str]) 
     with concurrent.futures.ThreadPoolExecutor(max_workers=cfg.max_workers) as ex:
         futures = {ex.submit(download_one, cfg, url, downloads_dir): url for url in pdf_urls}
 
-        for fut in tqdm(concurrent.futures.as_completed(futures), total=len(futures), desc="Downloading"):
+        for fut in tqdm(
+            concurrent.futures.as_completed(futures), total=len(futures), desc="Downloading"
+        ):
             url = futures[fut]
             try:
                 res = fut.result()
@@ -444,6 +466,7 @@ def append_manifest(manifest_path: Path, downloads: list[DownloadResult]) -> Non
 # =============================================================================
 # OCR + Text Extraction
 # =============================================================================
+
 
 def has_tool(name: str) -> bool:
     return shutil.which(name) is not None
@@ -510,6 +533,7 @@ def redact_text(text: str, cfg: PipelineConfig) -> str:
 # Chunking (overlap + offsets)
 # =============================================================================
 
+
 @dataclass
 class Chunk:
     chunk_id: int
@@ -571,6 +595,7 @@ def write_chunks_jsonl(out_jsonl: Path, doc_id: str, source_url: str, chunks: li
 # NER
 # =============================================================================
 
+
 def load_spacy(model_name: str):
     import spacy
 
@@ -606,7 +631,9 @@ def ner_on_chunks(nlp, chunks: list[Chunk]) -> list[dict]:
     return out
 
 
-def write_entities_jsonl(out_jsonl: Path, doc_id: str, source_url: str, pdf_path: str, ent_mentions: list[dict]) -> None:
+def write_entities_jsonl(
+    out_jsonl: Path, doc_id: str, source_url: str, pdf_path: str, ent_mentions: list[dict]
+) -> None:
     out_jsonl.parent.mkdir(parents=True, exist_ok=True)
     with out_jsonl.open("w", encoding="utf-8") as f:
         for m in ent_mentions:
@@ -627,6 +654,7 @@ def write_entities_jsonl(out_jsonl: Path, doc_id: str, source_url: str, pdf_path
 # =============================================================================
 # Safe exports (publishable-ish aggregates)
 # =============================================================================
+
 
 def aggregate_entities(entities_dir: Path, topn: int) -> dict[str, list[dict]]:
     """Aggregate entity mentions across all docs into top-N lists per label."""
@@ -662,7 +690,9 @@ def write_safe_exports(paths: dict[str, Path], cfg: PipelineConfig, manifest_pat
 
     # Aggregate entity mentions across corpus
     agg = aggregate_entities(paths["entities"], cfg.safe_export_topn)
-    (safe_dir / "top_entities_by_label.json").write_text(json.dumps(agg, indent=2, ensure_ascii=False), encoding="utf-8")
+    (safe_dir / "top_entities_by_label.json").write_text(
+        json.dumps(agg, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
 
     # Emit a sources list derived from manifest (publishable)
     sources: list[dict] = []
@@ -676,14 +706,24 @@ def write_safe_exports(paths: dict[str, Path], cfg: PipelineConfig, manifest_pat
                     obj = json.loads(line)
                 except Exception:
                     continue
-                sources.append({"doc_id": obj.get("sha256"), "url": obj.get("url"), "bytes": obj.get("bytes"), "ts": obj.get("ts")})
+                sources.append(
+                    {
+                        "doc_id": obj.get("sha256"),
+                        "url": obj.get("url"),
+                        "bytes": obj.get("bytes"),
+                        "ts": obj.get("ts"),
+                    }
+                )
 
-    (safe_dir / "sources_from_manifest.json").write_text(json.dumps(sources, indent=2, ensure_ascii=False), encoding="utf-8")
+    (safe_dir / "sources_from_manifest.json").write_text(
+        json.dumps(sources, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
 
 
 # =============================================================================
 # Pipeline
 # =============================================================================
+
 
 def run_pipeline(cfg: PipelineConfig, verbose: bool = False) -> None:
     base = Path(cfg.output_dir).expanduser().resolve()
@@ -726,11 +766,15 @@ def run_pipeline(cfg: PipelineConfig, verbose: bool = False) -> None:
     all_links: set[str] = set()
     for seed in cfg.seed_urls:
         try:
-            all_links |= discover_pdf_links(session, seed, cfg.allow_domains, cfg.timeout_seconds, cfg.verify_tls)
+            all_links |= discover_pdf_links(
+                session, seed, cfg.allow_domains, cfg.timeout_seconds, cfg.verify_tls
+            )
         except Exception as e:
             msg = str(e)
             logging.error(f"Discovery failed for {seed}: {msg}")
-            failures.append({"stage": "discover", "url": seed, "error": msg, "ts": now_unix(), "run_id": run_id})
+            failures.append(
+                {"stage": "discover", "url": seed, "error": msg, "ts": now_unix(), "run_id": run_id}
+            )
 
     pdf_urls = sorted(all_links)
     run_metrics["counts"]["discovered_urls"] = len(pdf_urls)
@@ -781,7 +825,16 @@ def run_pipeline(cfg: PipelineConfig, verbose: bool = False) -> None:
                     else:
                         run_metrics["counts"]["ocr_failed"] += 1
                         logging.warning(f"OCR skipped/failed for {in_pdf.name}: {msg}")
-                        failures.append({"stage": "ocr", "doc_id": doc_id, "url": source_url, "error": msg, "ts": now_unix(), "run_id": run_id})
+                        failures.append(
+                            {
+                                "stage": "ocr",
+                                "doc_id": doc_id,
+                                "url": source_url,
+                                "error": msg,
+                                "ts": now_unix(),
+                                "run_id": run_id,
+                            }
+                        )
                         effective_pdf_for_text = in_pdf
                 else:
                     effective_pdf_for_text = ocr_pdf_path
@@ -812,7 +865,16 @@ def run_pipeline(cfg: PipelineConfig, verbose: bool = False) -> None:
             msg = str(e)
             run_metrics["counts"]["ner_failed"] += 1
             logging.error(f"Processing failed for {in_pdf.name}: {msg}")
-            failures.append({"stage": "process", "doc_id": doc_id, "url": source_url, "error": msg, "ts": now_unix(), "run_id": run_id})
+            failures.append(
+                {
+                    "stage": "process",
+                    "doc_id": doc_id,
+                    "url": source_url,
+                    "error": msg,
+                    "ts": now_unix(),
+                    "run_id": run_id,
+                }
+            )
 
     # 8) Safe exports
     try:
@@ -847,6 +909,7 @@ def rebuild_safe_exports(cfg: PipelineConfig, verbose: bool = False) -> None:
 # CLI
 # =============================================================================
 
+
 def init_config(out_path: Path) -> None:
     """Write a starter config with reputable seed URLs.
 
@@ -868,7 +931,9 @@ def init_config(out_path: Path) -> None:
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
-    ap = argparse.ArgumentParser(description="Download + OCR + chunk + NER pipeline for public document sets.")
+    ap = argparse.ArgumentParser(
+        description="Download + OCR + chunk + NER pipeline for public document sets."
+    )
     ap.add_argument("--verbose", action="store_true", help="Verbose logging")
 
     sub = ap.add_subparsers(dest="cmd", required=True)

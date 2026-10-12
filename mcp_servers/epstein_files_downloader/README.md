@@ -245,7 +245,7 @@ for collection in collections:
             json={'collection_id': collection['collection_id']}
         )
         tasks = response.json()
-        
+
         # Monitor progress
         for task in tasks:
             task_id = task['task_id']
@@ -253,14 +253,14 @@ for collection in collections:
                 status = requests.get(
                     f'http://localhost:8765/download/status/{task_id}'
                 ).json()
-                
+
                 if status['status'] == 'completed':
                     print(f"✓ Downloaded: {status['destination']}")
                     break
                 elif status['status'] == 'failed':
                     print(f"✗ Failed: {status['error']}")
                     break
-                
+
                 print(f"Progress: {status['progress']:.1f}%")
                 time.sleep(2)
 ```
@@ -442,6 +442,6 @@ This project is part of the Epstein Files Pipeline project. See main repository 
 
 ---
 
-**Version**: 1.0.0  
-**Last Updated**: 2024-12-31  
+**Version**: 1.0.0
+**Last Updated**: 2024-12-31
 **Maintainer**: Epstein Project Team
