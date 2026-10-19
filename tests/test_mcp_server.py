@@ -33,7 +33,7 @@ TEST_CONFIG = ServerConfig(
     download_dir=tempfile.mkdtemp(),
     max_concurrent_downloads=2,
     retry_attempts=2,
-    retry_delay=1
+    retry_delay=1,
 )
 
 
@@ -53,6 +53,7 @@ def test_client(test_server):
 # ============================================================================
 # Server Initialization Tests
 # ============================================================================
+
 
 class TestServerInitialization:
     """Test server initialization and configuration"""
@@ -74,19 +75,20 @@ class TestServerInitialization:
     def test_http_session(self, test_server):
         """Test HTTP session initialization"""
         assert test_server.session is not None
-        assert hasattr(test_server.session, 'get')
-        assert hasattr(test_server.session, 'post')
+        assert hasattr(test_server.session, "get")
+        assert hasattr(test_server.session, "post")
 
     def test_fastapi_app(self, test_server):
         """Test FastAPI app initialization"""
         assert test_server.app is not None
-        assert hasattr(test_server.app, 'get')
-        assert hasattr(test_server.app, 'post')
+        assert hasattr(test_server.app, "get")
+        assert hasattr(test_server.app, "post")
 
 
 # ============================================================================
 # API Endpoint Tests
 # ============================================================================
+
 
 class TestAPIEndpoints:
     """Test all API endpoints"""
@@ -118,14 +120,12 @@ class TestAPIEndpoints:
                 name="Test Collection 1",
                 description="Test description",
                 url="http://example.com/collection1",
-                source="govinfo.gov"
+                source="govinfo.gov",
             )
         ]
 
         mocker.patch.object(
-            EpsteinFilesDownloader,
-            'discover_collections',
-            return_value=mock_collections
+            EpsteinFilesDownloader, "discover_collections", return_value=mock_collections
         )
 
         response = test_client.get("/collections")
@@ -144,14 +144,12 @@ class TestAPIEndpoints:
                 name="Test Collection 1",
                 description="Test description",
                 url="http://example.com/collection1",
-                source="govinfo.gov"
+                source="govinfo.gov",
             )
         ]
 
         mocker.patch.object(
-            EpsteinFilesDownloader,
-            'discover_collections',
-            return_value=mock_collections
+            EpsteinFilesDownloader, "discover_collections", return_value=mock_collections
         )
 
         response = test_client.get("/collections/test_coll_1")
@@ -161,11 +159,7 @@ class TestAPIEndpoints:
 
     def test_collection_not_found(self, test_client, mocker):
         """Test collection not found error"""
-        mocker.patch.object(
-            EpsteinFilesDownloader,
-            'discover_collections',
-            return_value=[]
-        )
+        mocker.patch.object(EpsteinFilesDownloader, "discover_collections", return_value=[])
 
         response = test_client.get("/collections/nonexistent")
         assert response.status_code == 404
@@ -174,16 +168,9 @@ class TestAPIEndpoints:
     def test_download_endpoint(self, test_client, mocker):
         """Test download endpoint"""
         # Mock download processing
-        mocker.patch.object(
-            EpsteinFilesDownloader,
-            '_process_download_queue',
-            return_value=None
-        )
+        mocker.patch.object(EpsteinFilesDownloader, "_process_download_queue", return_value=None)
 
-        payload = {
-            "url": "http://example.com/test.pdf",
-            "destination": TEST_CONFIG.download_dir
-        }
+        payload = {"url": "http://example.com/test.pdf", "destination": TEST_CONFIG.download_dir}
 
         response = test_client.post("/download", json=payload)
         assert response.status_code == 200
@@ -199,26 +186,17 @@ class TestAPIEndpoints:
                 document_id="doc_1",
                 collection_id="test_coll",
                 title="Test Document",
-                url="http://example.com/doc1.pdf"
+                url="http://example.com/doc1.pdf",
             )
         ]
 
         mocker.patch.object(
-            EpsteinFilesDownloader,
-            'get_collection_documents',
-            return_value=mock_documents
+            EpsteinFilesDownloader, "get_collection_documents", return_value=mock_documents
         )
 
-        mocker.patch.object(
-            EpsteinFilesDownloader,
-            '_process_download_queue',
-            return_value=None
-        )
+        mocker.patch.object(EpsteinFilesDownloader, "_process_download_queue", return_value=None)
 
-        payload = {
-            "collection_id": "test_coll",
-            "destination": TEST_CONFIG.download_dir
-        }
+        payload = {"collection_id": "test_coll", "destination": TEST_CONFIG.download_dir}
 
         response = test_client.post("/download/bulk", json=payload)
         assert response.status_code == 200
@@ -231,6 +209,7 @@ class TestAPIEndpoints:
 # Download Functionality Tests
 # ============================================================================
 
+
 class TestDownloadFunctionality:
     """Test download functionality"""
 
@@ -239,7 +218,7 @@ class TestDownloadFunctionality:
         task = DownloadTask(
             task_id="test_task_1",
             url="http://example.com/test.pdf",
-            destination=TEST_CONFIG.download_dir
+            destination=TEST_CONFIG.download_dir,
         )
 
         assert task.task_id == "test_task_1"
@@ -250,13 +229,12 @@ class TestDownloadFunctionality:
     def test_safe_filename_generation(self, test_server):
         """Test safe filename generation"""
         safe_name = test_server._generate_safe_filename(
-            "http://example.com/Test File (Special).pdf",
-            {"title": "Test Document"}
+            "http://example.com/Test File (Special).pdf", {"title": "Test Document"}
         )
 
         assert "Test_Document" in safe_name
         assert safe_name.endswith(".pdf")
-        assert all(c.isalnum() or c in ['_', '-', '.'] for c in safe_name)
+        assert all(c.isalnum() or c in ["_", "-", "."] for c in safe_name)
 
     def test_download_queue_management(self, test_server):
         """Test download queue management"""
@@ -264,13 +242,13 @@ class TestDownloadFunctionality:
         task1 = DownloadTask(
             task_id="task_1",
             url="http://example.com/file1.pdf",
-            destination=TEST_CONFIG.download_dir
+            destination=TEST_CONFIG.download_dir,
         )
 
         task2 = DownloadTask(
             task_id="task_2",
             url="http://example.com/file2.pdf",
-            destination=TEST_CONFIG.download_dir
+            destination=TEST_CONFIG.download_dir,
         )
 
         test_server.download_queue.put_nowait(task1)
@@ -283,15 +261,13 @@ class TestDownloadFunctionality:
 # Error Handling Tests
 # ============================================================================
 
+
 class TestErrorHandling:
     """Test error handling and edge cases"""
 
     def test_invalid_url_download(self, test_client):
         """Test download with invalid URL"""
-        payload = {
-            "url": "invalid-url",
-            "destination": TEST_CONFIG.download_dir
-        }
+        payload = {"url": "invalid-url", "destination": TEST_CONFIG.download_dir}
 
         response = test_client.post("/download", json=payload)
         assert response.status_code in [400, 422]  # Bad request or validation error
@@ -300,14 +276,11 @@ class TestErrorHandling:
         """Test nonexistent collection handling"""
         mocker.patch.object(
             EpsteinFilesDownloader,
-            'get_collection_documents',
-            side_effect=Exception("Collection not found")
+            "get_collection_documents",
+            side_effect=Exception("Collection not found"),
         )
 
-        payload = {
-            "collection_id": "nonexistent",
-            "destination": TEST_CONFIG.download_dir
-        }
+        payload = {"collection_id": "nonexistent", "destination": TEST_CONFIG.download_dir}
 
         response = test_client.post("/download/bulk", json=payload)
         assert response.status_code == 500
@@ -324,11 +297,13 @@ class TestErrorHandling:
 # Performance Tests
 # ============================================================================
 
+
 class TestPerformance:
     """Test performance and concurrency"""
 
     def test_concurrent_downloads(self, test_server, mocker):
         """Test concurrent download handling"""
+
         # Mock async download to avoid actual network calls
         async def mock_download(task):
             await asyncio.sleep(0.1)
@@ -336,11 +311,7 @@ class TestPerformance:
             task.progress = 100.0
             test_server._complete_task(task)
 
-        mocker.patch.object(
-            EpsteinFilesDownloader,
-            '_download_single',
-            side_effect=mock_download
-        )
+        mocker.patch.object(EpsteinFilesDownloader, "_download_single", side_effect=mock_download)
 
         # Add multiple tasks
         tasks = []
@@ -348,7 +319,7 @@ class TestPerformance:
             task = DownloadTask(
                 task_id=f"test_task_{i}",
                 url=f"http://example.com/file{i}.pdf",
-                destination=TEST_CONFIG.download_dir
+                destination=TEST_CONFIG.download_dir,
             )
             tasks.append(task)
             test_server.download_queue.put_nowait(task)
@@ -362,6 +333,7 @@ class TestPerformance:
 
     def test_response_time(self, test_client, benchmark):
         """Test API response time"""
+
         def test_endpoint():
             return test_client.get("/health")
 
@@ -375,6 +347,7 @@ class TestPerformance:
 # Integration Tests
 # ============================================================================
 
+
 class TestIntegration:
     """Test integration between components"""
 
@@ -387,14 +360,12 @@ class TestIntegration:
                 name="Test Collection",
                 description="Test",
                 url="http://example.com/coll",
-                source="govinfo"
+                source="govinfo",
             )
         ]
 
         mocker.patch.object(
-            EpsteinFilesDownloader,
-            'discover_collections',
-            return_value=mock_collections
+            EpsteinFilesDownloader, "discover_collections", return_value=mock_collections
         )
 
         # Mock document listing
@@ -403,21 +374,15 @@ class TestIntegration:
                 document_id="doc_1",
                 collection_id="test_coll",
                 title="Test Doc",
-                url="http://example.com/doc.pdf"
+                url="http://example.com/doc.pdf",
             )
         ]
 
         mocker.patch.object(
-            EpsteinFilesDownloader,
-            'get_collection_documents',
-            return_value=mock_documents
+            EpsteinFilesDownloader, "get_collection_documents", return_value=mock_documents
         )
 
-        mocker.patch.object(
-            EpsteinFilesDownloader,
-            '_process_download_queue',
-            return_value=None
-        )
+        mocker.patch.object(EpsteinFilesDownloader, "_process_download_queue", return_value=None)
 
         # Step 1: Discover collections
         collections_response = test_client.get("/collections")
@@ -433,10 +398,7 @@ class TestIntegration:
         assert len(documents) == 1
 
         # Step 3: Download documents
-        download_payload = {
-            "collection_id": collection_id,
-            "destination": TEST_CONFIG.download_dir
-        }
+        download_payload = {"collection_id": collection_id, "destination": TEST_CONFIG.download_dir}
 
         download_response = test_client.post("/download/bulk", json=download_payload)
         assert download_response.status_code == 200
@@ -455,10 +417,6 @@ class TestIntegration:
 
 if __name__ == "__main__":
     # Run tests with pytest
-    pytest.main([
-        "--verbose",
-        "--color=yes",
-        "-x",  # Stop on first failure
-        "-s",  # Show output
-        __file__
-    ])
+    pytest.main(
+        ["--verbose", "--color=yes", "-x", "-s", __file__]  # Stop on first failure  # Show output
+    )

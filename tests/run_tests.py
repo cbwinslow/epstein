@@ -23,9 +23,7 @@ def run_tests_with_telemetry():
 
     # Initialize telemetry
     telemetry = get_telemetry(
-        service_name="epstein-test-suite",
-        enable_console_export=True,
-        enable_otlp_export=False
+        service_name="epstein-test-suite", enable_console_export=True, enable_otlp_export=False
     )
 
     print("=" * 70)
@@ -35,10 +33,10 @@ def run_tests_with_telemetry():
     print()
 
     # Create span for entire test run
-    with telemetry.create_span("test_suite_execution", {
-        "test.suite": "epstein-multi-agent-system",
-        "test.timestamp": datetime.now().isoformat()
-    }):
+    with telemetry.create_span(
+        "test_suite_execution",
+        {"test.suite": "epstein-multi-agent-system", "test.timestamp": datetime.now().isoformat()},
+    ):
 
         # Run pytest with coverage
         pytest_args = [
@@ -50,7 +48,8 @@ def run_tests_with_telemetry():
             "--cov-report=term-missing",
             "--cov-report=html:htmlcov",
             "--cov-report=json:coverage.json",
-            "-p", "no:warnings"
+            "-p",
+            "no:warnings",
         ]
 
         print("Running tests with coverage...")
@@ -75,7 +74,7 @@ def run_tests_with_telemetry():
 
         # Save metrics to file
         metrics_file = f"test_metrics_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        with open(metrics_file, 'w') as f:
+        with open(metrics_file, "w") as f:
             json.dump(metrics, f, indent=2)
 
         print(f"\nMetrics saved to: {metrics_file}")

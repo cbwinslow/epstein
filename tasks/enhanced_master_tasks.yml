@@ -19,7 +19,7 @@ milestones:
         tests:
           - cmd: "git status --ignored"
             expect: "No untracked artifacts committed; ignored paths visible."
-      
+
       - id: M0-T02
         title: Run doctor checks
         description: Validate Docker, compose, ports, disk, volumes.
@@ -38,7 +38,7 @@ milestones:
         tests:
           - cmd: "make bootstrap && make status"
             expect: "postgres and qdrant running."
-      
+
       - id: M1-T02
         title: Validate schema exists
         description: doc_analysis schema and tables present.
@@ -56,31 +56,31 @@ milestones:
         description: Create comprehensive inventory of all Epstein-related document sources with metadata, access requirements, and estimated document counts.
         priority: P0
         labels: [download, documentation]
-        
+
       - id: M6-T02
         title: Implement advanced download retry logic
         description: Add exponential backoff, failure mode handling, and configurable retry limits to bulk downloader.
         priority: P0
         labels: [download, enhancement]
-        
+
       - id: M6-T03
         title: Add download verification system
         description: Implement SHA-256 verification, file size validation, format validation, and corruption detection.
         priority: P0
         labels: [download, quality]
-        
+
       - id: M6-T04
         title: Create download manifest and tracking
         description: Implement comprehensive manifest system tracking all downloads with metadata, checksums, and provenance.
         priority: P1
         labels: [download, tracking]
-        
+
       - id: M6-T05
         title: Implement PACER integration
         description: Add PACER API integration for court filings related to Jeffrey Epstein.
         priority: P1
         labels: [download, source, court-records]
-        
+
       - id: M6-T06
         title: Add SEC EDGAR integration
         description: Implement SEC EDGAR downloader for company filings related to Epstein entities.
@@ -96,49 +96,49 @@ milestones:
         description: Add custom entity types (FLIGHT_NUMBER, AIRCRAFT, FINANCIAL_INSTITUTION, etc.) to NER system.
         priority: P0
         labels: [nlp, ner, enhancement]
-        
+
       - id: M7-T02
         title: Train custom NER model
         description: Create training dataset and fine-tune spaCy model on Epstein-specific entities. Target >90% F1 score.
         priority: P0
         labels: [nlp, ner, ml-training]
-        
+
       - id: M7-T03
         title: Implement entity disambiguation
         description: Add entity resolution to handle aliases, nicknames, and variant names (e.g., "Jeffrey Epstein" vs "JE" vs "Epstein").
         priority: P0
         labels: [nlp, entity-resolution]
-        
+
       - id: M7-T04
         title: Build relationship extraction system
         description: Implement dependency parsing and co-occurrence analysis to extract entity relationships (KNOWS, EMPLOYED_BY, TRAVELED_WITH, etc.).
         priority: P0
         labels: [nlp, relationships]
-        
+
       - id: M7-T05
         title: Create flight log parser
         description: Specialized parser for flight manifests extracting date, aircraft, passengers, crew, locations, and duration.
         priority: P1
         labels: [nlp, parser, flight-logs]
-        
+
       - id: M7-T06
         title: Create meeting and event parser
         description: Extract meeting metadata including date, location, attendees, and purpose from documents.
         priority: P1
         labels: [nlp, parser, meetings]
-        
+
       - id: M7-T07
         title: Implement email and communication parser
         description: Parse email threads, extract participants, reconstruct conversation flows, and build communication graphs.
         priority: P1
         labels: [nlp, parser, communications]
-        
+
       - id: M7-T08
         title: Add document summarization
         description: Implement both extractive and abstractive summarization with entity preservation.
         priority: P1
         labels: [nlp, summarization]
-        
+
       - id: M7-T09
         title: Create event extraction system
         description: Identify and extract discrete events with attributes (who, what, when, where, why).
@@ -154,37 +154,37 @@ milestones:
         description: Evaluate and select graph database (Neo4j, Apache AGE, RedisGraph). Set up infrastructure and document decision in ADR.
         priority: P0
         labels: [knowledge-graph, infrastructure]
-        
+
       - id: M8-T02
         title: Design graph schema
         description: Design comprehensive node types (Person, Organization, Location, Event, Document) and edge types (KNOWS, EMPLOYED_BY, TRAVELED_WITH, etc.) with attributes.
         priority: P0
         labels: [knowledge-graph, schema]
-        
+
       - id: M8-T03
         title: Create graph population pipeline
         description: Build pipeline to ingest entities and relationships from NER system into graph database.
         priority: P0
         labels: [knowledge-graph, pipeline]
-        
+
       - id: M8-T04
         title: Implement entity resolution for graph
         description: Add fuzzy matching, name normalization, and entity clustering to reduce duplicates in graph.
         priority: P1
         labels: [knowledge-graph, entity-resolution]
-        
+
       - id: M8-T05
         title: Create core graph queries
         description: Implement essential queries (paths between entities, common associates, community detection, temporal queries).
         priority: P1
         labels: [knowledge-graph, queries]
-        
+
       - id: M8-T06
         title: Build graph visualization
         description: Implement interactive graph visualization with filtering, search, and export capabilities.
         priority: P2
         labels: [knowledge-graph, visualization]
-        
+
       - id: M8-T07
         title: Add graph query templates
         description: Create parameterized query templates and natural language to graph query translation.
@@ -200,37 +200,37 @@ milestones:
         description: Implement cross-reference system to compare claims across documents and calculate confidence scores.
         priority: P1
         labels: [analysis, fact-checking]
-        
+
       - id: M9-T02
         title: Create inconsistency detection system
         description: Detect date inconsistencies, location impossibilities, and contradictory statements.
         priority: P1
         labels: [analysis, verification]
-        
+
       - id: M9-T03
         title: Implement timeline reconstruction
         description: Build system to extract dates, normalize formats, order events chronologically, and create interactive timeline visualization.
         priority: P1
         labels: [analysis, timeline]
-        
+
       - id: M9-T04
         title: Build conversation stream linker
         description: Link email threads, meeting notes, and communications across documents to reconstruct conversation flows.
         priority: P1
         labels: [analysis, conversations]
-        
+
       - id: M9-T05
         title: Create pattern detection system
         description: Find recurring patterns, detect anomalies, and identify unusual entity combinations or behaviors.
         priority: P2
         labels: [analysis, patterns]
-        
+
       - id: M9-T06
         title: Implement deception detection
         description: Detect statement contradictions, linguistic deception indicators, and unsupported claims.
         priority: P2
         labels: [analysis, deception]
-        
+
       - id: M9-T07
         title: Create inference engine
         description: Build system to predict likely but undocumented relationships and identify information gaps.
@@ -246,55 +246,55 @@ milestones:
         description: Create base agent architecture with interface, lifecycle management, and communication protocol.
         priority: P0
         labels: [agents, architecture]
-        
+
       - id: M10-T02
         title: Create Entity Analysis Agent
         description: Build agent to analyze entity properties, find relationships, generate profiles, and answer entity queries.
         priority: P0
         labels: [agents, entity-analysis]
-        
+
       - id: M10-T03
         title: Create Relationship Discovery Agent
         description: Build agent to discover new relationships, validate hypotheses, and generate relationship reports.
         priority: P0
         labels: [agents, relationships]
-        
+
       - id: M10-T04
         title: Create Timeline Analysis Agent
         description: Build agent to reconstruct timelines, find temporal patterns, and validate date consistency.
         priority: P1
         labels: [agents, timeline]
-        
+
       - id: M10-T05
         title: Create Document Synthesis Agent
         description: Build agent to summarize documents, extract key information, and generate evidence bundles.
         priority: P1
         labels: [agents, documents]
-        
+
       - id: M10-T06
         title: Create Pattern Detection Agent
         description: Build agent to find recurring patterns, detect anomalies, and identify suspicious behaviors.
         priority: P1
         labels: [agents, patterns]
-        
+
       - id: M10-T07
         title: Create Verification Agent
         description: Build agent to fact-check claims, cross-reference sources, and assess evidence quality.
         priority: P1
         labels: [agents, verification]
-        
+
       - id: M10-T08
         title: Implement multi-agent orchestration
         description: Build coordination system for task decomposition, agent selection, parallel execution, and result aggregation.
         priority: P1
         labels: [agents, orchestration]
-        
+
       - id: M10-T09
         title: Create Knowledge Graph MCP Server
         description: Build MCP server for graph queries and operations.
         priority: P1
         labels: [agents, mcp, knowledge-graph]
-        
+
       - id: M10-T10
         title: Create Analysis MCP Server
         description: Build MCP server to run analysis workflows and coordinate analysis agents.
@@ -310,37 +310,37 @@ milestones:
         description: Design templates for findings, tasks, bugs, analysis requests, and document requests.
         priority: P1
         labels: [github, templates]
-        
+
       - id: M11-T02
         title: Set up GitHub Projects v2
         description: Create project with custom fields, views, and automation rules for tracking analysis progress.
         priority: P1
         labels: [github, projects]
-        
+
       - id: M11-T03
         title: Enhance automated issue generation
         description: Expand gen_issues_from_tasks.py to handle enhanced task structure and generate finding issues.
         priority: P1
         labels: [github, automation]
-        
+
       - id: M11-T04
         title: Configure CodeRabbitAI
         description: Set up CodeRabbitAI with custom review rules for security, NLP, database, and agent code.
         priority: P2
         labels: [ci, code-review]
-        
+
       - id: M11-T05
         title: Add analysis pipeline CI tests
         description: Create CI tests for NER, knowledge graph, agent functionality, and full pipeline integration.
         priority: P1
         labels: [ci, testing]
-        
+
       - id: M11-T06
         title: Implement performance testing
         description: Add benchmarks for document processing, vector search, and graph queries with trend tracking.
         priority: P2
         labels: [ci, performance]
-        
+
       - id: M11-T07
         title: Add security scanning
         description: Implement dependency scanning, secret scanning, SAST, and container image scanning.
@@ -356,31 +356,31 @@ milestones:
         description: Document analysis workflows, query cookbook, interpretation guidelines, and evidence handling best practices.
         priority: P1
         labels: [documentation, methodology]
-        
+
       - id: M12-T02
         title: Document all APIs
         description: Create comprehensive API documentation for MCP servers, agents, and tools with examples.
         priority: P1
         labels: [documentation, api]
-        
+
       - id: M12-T03
         title: Create knowledge graph documentation
         description: Document graph schema, query examples, visualization usage, and analysis best practices.
         priority: P1
         labels: [documentation, knowledge-graph]
-        
+
       - id: M12-T04
         title: Write comprehensive tutorials
         description: Create getting started guide, analysis walkthrough, agent development guide, and troubleshooting guide.
         priority: P1
         labels: [documentation, tutorials]
-        
+
       - id: M12-T05
         title: Create Architecture Decision Records
         description: Document key technical decisions, technology selections, trade-offs, and migration paths.
         priority: P2
         labels: [documentation, adr]
-        
+
       - id: M12-T06
         title: Build interactive documentation site
         description: Create searchable, interactive documentation site with examples and demos.
@@ -396,25 +396,25 @@ milestones:
         description: Add comprehensive unit tests for NER, entity resolution, agents, and analysis tools. Target >80% coverage.
         priority: P1
         labels: [testing, unit-tests]
-        
+
       - id: M13-T02
         title: Create integration test suite
         description: Build end-to-end tests for pipeline, multi-agent workflows, database integration, and MCP servers.
         priority: P1
         labels: [testing, integration-tests]
-        
+
       - id: M13-T03
         title: Implement data quality tests
         description: Validate entity extraction accuracy, relationship detection, graph consistency, and data provenance.
         priority: P1
         labels: [testing, data-quality]
-        
+
       - id: M13-T04
         title: Create ground truth validation dataset
         description: Build manually annotated dataset for validating NER, relationship extraction, and analysis accuracy.
         priority: P1
         labels: [testing, validation]
-        
+
       - id: M13-T05
         title: Add performance tests
         description: Implement load testing for document processing, stress testing for graph queries, and concurrency testing for agents.
@@ -430,43 +430,43 @@ milestones:
         description: Create comprehensive profiles for key entities including relationship networks, timeline, and document references.
         priority: P1
         labels: [analysis, deliverable]
-        
+
       - id: M14-T02
         title: Map relationship networks
         description: Generate network visualizations showing connections between entities with evidence links.
         priority: P1
         labels: [analysis, deliverable, visualization]
-        
+
       - id: M14-T03
         title: Create master timeline
         description: Build comprehensive chronological timeline of all documented events with entity involvement.
         priority: P1
         labels: [analysis, deliverable, timeline]
-        
+
       - id: M14-T04
         title: Identify conversation threads
         description: Document multi-document conversation streams linking communications over time.
         priority: P1
         labels: [analysis, deliverable, conversations]
-        
+
       - id: M14-T05
         title: Generate flight pattern analysis
         description: Analyze flight logs for travel patterns, frequent routes, passenger combinations, and temporal patterns.
         priority: P1
         labels: [analysis, deliverable, flight-logs]
-        
+
       - id: M14-T06
         title: Create meeting attendance analysis
         description: Compile meeting attendance records, identify frequent participants, and analyze meeting patterns.
         priority: P2
         labels: [analysis, deliverable, meetings]
-        
+
       - id: M14-T07
         title: Generate inconsistency report
         description: Document identified contradictions, discrepancies, and potential deceptions with evidence.
         priority: P2
         labels: [analysis, deliverable, verification]
-        
+
       - id: M14-T08
         title: Create analysis playbook
         description: Document successful analysis techniques, query patterns, and methodology for future analysis.

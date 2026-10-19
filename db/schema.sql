@@ -62,7 +62,7 @@ CREATE TABLE documents (
     metadata JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     -- Constraints
     CONSTRAINT documents_file_hash_unique UNIQUE (file_hash),
     CONSTRAINT documents_external_id_source_unique UNIQUE (external_id, source_id)
@@ -78,7 +78,7 @@ CREATE TABLE document_versions (
     file_size BIGINT NOT NULL,
     change_description TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     -- Constraints
     CONSTRAINT document_versions_unique UNIQUE (document_id, version_number)
 );
@@ -95,7 +95,7 @@ CREATE TABLE extracted_text (
     metadata JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     -- Constraints
     CONSTRAINT extracted_text_unique UNIQUE (document_id, page_number)
 );
@@ -127,7 +127,7 @@ CREATE TABLE relationships (
     metadata JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     -- Constraints
     CONSTRAINT relationships_unique UNIQUE (source_entity_id, target_entity_id, relationship_type),
     CONSTRAINT relationships_no_self_reference CHECK (source_entity_id != target_entity_id)
@@ -213,7 +213,7 @@ CREATE TRIGGER update_relationships_updated_at BEFORE UPDATE ON relationships
 
 -- Document summary view
 CREATE VIEW document_summary AS
-SELECT 
+SELECT
     d.id,
     d.title,
     d.file_name,
@@ -234,7 +234,7 @@ GROUP BY d.id, s.name, ir.status;
 
 -- Entity summary view
 CREATE VIEW entity_summary AS
-SELECT 
+SELECT
     e.id,
     e.entity_type,
     e.entity_text,
@@ -251,13 +251,13 @@ WHERE e.confidence_score >= 0.5;
 -- ============================================================================
 
 -- Check constraints for valid status values
-ALTER TABLE ingestion_runs ADD CONSTRAINT ingestion_runs_status_check 
+ALTER TABLE ingestion_runs ADD CONSTRAINT ingestion_runs_status_check
     CHECK (status IN ('pending', 'running', 'completed', 'failed', 'cancelled'));
 
-ALTER TABLE documents ADD CONSTRAINT documents_processing_status_check 
+ALTER TABLE documents ADD CONSTRAINT documents_processing_status_check
     CHECK (processing_status IN ('pending', 'processing', 'ocr_required', 'text_extracted', 'entity_extracted', 'completed', 'failed'));
 
-ALTER TABLE extracted_text ADD CONSTRAINT extracted_text_method_check 
+ALTER TABLE extracted_text ADD CONSTRAINT extracted_text_method_check
     CHECK (extraction_method IN ('native', 'ocr', 'manual'));
 
 -- ============================================================================

@@ -26,7 +26,7 @@ This document outlines the available storage options for the OCR-processed Epste
 
 **Cost**: Free for public repositories
 
-**Best For**: 
+**Best For**:
 - CI/CD verification
 - Temporary processing results
 - Development and testing
@@ -64,7 +64,7 @@ This document outlines the available storage options for the OCR-processed Epste
 - ❌ Storage costs (though minimal)
 - ❌ Need to manage bucket lifecycle
 
-**Cost**: 
+**Cost**:
 - Storage: $0.015/GB/month
 - No egress fees (unlimited downloads)
 - Example: 100GB = $1.50/month
@@ -91,7 +91,7 @@ This document outlines the available storage options for the OCR-processed Epste
   run: |
     # Install Wrangler CLI
     npm install -g wrangler
-    
+
     # Upload to R2 bucket
     wrangler r2 object put epstein-documents/ocr-$(date +%Y%m%d).tar.gz \
       --file ./ocr-results.tar.gz
@@ -234,18 +234,18 @@ outputs:
   artifacts:
     enabled: true          # Always enabled (free)
     retention-days: 90
-  
+
   cloudflare-r2:
     enabled: false         # Optional, requires setup
     bucket: "epstein-documents"
     public: true
-  
+
   repository:
     enabled: true          # Metadata only
     paths:
       - "results/manifests/*.jsonl"
       - "results/indexes/*.json"
-  
+
   release:
     enabled: false         # Manual/periodic
     create-on: tag
@@ -311,7 +311,7 @@ outputs:
 - **Savings: $92.16/year** with R2
 
 **Comparison for 10TB egress**:
-- AWS S3: $10.80 storage + $921.60 egress (10TB × $0.09/GB) = $932.40/year  
+- AWS S3: $10.80 storage + $921.60 egress (10TB × $0.09/GB) = $932.40/year
 - Cloudflare R2: $10.80/year (no egress fees)
 - **Savings: $921.60/year** with R2
 

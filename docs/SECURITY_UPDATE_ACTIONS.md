@@ -4,18 +4,18 @@
 
 This document describes the security fix applied to the OCR Processing Workflow to address a critical vulnerability in GitHub Actions.
 
-**Date**: 2025-01-07  
-**Status**: ✅ FIXED  
+**Date**: 2025-01-07
+**Status**: ✅ FIXED
 **Severity**: High
 
 ## Vulnerability Details
 
 ### CVE Information
 
-**Affected Action**: `actions/download-artifact`  
-**Vulnerability**: Arbitrary File Write via artifact extraction  
-**Affected Versions**: >= 4.0.0, < 4.1.3  
-**Patched Version**: 4.1.3  
+**Affected Action**: `actions/download-artifact`
+**Vulnerability**: Arbitrary File Write via artifact extraction
+**Affected Versions**: >= 4.0.0, < 4.1.3
+**Patched Version**: 4.1.3
 **Severity**: High
 
 ### Description
@@ -168,6 +168,6 @@ For security issues or questions:
 
 ---
 
-**Last Updated**: 2025-01-07  
-**Version**: 1.0.0  
+**Last Updated**: 2025-01-07
+**Version**: 1.0.0
 **Status**: Secure ✅

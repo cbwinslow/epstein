@@ -30,8 +30,10 @@ DEFAULT_QDRANT = "http://localhost:6333"
 DEFAULT_COLLECTION = "epstein_chunks"
 DEFAULT_MODEL = "BAAI/bge-small-en-v1.5"
 
+
 def eprint(msg: str) -> None:
     print(msg, file=sys.stderr)
+
 
 def fetch_chunk(conn: psycopg.Connection, chunk_id: int) -> dict[str, Any] | None:
     q = """
@@ -44,6 +46,7 @@ def fetch_chunk(conn: psycopg.Connection, chunk_id: int) -> dict[str, Any] | Non
         cur.execute(q, (chunk_id,))
         row = cur.fetchone()
         return dict(row) if row else None
+
 
 def main() -> int:
     ap = argparse.ArgumentParser()
@@ -84,16 +87,21 @@ def main() -> int:
                 print(f"score={h.score:.4f} chunk_id={cid} doc_id={payload.get('doc_id')}")
                 if row:
                     print(f"source_url: {row.get('source_url')}")
-                    print(f"offsets: {row.get('start_char')}..{row.get('end_char')} idx={row.get('chunk_index')}")
-                    text = str(row.get('chunk_text') or "").replace("\n", " ")
+                    print(
+                        f"offsets: {row.get('start_char')}..{row.get('end_char')} idx={row.get('chunk_index')}"
+                    )
+                    text = str(row.get("chunk_text") or "").replace("\n", " ")
                     excerpt = text[:600]
                     print(f"excerpt: {excerpt}{'...' if len(text) > 600 else ''}")
                 print("-" * 80)
     else:
         for h in hits:
             payload = h.payload or {}
-            print(f"score={h.score:.4f} chunk_id={h.id} doc_id={payload.get('doc_id')} offsets={payload.get('start_char')}..{payload.get('end_char')}")
+            print(
+                f"score={h.score:.4f} chunk_id={h.id} doc_id={payload.get('doc_id')} offsets={payload.get('start_char')}..{payload.get('end_char')}"
+            )
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

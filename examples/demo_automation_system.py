@@ -106,18 +106,13 @@ print()
 # Track download operation
 print("📊 Tracking operation metrics...")
 monitor.start_operation(
-    OperationType.DOWNLOAD,
-    total_count=len(demo_files),
-    description="Demo downloads"
+    OperationType.DOWNLOAD, total_count=len(demo_files), description="Demo downloads"
 )
 
 for i, file in enumerate(demo_files):
     size = file.stat().st_size
     monitor.update_progress(
-        OperationType.DOWNLOAD,
-        completed=1,
-        bytes_processed=size,
-        duration_seconds=0.1
+        OperationType.DOWNLOAD, completed=1, bytes_processed=size, duration_seconds=0.1
     )
 
 monitor.complete_operation(OperationType.DOWNLOAD)
@@ -155,17 +150,13 @@ print()
 # Track organization operation
 print("📁 Organizing files...")
 monitor.start_operation(
-    OperationType.ORGANIZE,
-    total_count=len(demo_files),
-    description="File organization"
+    OperationType.ORGANIZE, total_count=len(demo_files), description="File organization"
 )
 
 organized_count = 0
 for file in demo_files:
     success, organized_path, error = organizer.organize_file(
-        file,
-        source="demo_files",
-        dataset_number=1
+        file, source="demo_files", dataset_number=1
     )
 
     if success:
@@ -200,7 +191,7 @@ print()
 
 all_metrics = monitor.get_metrics()
 for op_type, metrics in all_metrics.items():
-    if metrics['total_count'] > 0:
+    if metrics["total_count"] > 0:
         print(f"{op_type.upper()}:")
         print(f"  ✓ Completed: {metrics['completed_count']}/{metrics['total_count']}")
         print(f"  ✓ Success rate: {metrics['success_rate']:.1f}%")
