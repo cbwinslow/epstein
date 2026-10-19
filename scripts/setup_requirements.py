@@ -40,7 +40,7 @@ class SystemChecker:
             "platform_version": platform.release(),
             "python_version": sys.version_info,
             "architecture": platform.architecture(),
-            "processor": platform.processor()
+            "processor": platform.processor(),
         }
 
     def _log(self, message: str, level: str = "INFO"):
@@ -57,16 +57,16 @@ class SystemChecker:
         if current >= required:
             return True, f"Python {current.major}.{current.minor}.{current.micro} ✓"
         else:
-            return False, f"Python {current.major}.{current.minor}.{current.micro} (requires {required[0]}.{required[1]}+) ✗"
+            return (
+                False,
+                f"Python {current.major}.{current.minor}.{current.micro} (requires {required[0]}.{required[1]}+) ✗",
+            )
 
     def check_docker(self) -> tuple[bool, str]:
         """Check Docker installation"""
         try:
             result = subprocess.run(
-                ["docker", "--version"],
-                capture_output=True,
-                text=True,
-                timeout=10
+                ["docker", "--version"], capture_output=True, text=True, timeout=10
             )
             if result.returncode == 0:
                 version = result.stdout.strip()
@@ -80,10 +80,7 @@ class SystemChecker:
         """Check PostgreSQL installation"""
         try:
             result = subprocess.run(
-                ["psql", "--version"],
-                capture_output=True,
-                text=True,
-                timeout=10
+                ["psql", "--version"], capture_output=True, text=True, timeout=10
             )
             if result.returncode == 0:
                 version = result.stdout.strip()
@@ -97,13 +94,10 @@ class SystemChecker:
         """Check Tesseract OCR installation"""
         try:
             result = subprocess.run(
-                ["tesseract", "--version"],
-                capture_output=True,
-                text=True,
-                timeout=10
+                ["tesseract", "--version"], capture_output=True, text=True, timeout=10
             )
             if result.returncode == 0:
-                version = result.stdout.strip().split('\n')[0]
+                version = result.stdout.strip().split("\n")[0]
                 return True, f"Tesseract {version} ✓"
             else:
                 return False, "Tesseract OCR not found ✗"
@@ -113,12 +107,7 @@ class SystemChecker:
     def check_poppler(self) -> tuple[bool, str]:
         """Check Poppler installation (for pdf2image)"""
         try:
-            result = subprocess.run(
-                ["pdftoppm", "-v"],
-                capture_output=True,
-                text=True,
-                timeout=10
-            )
+            result = subprocess.run(["pdftoppm", "-v"], capture_output=True, text=True, timeout=10)
             if result.returncode == 0:
                 return True, "Poppler utilities ✓"
             else:
@@ -130,11 +119,11 @@ class SystemChecker:
         """Check available memory"""
         try:
             if platform.system() == "Linux":
-                with open('/proc/meminfo') as f:
+                with open("/proc/meminfo") as f:
                     meminfo = f.read()
 
-                mem_total = int(meminfo.split('MemTotal:')[1].split()[0])
-                mem_available = int(meminfo.split('MemAvailable:')[1].split()[0])
+                mem_total = int(meminfo.split("MemTotal:")[1].split()[0])
+                mem_available = int(meminfo.split("MemAvailable:")[1].split()[0])
 
                 # Convert to GB
                 mem_total / 1024 / 1024
@@ -147,10 +136,7 @@ class SystemChecker:
 
             elif platform.system() == "Darwin":  # macOS
                 result = subprocess.run(
-                    ["sysctl", "hw.memsize"],
-                    capture_output=True,
-                    text=True,
-                    timeout=10
+                    ["sysctl", "hw.memsize"], capture_output=True, text=True, timeout=10
                 )
                 if result.returncode == 0:
                     mem_bytes = int(result.stdout.strip().split()[1])
@@ -166,10 +152,10 @@ class SystemChecker:
                     ["wmic", "computersystem", "get", "TotalPhysicalMemory"],
                     capture_output=True,
                     text=True,
-                    timeout=10
+                    timeout=10,
                 )
                 if result.returncode == 0:
-                    mem_bytes = int(result.stdout.strip().split('\n')[1])
+                    mem_bytes = int(result.stdout.strip().split("\n")[1])
                     mem_gb = mem_bytes / 1024 / 1024 / 1024
 
                     if mem_gb >= 16:
@@ -186,6 +172,7 @@ class SystemChecker:
         """Check available disk space"""
         try:
             import shutil
+
             total, used, free = shutil.disk_usage("/")
 
             # Convert to GB
@@ -208,7 +195,7 @@ class SystemChecker:
             "Tesseract OCR": self.check_tesseract(),
             "Poppler": self.check_poppler(),
             "Memory": self.check_memory(),
-            "Disk Space": self.check_disk_space()
+            "Disk Space": self.check_disk_space(),
         }
 
         self.checks = checks
@@ -216,12 +203,14 @@ class SystemChecker:
 
     def print_results(self):
         """Print check results"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("🔍 System Requirements Check")
-        print("="*60)
+        print("=" * 60)
 
         print(f"Platform: {self.system_info['platform']} {self.system_info['platform_version']}")
-        print(f"Python: {self.system_info['python_version'].major}.{self.system_info['python_version'].minor}.{self.system_info['python_version'].micro}")
+        print(
+            f"Python: {self.system_info['python_version'].major}.{self.system_info['python_version'].minor}.{self.system_info['python_version'].micro}"
+        )
         print(f"Architecture: {self.system_info['architecture'][0]}")
 
         print("\n📋 Requirements Status:")
@@ -281,7 +270,7 @@ class DependencyInstaller:
                 "requests>=2.31.0",
                 "aiohttp>=3.8.0",
                 "pytest>=7.0.0",
-                "pytest-asyncio>=0.20.0"
+                "pytest-asyncio>=0.20.0",
             ]
 
             # Install OpenTelemetry
@@ -289,7 +278,7 @@ class DependencyInstaller:
                 "opentelemetry-api>=1.15.0",
                 "opentelemetry-sdk>=1.15.0",
                 "opentelemetry-instrumentation-fastapi>=0.36b0",
-                "opentelemetry-instrumentation-requests>=0.36b0"
+                "opentelemetry-instrumentation-requests>=0.36b0",
             ]
 
             # Install LangChain ecosystem
@@ -297,22 +286,18 @@ class DependencyInstaller:
                 "langchain>=0.0.300",
                 "langchain-core>=0.1.0",
                 "langsmith>=0.1.0",
-                "langfuse>=0.0.70"
+                "langfuse>=0.0.70",
             ]
 
             # Install OpenRouter
-            openrouter_deps = [
-                "openrouter-sdk>=0.1.0"
-            ]
+            openrouter_deps = ["openrouter-sdk>=0.1.0"]
 
             all_deps = core_deps + otel_deps + langchain_deps + openrouter_deps
 
             for dep in all_deps:
                 self._log(f"Installing {dep}...")
                 result = subprocess.run(
-                    [sys.executable, "-m", "pip", "install", dep],
-                    capture_output=True,
-                    text=True
+                    [sys.executable, "-m", "pip", "install", dep], capture_output=True, text=True
                 )
 
                 if result.returncode != 0:
@@ -327,7 +312,7 @@ class DependencyInstaller:
             result = subprocess.run(
                 [sys.executable, "-m", "spacy", "download", "en_core_web_lg"],
                 capture_output=True,
-                text=True
+                text=True,
             )
 
             if result.returncode != 0:
@@ -387,28 +372,23 @@ class DependencyInstaller:
                 "tesseract-ocr-eng",
                 "poppler-utils",
                 "postgresql",
-                "postgresql-contrib"
+                "postgresql-contrib",
             ],
             "yum": [
                 "tesseract",
                 "tesseract-langpack-eng",
                 "poppler-utils",
                 "postgresql-server",
-                "postgresql-contrib"
+                "postgresql-contrib",
             ],
             "dnf": [
                 "tesseract",
                 "tesseract-langpack-eng",
                 "poppler-utils",
                 "postgresql-server",
-                "postgresql-contrib"
+                "postgresql-contrib",
             ],
-            "pacman": [
-                "tesseract",
-                "tesseract-data-eng",
-                "poppler",
-                "postgresql"
-            ]
+            "pacman": ["tesseract", "tesseract-data-eng", "poppler", "postgresql"],
         }
 
         if pkg_manager not in deps:
@@ -419,9 +399,7 @@ class DependencyInstaller:
         for dep in deps[pkg_manager]:
             self._log(f"Installing {dep}...")
             result = subprocess.run(
-                [pkg_manager, "install", "-y", dep],
-                capture_output=True,
-                text=True
+                [pkg_manager, "install", "-y", dep], capture_output=True, text=True
             )
 
             if result.returncode != 0:
@@ -446,11 +424,7 @@ class DependencyInstaller:
 
         for dep in deps:
             self._log(f"Installing {dep}...")
-            result = subprocess.run(
-                ["brew", "install", dep],
-                capture_output=True,
-                text=True
-            )
+            result = subprocess.run(["brew", "install", dep], capture_output=True, text=True)
 
             if result.returncode != 0:
                 print(f"⚠️  Warning: Failed to install {dep}")
@@ -485,9 +459,7 @@ class DependencyInstaller:
 
             # Create virtual environment
             result = subprocess.run(
-                [sys.executable, "-m", "venv", ".venv"],
-                capture_output=True,
-                text=True
+                [sys.executable, "-m", "venv", ".venv"], capture_output=True, text=True
             )
 
             if result.returncode != 0:
@@ -502,9 +474,7 @@ class DependencyInstaller:
 
             # Install requirements in virtual environment
             result = subprocess.run(
-                [pip_script, "install", "--upgrade", "pip"],
-                capture_output=True,
-                text=True
+                [pip_script, "install", "--upgrade", "pip"], capture_output=True, text=True
             )
 
             if result.returncode != 0:
@@ -841,44 +811,24 @@ datasources:
 
 def main():
     """Main setup function"""
-    parser = argparse.ArgumentParser(
-        description="Epstein Files Project - Automated Setup Script"
-    )
+    parser = argparse.ArgumentParser(description="Epstein Files Project - Automated Setup Script")
 
     parser.add_argument(
-        "--check-only",
-        action="store_true",
-        help="Only check requirements, don't install"
+        "--check-only", action="store_true", help="Only check requirements, don't install"
     )
 
-    parser.add_argument(
-        "--install-deps",
-        action="store_true",
-        help="Install Python dependencies"
-    )
+    parser.add_argument("--install-deps", action="store_true", help="Install Python dependencies")
+
+    parser.add_argument("--install-system", action="store_true", help="Install system dependencies")
 
     parser.add_argument(
-        "--install-system",
-        action="store_true",
-        help="Install system dependencies"
+        "--install-all", action="store_true", help="Install all dependencies (default)"
     )
 
-    parser.add_argument(
-        "--install-all",
-        action="store_true",
-        help="Install all dependencies (default)"
-    )
+    parser.add_argument("--verbose", action="store_true", help="Verbose output")
 
     parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Verbose output"
-    )
-
-    parser.add_argument(
-        "--force",
-        action="store_true",
-        help="Force installation even if requirements are met"
+        "--force", action="store_true", help="Force installation even if requirements are met"
     )
 
     args = parser.parse_args()
@@ -888,7 +838,7 @@ def main():
         args.install_all = True
 
     print("🚀 Epstein Files Project - Automated Setup")
-    print("="*60)
+    print("=" * 60)
 
     # Step 1: Check system requirements
     print("\n🔍 Checking system requirements...")
@@ -942,9 +892,9 @@ def main():
         return 1
 
     # Step 4: Final instructions
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🎉 Setup Complete!")
-    print("="*60)
+    print("=" * 60)
 
     print("\n📋 Next Steps:")
     print("1. Review and update .env file with your configuration")

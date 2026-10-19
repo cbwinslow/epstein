@@ -1,4 +1,5 @@
 """Simple async client that wraps the MultiAgentOrchestrator to provide a stable API for the TUI."""
+
 from __future__ import annotations
 
 import asyncio

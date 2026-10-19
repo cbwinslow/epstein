@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 class OCRStatus(Enum):
     """Status of OCR processing"""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -37,6 +38,7 @@ class OCRStatus(Enum):
 
 class OCRQuality(Enum):
     """Quality assessment of OCR output"""
+
     EXCELLENT = "excellent"  # >95% confidence
     GOOD = "good"  # 80-95% confidence
     ACCEPTABLE = "acceptable"  # 60-80% confidence
@@ -47,6 +49,7 @@ class OCRQuality(Enum):
 @dataclass
 class OCRMetrics:
     """Metrics for OCR processing"""
+
     start_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     end_time: datetime | None = None
     duration_seconds: float = 0.0
@@ -84,6 +87,7 @@ class OCRMetrics:
 @dataclass
 class OCRTask:
     """Represents an OCR processing task"""
+
     input_path: Path
     output_path: Path
     text_output_path: Path | None = None
@@ -132,7 +136,7 @@ class OCRProcessor:
         max_workers: int = 2,
         max_retries: int = 3,
         quality_threshold: OCRQuality = OCRQuality.ACCEPTABLE,
-        skip_existing: bool = True
+        skip_existing: bool = True,
     ):
         """
         Initialize OCR processor
@@ -175,12 +179,7 @@ class OCRProcessor:
 
         for tool in required_tools:
             try:
-                subprocess.run(
-                    [tool, "--version"],
-                    capture_output=True,
-                    check=True,
-                    timeout=5
-                )
+                subprocess.run([tool, "--version"], capture_output=True, check=True, timeout=5)
             except (subprocess.SubprocessError, FileNotFoundError):
                 missing_tools.append(tool)
 
@@ -233,10 +232,7 @@ class OCRProcessor:
             Tuple of (has_text, character_count)
         """
         try:
-            text = pdfminer.high_level.extract_text(
-                str(pdf_path),
-                laparams=LAParams()
-            )
+            text = pdfminer.high_level.extract_text(str(pdf_path), laparams=LAParams())
 
             # Count non-whitespace characters
             text_chars = len([c for c in text if not c.isspace()])
@@ -261,10 +257,7 @@ class OCRProcessor:
             Tuple of (success, extracted_text, error_message)
         """
         try:
-            text = pdfminer.high_level.extract_text(
-                str(pdf_path),
-                laparams=LAParams()
-            )
+            text = pdfminer.high_level.extract_text(str(pdf_path), laparams=LAParams())
 
             return True, text, None
 
@@ -321,9 +314,7 @@ class OCRProcessor:
         # Determine quality level
         quality = OCRQuality.FAILED
         for qual, threshold in sorted(
-            self.QUALITY_THRESHOLDS.items(),
-            key=lambda x: x[1],
-            reverse=True
+            self.QUALITY_THRESHOLDS.items(), key=lambda x: x[1], reverse=True
         ):
             if confidence >= threshold:
                 quality = qual
@@ -365,6 +356,7 @@ class OCRProcessor:
                 # Just copy the file
                 task.output_path.parent.mkdir(parents=True, exist_ok=True)
                 import shutil
+
                 shutil.copy2(task.input_path, task.output_path)
                 task.status = OCRStatus.SKIPPED
                 task.metadata["already_searchable"] = True
@@ -376,9 +368,12 @@ class OCRProcessor:
 
                 cmd = [
                     "ocrmypdf",
-                    "--language", self.tesseract_lang,
-                    "--output-type", "pdf",
-                    "--optimize", "1",
+                    "--language",
+                    self.tesseract_lang,
+                    "--output-type",
+                    "pdf",
+                    "--optimize",
+                    "1",
                     "--skip-text",  # Skip pages that already have text
                     "--force-ocr",  # Force OCR on pages without text
                     str(task.input_path),
@@ -386,10 +381,7 @@ class OCRProcessor:
                 ]
 
                 result = subprocess.run(
-                    cmd,
-                    capture_output=True,
-                    text=True,
-                    timeout=600  # 10 minute timeout
+                    cmd, capture_output=True, text=True, timeout=600  # 10 minute timeout
                 )
 
                 if result.returncode != 0:
@@ -496,9 +488,7 @@ class OCRProcessor:
         return False, last_error
 
     def process_batch(
-        self,
-        task_ids: list[str] | None = None,
-        parallel: bool = True
+        self, task_ids: list[str] | None = None, parallel: bool = True
     ) -> dict[str, tuple[bool, str | None]]:
         """
         Process multiple OCR tasks
@@ -514,13 +504,12 @@ class OCRProcessor:
         results = {}
 
         if parallel and self.max_workers > 1:
-            logger.info(f"Processing {len(task_ids)} tasks in parallel (workers={self.max_workers})")
+            logger.info(
+                f"Processing {len(task_ids)} tasks in parallel (workers={self.max_workers})"
+            )
 
             with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
-                futures = {
-                    executor.submit(self.run_ocr_with_retry, tid): tid
-                    for tid in task_ids
-                }
+                futures = {executor.submit(self.run_ocr_with_retry, tid): tid for tid in task_ids}
 
                 for future in as_completed(futures):
                     task_id = futures[future]
@@ -563,8 +552,12 @@ class OCRProcessor:
         total_text_words = 0
 
         if completed_tasks:
-            avg_duration = sum(t.metrics.duration_seconds for t in completed_tasks) / len(completed_tasks)
-            avg_confidence = sum(t.metrics.confidence_score for t in completed_tasks) / len(completed_tasks)
+            avg_duration = sum(t.metrics.duration_seconds for t in completed_tasks) / len(
+                completed_tasks
+            )
+            avg_confidence = sum(t.metrics.confidence_score for t in completed_tasks) / len(
+                completed_tasks
+            )
             total_text_chars = sum(t.metrics.text_extracted_chars for t in completed_tasks)
             total_text_words = sum(t.metrics.text_extracted_words for t in completed_tasks)
 
@@ -586,10 +579,7 @@ class OCRProcessor:
     def _save_metrics(self, task: OCRTask) -> None:
         """Save task metrics to file"""
         try:
-            record = {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "task": task.to_dict()
-            }
+            record = {"timestamp": datetime.now(timezone.utc).isoformat(), "task": task.to_dict()}
 
             with open(self.metrics_file, "a") as f:
                 f.write(json.dumps(record) + "\n")
