@@ -28,6 +28,7 @@ from pathlib import Path
 @dataclass
 class VerificationResult:
     """Result of verifying a single file"""
+
     filepath: str
     exists: bool
     size_bytes: int
@@ -50,16 +51,19 @@ class VerificationResult:
     @property
     def is_valid(self) -> bool:
         """Check if file passed all verifications"""
-        return (self.exists and
-                self.size_matches and
-                self.checksum_matches and
-                (self.is_valid_zip is None or self.is_valid_zip) and
-                len(self.errors) == 0)
+        return (
+            self.exists
+            and self.size_matches
+            and self.checksum_matches
+            and (self.is_valid_zip is None or self.is_valid_zip)
+            and len(self.errors) == 0
+        )
 
 
 @dataclass
 class VerificationReport:
     """Overall verification report"""
+
     total_files: int
     verified: int
     failed: int
@@ -88,7 +92,7 @@ def compute_sha256(filepath: Path, chunk_size: int = 8 * 1024 * 1024) -> str:
     """
     hasher = hashlib.sha256()
     try:
-        with filepath.open('rb') as f:
+        with filepath.open("rb") as f:
             while True:
                 chunk = f.read(chunk_size)
                 if not chunk:
@@ -111,7 +115,7 @@ def verify_zip_integrity(filepath: Path) -> tuple[bool, str | None]:
         Tuple of (is_valid, error_message)
     """
     try:
-        with zipfile.ZipFile(filepath, 'r') as zf:
+        with zipfile.ZipFile(filepath, "r") as zf:
             # Test all members
             corrupt_member = zf.testzip()
             if corrupt_member is not None:
@@ -128,7 +132,7 @@ def verify_file(
     expected_size: int | None = None,
     expected_sha256: str | None = None,
     verify_zip: bool = True,
-    verbose: bool = False
+    verbose: bool = False,
 ) -> VerificationResult:
     """
     Verify a single file.
@@ -143,11 +147,7 @@ def verify_file(
     Returns:
         VerificationResult object
     """
-    result = VerificationResult(
-        filepath=str(filepath),
-        exists=False,
-        size_bytes=0
-    )
+    result = VerificationResult(filepath=str(filepath), exists=False, size_bytes=0)
 
     # Check existence
     if not filepath.exists():
@@ -164,7 +164,7 @@ def verify_file(
         result.expected_size = expected_size
 
         if expected_size is not None:
-            result.size_matches = (result.size_bytes == expected_size)
+            result.size_matches = result.size_bytes == expected_size
             if not result.size_matches:
                 result.errors.append(
                     f"Size mismatch: got {result.size_bytes}, expected {expected_size}"
@@ -184,7 +184,7 @@ def verify_file(
     result.expected_sha256 = expected_sha256
 
     if result.sha256 and expected_sha256:
-        result.checksum_matches = (result.sha256.lower() == expected_sha256.lower())
+        result.checksum_matches = result.sha256.lower() == expected_sha256.lower()
         if not result.checksum_matches:
             result.errors.append("SHA-256 checksum mismatch")
             if verbose:
@@ -195,7 +195,7 @@ def verify_file(
             print(f"❌ {filepath.name}: Failed to compute checksum")
 
     # Verify ZIP integrity if applicable
-    if verify_zip and filepath.suffix.lower() == '.zip':
+    if verify_zip and filepath.suffix.lower() == ".zip":
         if verbose:
             print(f"📦 {filepath.name}: Verifying ZIP integrity...")
 
@@ -227,7 +227,7 @@ def load_manifest(manifest_path: Path) -> list[dict]:
     """
     entries = []
     try:
-        with manifest_path.open('r', encoding='utf-8') as f:
+        with manifest_path.open("r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if line:
@@ -238,10 +238,7 @@ def load_manifest(manifest_path: Path) -> list[dict]:
 
 
 def verify_directory(
-    directory: Path,
-    recursive: bool = True,
-    verify_zip: bool = True,
-    verbose: bool = False
+    directory: Path, recursive: bool = True, verify_zip: bool = True, verbose: bool = False
 ) -> VerificationReport:
     """
     Verify all files in a directory.
@@ -265,14 +262,14 @@ def verify_directory(
             checksum_mismatches=0,
             size_mismatches=0,
             corrupted_zips=0,
-            results=[]
+            results=[],
         )
 
     # Find all files
     if recursive:
-        files = [f for f in directory.rglob('*') if f.is_file()]
+        files = [f for f in directory.rglob("*") if f.is_file()]
     else:
-        files = [f for f in directory.glob('*') if f.is_file()]
+        files = [f for f in directory.glob("*") if f.is_file()]
 
     if verbose:
         print(f"📂 Found {len(files)} file(s) in {directory}")
@@ -291,7 +288,7 @@ def verify_from_manifest(
     manifest_path: Path,
     base_dir: Path | None = None,
     verify_zip: bool = True,
-    verbose: bool = False
+    verbose: bool = False,
 ) -> VerificationReport:
     """
     Verify files listed in a manifest.
@@ -317,7 +314,7 @@ def verify_from_manifest(
             checksum_mismatches=0,
             size_mismatches=0,
             corrupted_zips=0,
-            results=[]
+            results=[],
         )
 
     if verbose:
@@ -325,22 +322,22 @@ def verify_from_manifest(
 
     results = []
     for entry in entries:
-        dest = entry.get('dest', '')
+        dest = entry.get("dest", "")
         filepath = Path(dest)
 
         # Handle relative paths
         if base_dir and not filepath.is_absolute():
             filepath = base_dir / filepath
 
-        expected_size = entry.get('bytes')
-        expected_sha256 = entry.get('sha256')
+        expected_size = entry.get("bytes")
+        expected_sha256 = entry.get("sha256")
 
         result = verify_file(
             filepath,
             expected_size=expected_size,
             expected_sha256=expected_sha256,
             verify_zip=verify_zip,
-            verbose=verbose
+            verbose=verbose,
         )
         results.append(result)
 
@@ -374,7 +371,7 @@ def generate_report(results: list[VerificationResult]) -> VerificationReport:
         checksum_mismatches=checksum_mismatches,
         size_mismatches=size_mismatches,
         corrupted_zips=corrupted_zips,
-        results=results
+        results=results,
     )
 
 
@@ -448,7 +445,7 @@ def save_report(report: VerificationReport, output_path: Path):
 
         report_dict = asdict(report)
 
-        with output_path.open('w', encoding='utf-8') as f:
+        with output_path.open("w", encoding="utf-8") as f:
             json.dump(report_dict, f, indent=2, ensure_ascii=False)
 
         print(f"\n💾 Report saved to: {output_path}")
@@ -473,66 +470,50 @@ Examples:
 
   # Skip ZIP integrity checks
   python scripts/verify_downloads.py --dir ./downloads --no-verify-zip
-        """
+        """,
     )
 
+    parser.add_argument("--dir", type=Path, help="Directory containing files to verify")
     parser.add_argument(
-        '--dir',
-        type=Path,
-        help='Directory containing files to verify'
+        "--manifest", type=Path, help="Manifest file (JSONL format) containing file metadata"
     )
     parser.add_argument(
-        '--manifest',
-        type=Path,
-        help='Manifest file (JSONL format) containing file metadata'
+        "--base-dir", type=Path, help="Base directory for resolving relative paths in manifest"
     )
     parser.add_argument(
-        '--base-dir',
-        type=Path,
-        help='Base directory for resolving relative paths in manifest'
-    )
-    parser.add_argument(
-        '--recursive',
-        action='store_true',
+        "--recursive",
+        action="store_true",
         default=True,
-        help='Recursively verify subdirectories (default: True)'
+        help="Recursively verify subdirectories (default: True)",
     )
     parser.add_argument(
-        '--no-recursive',
-        dest='recursive',
-        action='store_false',
-        help='Do not recursively verify subdirectories'
+        "--no-recursive",
+        dest="recursive",
+        action="store_false",
+        help="Do not recursively verify subdirectories",
     )
     parser.add_argument(
-        '--verify-zip',
-        action='store_true',
+        "--verify-zip",
+        action="store_true",
         default=True,
-        help='Verify ZIP file integrity (default: True)'
+        help="Verify ZIP file integrity (default: True)",
     )
     parser.add_argument(
-        '--no-verify-zip',
-        dest='verify_zip',
-        action='store_false',
-        help='Skip ZIP file integrity verification'
+        "--no-verify-zip",
+        dest="verify_zip",
+        action="store_false",
+        help="Skip ZIP file integrity verification",
     )
     parser.add_argument(
-        '--verbose',
-        '-v',
-        action='store_true',
-        help='Print verbose output during verification'
+        "--verbose", "-v", action="store_true", help="Print verbose output during verification"
     )
     parser.add_argument(
-        '--detailed',
-        '-d',
-        action='store_true',
-        help='Print detailed results for each file in report'
+        "--detailed",
+        "-d",
+        action="store_true",
+        help="Print detailed results for each file in report",
     )
-    parser.add_argument(
-        '--report',
-        '-r',
-        type=Path,
-        help='Save verification report to JSON file'
-    )
+    parser.add_argument("--report", "-r", type=Path, help="Save verification report to JSON file")
 
     args = parser.parse_args()
 
@@ -547,18 +528,12 @@ Examples:
     if args.dir:
         print(f"🔍 Verifying directory: {args.dir}")
         report = verify_directory(
-            args.dir,
-            recursive=args.recursive,
-            verify_zip=args.verify_zip,
-            verbose=args.verbose
+            args.dir, recursive=args.recursive, verify_zip=args.verify_zip, verbose=args.verbose
         )
     else:
         print(f"🔍 Verifying from manifest: {args.manifest}")
         report = verify_from_manifest(
-            args.manifest,
-            base_dir=args.base_dir,
-            verify_zip=args.verify_zip,
-            verbose=args.verbose
+            args.manifest, base_dir=args.base_dir, verify_zip=args.verify_zip, verbose=args.verbose
         )
 
     # Print report
@@ -572,5 +547,5 @@ Examples:
     sys.exit(0 if report.failed == 0 else 1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
