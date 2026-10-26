@@ -16,6 +16,7 @@ import psutil
 
 class TaskStatus(Enum):
     """Task execution status"""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -25,6 +26,7 @@ class TaskStatus(Enum):
 
 class PipelineHealth(Enum):
     """Pipeline health status"""
+
     HEALTHY = "healthy"
     WARNING = "warning"
     CRITICAL = "critical"
@@ -34,6 +36,7 @@ class PipelineHealth(Enum):
 @dataclass
 class TaskInfo:
     """Information about a pipeline task"""
+
     task_id: str
     task_name: str
     status: TaskStatus
@@ -48,6 +51,7 @@ class TaskInfo:
 @dataclass
 class PipelineMetrics:
     """Pipeline performance metrics"""
+
     total_tasks: int
     completed_tasks: int
     failed_tasks: int
@@ -75,21 +79,24 @@ class PipelineMonitor:
             average_duration=0.0,
             success_rate=0.0,
             throughput=0.0,
-            last_updated=datetime.now()
+            last_updated=datetime.now(),
         )
 
         # Configuration
-        self.health_check_interval = self.config.get('health_check_interval', 60)
-        self.task_timeout = self.config.get('task_timeout', 3600)  # 1 hour
-        self.max_concurrent_tasks = self.config.get('max_concurrent_tasks', 10)
-        self.enable_resource_monitoring = self.config.get('enable_resource_monitoring', True)
-        self.alert_thresholds = self.config.get('alert_thresholds', {
-            'cpu_usage': 80.0,
-            'memory_usage': 85.0,
-            'disk_usage': 90.0,
-            'task_failure_rate': 0.1,
-            'task_duration': 300.0  # 5 minutes
-        })
+        self.health_check_interval = self.config.get("health_check_interval", 60)
+        self.task_timeout = self.config.get("task_timeout", 3600)  # 1 hour
+        self.max_concurrent_tasks = self.config.get("max_concurrent_tasks", 10)
+        self.enable_resource_monitoring = self.config.get("enable_resource_monitoring", True)
+        self.alert_thresholds = self.config.get(
+            "alert_thresholds",
+            {
+                "cpu_usage": 80.0,
+                "memory_usage": 85.0,
+                "disk_usage": 90.0,
+                "task_failure_rate": 0.1,
+                "task_duration": 300.0,  # 5 minutes
+            },
+        )
 
         # Alerting
         self.alerts = []
@@ -113,7 +120,9 @@ class PipelineMonitor:
             health_score = self._calculate_health_score(resource_usage, task_analysis)
 
             # Determine overall health status
-            health_status = self._determine_health_status(health_score, resource_usage, task_analysis)
+            health_status = self._determine_health_status(
+                health_score, resource_usage, task_analysis
+            )
 
             # Generate recommendations
             recommendations = self._generate_health_recommendations(resource_usage, task_analysis)
@@ -138,9 +147,9 @@ class PipelineMonitor:
                     "running_tasks": self.metrics.running_tasks,
                     "success_rate": self.metrics.success_rate,
                     "average_duration": self.metrics.average_duration,
-                    "throughput": self.metrics.throughput
+                    "throughput": self.metrics.throughput,
                 },
-                "check_timestamp": datetime.now().isoformat()
+                "check_timestamp": datetime.now().isoformat(),
             }
 
             # Store health history
@@ -170,7 +179,7 @@ class PipelineMonitor:
                 task_id=task_id,
                 task_name=task_name,
                 status=TaskStatus.RUNNING,
-                start_time=datetime.now()
+                start_time=datetime.now(),
             )
 
             self.tasks[task_id] = task_info
@@ -190,7 +199,7 @@ class PipelineMonitor:
                 "duration": task_info.duration,
                 "progress": task_info.progress,
                 "resource_usage": task_info.resource_usage,
-                "monitoring_timestamp": datetime.now().isoformat()
+                "monitoring_timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
@@ -209,11 +218,21 @@ class PipelineMonitor:
 
             # Extract trends from health history
             trends = {
-                "cpu_usage_trend": self._calculate_trend([h['resource_usage']['cpu_usage'] for h in self.health_history]),
-                "memory_usage_trend": self._calculate_trend([h['resource_usage']['memory_usage'] for h in self.health_history]),
-                "task_success_rate_trend": self._calculate_trend([h['metrics']['success_rate'] for h in self.health_history]),
-                "average_duration_trend": self._calculate_trend([h['metrics']['average_duration'] for h in self.health_history]),
-                "throughput_trend": self._calculate_trend([h['metrics']['throughput'] for h in self.health_history])
+                "cpu_usage_trend": self._calculate_trend(
+                    [h["resource_usage"]["cpu_usage"] for h in self.health_history]
+                ),
+                "memory_usage_trend": self._calculate_trend(
+                    [h["resource_usage"]["memory_usage"] for h in self.health_history]
+                ),
+                "task_success_rate_trend": self._calculate_trend(
+                    [h["metrics"]["success_rate"] for h in self.health_history]
+                ),
+                "average_duration_trend": self._calculate_trend(
+                    [h["metrics"]["average_duration"] for h in self.health_history]
+                ),
+                "throughput_trend": self._calculate_trend(
+                    [h["metrics"]["throughput"] for h in self.health_history]
+                ),
             }
 
             # Identify anomalies
@@ -227,7 +246,7 @@ class PipelineMonitor:
                 "anomalies": anomalies,
                 "recommendations": recommendations,
                 "analysis_period": f"{len(self.health_history)} health checks",
-                "analysis_timestamp": datetime.now().isoformat()
+                "analysis_timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
@@ -264,7 +283,7 @@ class PipelineMonitor:
                 "resource_analysis": resource_analysis,
                 "optimization_plan": optimization_plan,
                 "estimated_impact": estimated_impact,
-                "optimization_timestamp": datetime.now().isoformat()
+                "optimization_timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
@@ -295,7 +314,7 @@ class PipelineMonitor:
             "progress": task_info.progress,
             "error_message": task_info.error_message,
             "resource_usage": task_info.resource_usage,
-            "status_timestamp": datetime.now().isoformat()
+            "status_timestamp": datetime.now().isoformat(),
         }
 
     def list_tasks(self, status: TaskStatus | None = None) -> list[dict[str, Any]]:
@@ -311,15 +330,19 @@ class PipelineMonitor:
         tasks = []
         for task_id, task_info in self.tasks.items():
             if status is None or task_info.status == status:
-                tasks.append({
-                    "task_id": task_id,
-                    "task_name": task_info.task_name,
-                    "status": task_info.status.value,
-                    "start_time": task_info.start_time.isoformat() if task_info.start_time else None,
-                    "end_time": task_info.end_time.isoformat() if task_info.end_time else None,
-                    "duration": task_info.duration,
-                    "progress": task_info.progress
-                })
+                tasks.append(
+                    {
+                        "task_id": task_id,
+                        "task_name": task_info.task_name,
+                        "status": task_info.status.value,
+                        "start_time": (
+                            task_info.start_time.isoformat() if task_info.start_time else None
+                        ),
+                        "end_time": task_info.end_time.isoformat() if task_info.end_time else None,
+                        "duration": task_info.duration,
+                        "progress": task_info.progress,
+                    }
+                )
 
         return tasks
 
@@ -328,7 +351,7 @@ class PipelineMonitor:
         try:
             cpu_usage = psutil.cpu_percent(interval=1)
             memory = psutil.virtual_memory()
-            disk = psutil.disk_usage('/')
+            disk = psutil.disk_usage("/")
 
             return {
                 "cpu_usage": cpu_usage,
@@ -336,7 +359,7 @@ class PipelineMonitor:
                 "memory_available_gb": memory.available / (1024**3),
                 "disk_usage": disk.percent,
                 "disk_free_gb": disk.free / (1024**3),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
         except Exception as e:
             self.logger.error(f"Failed to get resource usage: {e}")
@@ -346,20 +369,27 @@ class PipelineMonitor:
                 "memory_available_gb": 0.0,
                 "disk_usage": 0.0,
                 "disk_free_gb": 0.0,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
     def _analyze_task_status(self) -> dict[str, Any]:
         """Analyze current task status"""
         total_tasks = len(self.tasks)
-        completed_tasks = sum(1 for task in self.tasks.values() if task.status == TaskStatus.COMPLETED)
+        completed_tasks = sum(
+            1 for task in self.tasks.values() if task.status == TaskStatus.COMPLETED
+        )
         failed_tasks = sum(1 for task in self.tasks.values() if task.status == TaskStatus.FAILED)
         running_tasks = sum(1 for task in self.tasks.values() if task.status == TaskStatus.RUNNING)
 
         # Calculate average duration for completed tasks
-        completed_durations = [task.duration for task in self.tasks.values()
-                             if task.status == TaskStatus.COMPLETED and task.duration]
-        average_duration = sum(completed_durations) / len(completed_durations) if completed_durations else 0.0
+        completed_durations = [
+            task.duration
+            for task in self.tasks.values()
+            if task.status == TaskStatus.COMPLETED and task.duration
+        ]
+        average_duration = (
+            sum(completed_durations) / len(completed_durations) if completed_durations else 0.0
+        )
 
         # Calculate success rate
         success_rate = completed_tasks / total_tasks if total_tasks > 0 else 0.0
@@ -371,35 +401,44 @@ class PipelineMonitor:
             "running_tasks": running_tasks,
             "average_duration": average_duration,
             "success_rate": success_rate,
-            "pending_tasks": total_tasks - completed_tasks - failed_tasks - running_tasks
+            "pending_tasks": total_tasks - completed_tasks - failed_tasks - running_tasks,
         }
 
-    def _calculate_health_score(self, resource_usage: dict[str, Any],
-                              task_analysis: dict[str, Any]) -> float:
+    def _calculate_health_score(
+        self, resource_usage: dict[str, Any], task_analysis: dict[str, Any]
+    ) -> float:
         """Calculate overall pipeline health score (0-100)"""
         score = 100.0
 
         # Deduct points for resource issues
-        if resource_usage['cpu_usage'] > self.alert_thresholds['cpu_usage']:
-            score -= min((resource_usage['cpu_usage'] - self.alert_thresholds['cpu_usage']) * 2, 30)
+        if resource_usage["cpu_usage"] > self.alert_thresholds["cpu_usage"]:
+            score -= min((resource_usage["cpu_usage"] - self.alert_thresholds["cpu_usage"]) * 2, 30)
 
-        if resource_usage['memory_usage'] > self.alert_thresholds['memory_usage']:
-            score -= min((resource_usage['memory_usage'] - self.alert_thresholds['memory_usage']) * 2, 25)
+        if resource_usage["memory_usage"] > self.alert_thresholds["memory_usage"]:
+            score -= min(
+                (resource_usage["memory_usage"] - self.alert_thresholds["memory_usage"]) * 2, 25
+            )
 
-        if resource_usage['disk_usage'] > self.alert_thresholds['disk_usage']:
-            score -= min((resource_usage['disk_usage'] - self.alert_thresholds['disk_usage']) * 2, 20)
+        if resource_usage["disk_usage"] > self.alert_thresholds["disk_usage"]:
+            score -= min(
+                (resource_usage["disk_usage"] - self.alert_thresholds["disk_usage"]) * 2, 20
+            )
 
         # Deduct points for task issues
-        if task_analysis['success_rate'] < (1 - self.alert_thresholds['task_failure_rate']):
-            score -= min((1 - task_analysis['success_rate']) * 50, 40)
+        if task_analysis["success_rate"] < (1 - self.alert_thresholds["task_failure_rate"]):
+            score -= min((1 - task_analysis["success_rate"]) * 50, 40)
 
-        if task_analysis['average_duration'] > self.alert_thresholds['task_duration']:
-            score -= min((task_analysis['average_duration'] - self.alert_thresholds['task_duration']) * 0.1, 15)
+        if task_analysis["average_duration"] > self.alert_thresholds["task_duration"]:
+            score -= min(
+                (task_analysis["average_duration"] - self.alert_thresholds["task_duration"]) * 0.1,
+                15,
+            )
 
         return max(0.0, score)
 
-    def _determine_health_status(self, health_score: float, resource_usage: dict[str, Any],
-                               task_analysis: dict[str, Any]) -> PipelineHealth:
+    def _determine_health_status(
+        self, health_score: float, resource_usage: dict[str, Any], task_analysis: dict[str, Any]
+    ) -> PipelineHealth:
         """Determine overall pipeline health status"""
         if health_score >= 80:
             return PipelineHealth.HEALTHY
@@ -408,94 +447,112 @@ class PipelineMonitor:
         else:
             return PipelineHealth.CRITICAL
 
-    def _generate_health_recommendations(self, resource_usage: dict[str, Any],
-                                       task_analysis: dict[str, Any]) -> list[dict[str, Any]]:
+    def _generate_health_recommendations(
+        self, resource_usage: dict[str, Any], task_analysis: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Generate health-based recommendations"""
         recommendations = []
 
         # CPU recommendations
-        if resource_usage['cpu_usage'] > self.alert_thresholds['cpu_usage']:
-            recommendations.append({
-                "type": "resource",
-                "priority": "high",
-                "issue": f"High CPU usage ({resource_usage['cpu_usage']:.1f}%)",
-                "recommendation": "Consider scaling up resources or optimizing CPU-intensive tasks"
-            })
+        if resource_usage["cpu_usage"] > self.alert_thresholds["cpu_usage"]:
+            recommendations.append(
+                {
+                    "type": "resource",
+                    "priority": "high",
+                    "issue": f"High CPU usage ({resource_usage['cpu_usage']:.1f}%)",
+                    "recommendation": "Consider scaling up resources or optimizing CPU-intensive tasks",
+                }
+            )
 
         # Memory recommendations
-        if resource_usage['memory_usage'] > self.alert_thresholds['memory_usage']:
-            recommendations.append({
-                "type": "resource",
-                "priority": "high",
-                "issue": f"High memory usage ({resource_usage['memory_usage']:.1f}%)",
-                "recommendation": "Consider increasing memory or optimizing memory usage"
-            })
+        if resource_usage["memory_usage"] > self.alert_thresholds["memory_usage"]:
+            recommendations.append(
+                {
+                    "type": "resource",
+                    "priority": "high",
+                    "issue": f"High memory usage ({resource_usage['memory_usage']:.1f}%)",
+                    "recommendation": "Consider increasing memory or optimizing memory usage",
+                }
+            )
 
         # Task performance recommendations
-        if task_analysis['success_rate'] < 0.9:
-            recommendations.append({
-                "type": "task_performance",
-                "priority": "medium",
-                "issue": f"Low success rate ({task_analysis['success_rate']:.1%})",
-                "recommendation": "Investigate failed tasks and improve error handling"
-            })
+        if task_analysis["success_rate"] < 0.9:
+            recommendations.append(
+                {
+                    "type": "task_performance",
+                    "priority": "medium",
+                    "issue": f"Low success rate ({task_analysis['success_rate']:.1%})",
+                    "recommendation": "Investigate failed tasks and improve error handling",
+                }
+            )
 
-        if task_analysis['average_duration'] > self.alert_thresholds['task_duration']:
-            recommendations.append({
-                "type": "task_performance",
-                "priority": "medium",
-                "issue": f"High average task duration ({task_analysis['average_duration']:.1f}s)",
-                "recommendation": "Optimize task execution or increase parallelism"
-            })
+        if task_analysis["average_duration"] > self.alert_thresholds["task_duration"]:
+            recommendations.append(
+                {
+                    "type": "task_performance",
+                    "priority": "medium",
+                    "issue": f"High average task duration ({task_analysis['average_duration']:.1f}s)",
+                    "recommendation": "Optimize task execution or increase parallelism",
+                }
+            )
 
         return recommendations
 
-    def _check_alerts(self, resource_usage: dict[str, Any],
-                      task_analysis: dict[str, Any]) -> list[dict[str, Any]]:
+    def _check_alerts(
+        self, resource_usage: dict[str, Any], task_analysis: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Check for alerts based on thresholds"""
         alerts = []
 
         # CPU alert
-        if resource_usage['cpu_usage'] > self.alert_thresholds['cpu_usage']:
-            alerts.append({
-                "type": "cpu_usage",
-                "severity": "warning" if resource_usage['cpu_usage'] < 90 else "critical",
-                "message": f"CPU usage is {resource_usage['cpu_usage']:.1f}%",
-                "threshold": self.alert_thresholds['cpu_usage']
-            })
+        if resource_usage["cpu_usage"] > self.alert_thresholds["cpu_usage"]:
+            alerts.append(
+                {
+                    "type": "cpu_usage",
+                    "severity": "warning" if resource_usage["cpu_usage"] < 90 else "critical",
+                    "message": f"CPU usage is {resource_usage['cpu_usage']:.1f}%",
+                    "threshold": self.alert_thresholds["cpu_usage"],
+                }
+            )
 
         # Memory alert
-        if resource_usage['memory_usage'] > self.alert_thresholds['memory_usage']:
-            alerts.append({
-                "type": "memory_usage",
-                "severity": "warning" if resource_usage['memory_usage'] < 95 else "critical",
-                "message": f"Memory usage is {resource_usage['memory_usage']:.1f}%",
-                "threshold": self.alert_thresholds['memory_usage']
-            })
+        if resource_usage["memory_usage"] > self.alert_thresholds["memory_usage"]:
+            alerts.append(
+                {
+                    "type": "memory_usage",
+                    "severity": "warning" if resource_usage["memory_usage"] < 95 else "critical",
+                    "message": f"Memory usage is {resource_usage['memory_usage']:.1f}%",
+                    "threshold": self.alert_thresholds["memory_usage"],
+                }
+            )
 
         # Task failure rate alert
-        if task_analysis['success_rate'] < (1 - self.alert_thresholds['task_failure_rate']):
-            alerts.append({
-                "type": "task_failure_rate",
-                "severity": "warning" if task_analysis['success_rate'] > 0.8 else "critical",
-                "message": f"Task failure rate is {(1 - task_analysis['success_rate']):.1%}",
-                "threshold": self.alert_thresholds['task_failure_rate']
-            })
+        if task_analysis["success_rate"] < (1 - self.alert_thresholds["task_failure_rate"]):
+            alerts.append(
+                {
+                    "type": "task_failure_rate",
+                    "severity": "warning" if task_analysis["success_rate"] > 0.8 else "critical",
+                    "message": f"Task failure rate is {(1 - task_analysis['success_rate']):.1%}",
+                    "threshold": self.alert_thresholds["task_failure_rate"],
+                }
+            )
 
         return alerts
 
     def _update_metrics(self, task_analysis: dict[str, Any]):
         """Update pipeline metrics"""
-        self.metrics.total_tasks = task_analysis['total_tasks']
-        self.metrics.completed_tasks = task_analysis['completed_tasks']
-        self.metrics.failed_tasks = task_analysis['failed_tasks']
-        self.metrics.running_tasks = task_analysis['running_tasks']
-        self.metrics.average_duration = task_analysis['average_duration']
-        self.metrics.success_rate = task_analysis['success_rate']
+        self.metrics.total_tasks = task_analysis["total_tasks"]
+        self.metrics.completed_tasks = task_analysis["completed_tasks"]
+        self.metrics.failed_tasks = task_analysis["failed_tasks"]
+        self.metrics.running_tasks = task_analysis["running_tasks"]
+        self.metrics.average_duration = task_analysis["average_duration"]
+        self.metrics.success_rate = task_analysis["success_rate"]
 
         # Calculate throughput (tasks per minute)
         if self.metrics.completed_tasks > 0:
-            time_span = (datetime.now() - self.health_history[0]['check_timestamp']).total_seconds() / 60
+            time_span = (
+                datetime.now() - self.health_history[0]["check_timestamp"]
+            ).total_seconds() / 60
             self.metrics.throughput = self.metrics.completed_tasks / max(time_span, 1)
 
         self.metrics.last_updated = datetime.now()
@@ -508,16 +565,27 @@ class PipelineMonitor:
             self.metrics.failed_tasks += 1
 
         self.metrics.total_tasks = len(self.tasks)
-        self.metrics.running_tasks = sum(1 for task in self.tasks.values() if task.status == TaskStatus.RUNNING)
+        self.metrics.running_tasks = sum(
+            1 for task in self.tasks.values() if task.status == TaskStatus.RUNNING
+        )
 
         # Update average duration
-        completed_tasks = [task for task in self.tasks.values()
-                          if task.status == TaskStatus.COMPLETED and task.duration]
+        completed_tasks = [
+            task
+            for task in self.tasks.values()
+            if task.status == TaskStatus.COMPLETED and task.duration
+        ]
         if completed_tasks:
-            self.metrics.average_duration = sum(task.duration for task in completed_tasks) / len(completed_tasks)
+            self.metrics.average_duration = sum(task.duration for task in completed_tasks) / len(
+                completed_tasks
+            )
 
         # Update success rate
-        self.metrics.success_rate = self.metrics.completed_tasks / self.metrics.total_tasks if self.metrics.total_tasks > 0 else 0.0
+        self.metrics.success_rate = (
+            self.metrics.completed_tasks / self.metrics.total_tasks
+            if self.metrics.total_tasks > 0
+            else 0.0
+        )
 
     async def _simulate_task_execution(self, task_id: str):
         """Simulate task execution (for demonstration purposes)"""
@@ -574,7 +642,7 @@ class PipelineMonitor:
             "direction": "up" if slope > 0 else "down" if slope < 0 else "stable",
             "slope": slope,
             "current_value": values[-1],
-            "previous_value": values[-2] if len(values) > 1 else values[-1]
+            "previous_value": values[-2] if len(values) > 1 else values[-1],
         }
 
     def _identify_anomalies(self) -> list[dict[str, Any]]:
@@ -583,76 +651,91 @@ class PipelineMonitor:
 
         # Check for sudden changes in resource usage
         if len(self.health_history) >= 3:
-            recent_cpu = [h['resource_usage']['cpu_usage'] for h in self.health_history[-3:]]
+            recent_cpu = [h["resource_usage"]["cpu_usage"] for h in self.health_history[-3:]]
             if max(recent_cpu) - min(recent_cpu) > 20:  # 20% change
-                anomalies.append({
-                    "type": "cpu_spike",
-                    "severity": "medium",
-                    "description": "Sudden CPU usage spike detected",
-                    "values": recent_cpu
-                })
+                anomalies.append(
+                    {
+                        "type": "cpu_spike",
+                        "severity": "medium",
+                        "description": "Sudden CPU usage spike detected",
+                        "values": recent_cpu,
+                    }
+                )
 
         # Check for task failure rate anomalies
         if len(self.health_history) >= 3:
-            recent_success_rates = [h['metrics']['success_rate'] for h in self.health_history[-3:]]
+            recent_success_rates = [h["metrics"]["success_rate"] for h in self.health_history[-3:]]
             if min(recent_success_rates) < 0.8:  # Less than 80% success rate
-                anomalies.append({
-                    "type": "low_success_rate",
-                    "severity": "high",
-                    "description": "Consistently low task success rate",
-                    "values": [f"{rate:.1%}" for rate in recent_success_rates]
-                })
+                anomalies.append(
+                    {
+                        "type": "low_success_rate",
+                        "severity": "high",
+                        "description": "Consistently low task success rate",
+                        "values": [f"{rate:.1%}" for rate in recent_success_rates],
+                    }
+                )
 
         return anomalies
 
-    def _generate_performance_recommendations(self, trends: dict[str, Any],
-                                           anomalies: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _generate_performance_recommendations(
+        self, trends: dict[str, Any], anomalies: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Generate performance optimization recommendations"""
         recommendations = []
 
         # CPU trend recommendations
-        if trends['cpu_usage_trend']['trend'] == 'increasing':
-            recommendations.append({
-                "type": "cpu_optimization",
-                "priority": "high",
-                "issue": "CPU usage is trending upward",
-                "recommendation": "Consider optimizing CPU-intensive tasks or scaling resources"
-            })
+        if trends["cpu_usage_trend"]["trend"] == "increasing":
+            recommendations.append(
+                {
+                    "type": "cpu_optimization",
+                    "priority": "high",
+                    "issue": "CPU usage is trending upward",
+                    "recommendation": "Consider optimizing CPU-intensive tasks or scaling resources",
+                }
+            )
 
         # Memory trend recommendations
-        if trends['memory_usage_trend']['trend'] == 'increasing':
-            recommendations.append({
-                "type": "memory_optimization",
-                "priority": "medium",
-                "issue": "Memory usage is trending upward",
-                "recommendation": "Consider memory optimization or increasing available memory"
-            })
+        if trends["memory_usage_trend"]["trend"] == "increasing":
+            recommendations.append(
+                {
+                    "type": "memory_optimization",
+                    "priority": "medium",
+                    "issue": "Memory usage is trending upward",
+                    "recommendation": "Consider memory optimization or increasing available memory",
+                }
+            )
 
         # Task performance recommendations
-        if trends['task_success_rate_trend']['trend'] == 'decreasing':
-            recommendations.append({
-                "type": "task_reliability",
-                "priority": "high",
-                "issue": "Task success rate is decreasing",
-                "recommendation": "Improve error handling and task reliability"
-            })
+        if trends["task_success_rate_trend"]["trend"] == "decreasing":
+            recommendations.append(
+                {
+                    "type": "task_reliability",
+                    "priority": "high",
+                    "issue": "Task success rate is decreasing",
+                    "recommendation": "Improve error handling and task reliability",
+                }
+            )
 
         # Anomaly-based recommendations
         for anomaly in anomalies:
-            if anomaly['type'] == 'cpu_spike':
-                recommendations.append({
-                    "type": "resource_monitoring",
-                    "priority": "medium",
-                    "issue": "CPU usage spikes detected",
-                    "recommendation": "Implement CPU usage monitoring and alerting"
-                })
-            elif anomaly['type'] == 'low_success_rate':
-                recommendations.append({
-                    "type": "task_improvement",
-                    "priority": "high",
-                    "issue": "Low task success rate",
-                    "recommendation": "Investigate and fix failing tasks"
-                })
+            if anomaly["type"] == "cpu_spike":
+                recommendations.append(
+                    {
+                        "type": "resource_monitoring",
+                        "priority": "medium",
+                        "issue": "CPU usage spikes detected",
+                        "recommendation": "Implement CPU usage monitoring and alerting",
+                    }
+                )
+            elif anomaly["type"] == "low_success_rate":
+                recommendations.append(
+                    {
+                        "type": "task_improvement",
+                        "priority": "high",
+                        "issue": "Low task success rate",
+                        "recommendation": "Investigate and fix failing tasks",
+                    }
+                )
 
         return recommendations
 
@@ -662,30 +745,39 @@ class PipelineMonitor:
             return {"error": "Insufficient data for resource analysis"}
 
         # Calculate average resource usage
-        avg_cpu = sum(h['resource_usage']['cpu_usage'] for h in self.health_history) / len(self.health_history)
-        avg_memory = sum(h['resource_usage']['memory_usage'] for h in self.health_history) / len(self.health_history)
-        avg_disk = sum(h['resource_usage']['disk_usage'] for h in self.health_history) / len(self.health_history)
+        avg_cpu = sum(h["resource_usage"]["cpu_usage"] for h in self.health_history) / len(
+            self.health_history
+        )
+        avg_memory = sum(h["resource_usage"]["memory_usage"] for h in self.health_history) / len(
+            self.health_history
+        )
+        avg_disk = sum(h["resource_usage"]["disk_usage"] for h in self.health_history) / len(
+            self.health_history
+        )
 
         # Calculate resource efficiency
         resource_efficiency = {
             "cpu_efficiency": max(0, 100 - avg_cpu),
             "memory_efficiency": max(0, 100 - avg_memory),
             "disk_efficiency": max(0, 100 - avg_disk),
-            "overall_efficiency": (max(0, 100 - avg_cpu) + max(0, 100 - avg_memory) + max(0, 100 - avg_disk)) / 3
+            "overall_efficiency": (
+                max(0, 100 - avg_cpu) + max(0, 100 - avg_memory) + max(0, 100 - avg_disk)
+            )
+            / 3,
         }
 
         return {
-            "average_usage": {
-                "cpu": avg_cpu,
-                "memory": avg_memory,
-                "disk": avg_disk
-            },
+            "average_usage": {"cpu": avg_cpu, "memory": avg_memory, "disk": avg_disk},
             "efficiency": resource_efficiency,
-            "utilization_pattern": self._determine_utilization_pattern(avg_cpu, avg_memory, avg_disk),
-            "analysis_timestamp": datetime.now().isoformat()
+            "utilization_pattern": self._determine_utilization_pattern(
+                avg_cpu, avg_memory, avg_disk
+            ),
+            "analysis_timestamp": datetime.now().isoformat(),
         }
 
-    def _determine_utilization_pattern(self, avg_cpu: float, avg_memory: float, avg_disk: float) -> str:
+    def _determine_utilization_pattern(
+        self, avg_cpu: float, avg_memory: float, avg_disk: float
+    ) -> str:
         """Determine resource utilization pattern"""
         if avg_cpu > 80 and avg_memory > 80:
             return "high_utilization_bottleneck"
@@ -700,34 +792,37 @@ class PipelineMonitor:
         else:
             return "low_utilization"
 
-    def _generate_optimization_plan(self, health_result: dict[str, Any],
-                                  performance_result: dict[str, Any],
-                                  resource_analysis: dict[str, Any]) -> dict[str, Any]:
+    def _generate_optimization_plan(
+        self,
+        health_result: dict[str, Any],
+        performance_result: dict[str, Any],
+        resource_analysis: dict[str, Any],
+    ) -> dict[str, Any]:
         """Generate comprehensive optimization plan"""
         plan = {
             "immediate_actions": [],
             "short_term_actions": [],
             "long_term_actions": [],
             "resource_optimization": {},
-            "performance_optimization": {}
+            "performance_optimization": {},
         }
 
         # Immediate actions based on health status
-        if health_result['health_status'] == 'critical':
-            plan['immediate_actions'].append("Investigate critical health issues")
+        if health_result["health_status"] == "critical":
+            plan["immediate_actions"].append("Investigate critical health issues")
 
         # Resource optimization
-        if resource_analysis['utilization_pattern'] == 'high_utilization_bottleneck':
-            plan['resource_optimization']['cpu'] = "Scale up resources or optimize CPU usage"
-            plan['resource_optimization']['memory'] = "Increase memory or optimize memory usage"
-            plan['short_term_actions'].append("Implement resource scaling")
+        if resource_analysis["utilization_pattern"] == "high_utilization_bottleneck":
+            plan["resource_optimization"]["cpu"] = "Scale up resources or optimize CPU usage"
+            plan["resource_optimization"]["memory"] = "Increase memory or optimize memory usage"
+            plan["short_term_actions"].append("Implement resource scaling")
 
         # Performance optimization
-        if 'trends' in performance_result:
-            trends = performance_result['trends']
-            if trends['task_success_rate_trend']['trend'] == 'decreasing':
-                plan['performance_optimization']['reliability'] = "Improve task error handling"
-                plan['short_term_actions'].append("Enhance error handling mechanisms")
+        if "trends" in performance_result:
+            trends = performance_result["trends"]
+            if trends["task_success_rate_trend"]["trend"] == "decreasing":
+                plan["performance_optimization"]["reliability"] = "Improve task error handling"
+                plan["short_term_actions"].append("Enhance error handling mechanisms")
 
         return plan
 
@@ -737,19 +832,19 @@ class PipelineMonitor:
             "performance_improvement": "unknown",
             "resource_efficiency": "unknown",
             "reliability_improvement": "unknown",
-            "maintenance_reduction": "unknown"
+            "maintenance_reduction": "unknown",
         }
 
         # Estimate based on optimization plan
-        immediate_actions = len(optimization_plan.get('immediate_actions', []))
-        len(optimization_plan.get('short_term_actions', []))
+        immediate_actions = len(optimization_plan.get("immediate_actions", []))
+        len(optimization_plan.get("short_term_actions", []))
 
         if immediate_actions > 2:
-            impact['performance_improvement'] = "20-40%"
-            impact['resource_efficiency'] = "15-30%"
+            impact["performance_improvement"] = "20-40%"
+            impact["resource_efficiency"] = "15-30%"
         elif immediate_actions > 0:
-            impact['performance_improvement'] = "10-20%"
-            impact['resource_efficiency'] = "5-15%"
+            impact["performance_improvement"] = "10-20%"
+            impact["resource_efficiency"] = "5-15%"
 
         return impact
 
@@ -761,11 +856,8 @@ TOOLS = [
         "function": {
             "name": "monitor_pipeline_health",
             "description": "Perform comprehensive pipeline health check",
-            "parameters": {
-                "type": "object",
-                "properties": {}
-            }
-        }
+            "parameters": {"type": "object", "properties": {}},
+        },
     },
     {
         "type": "function",
@@ -775,40 +867,31 @@ TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "task_id": {
-                        "type": "string",
-                        "description": "Unique identifier for the task"
-                    },
+                    "task_id": {"type": "string", "description": "Unique identifier for the task"},
                     "task_name": {
                         "type": "string",
-                        "description": "Name of the task being monitored"
-                    }
+                        "description": "Name of the task being monitored",
+                    },
                 },
-                "required": ["task_id", "task_name"]
-            }
-        }
+                "required": ["task_id", "task_name"],
+            },
+        },
     },
     {
         "type": "function",
         "function": {
             "name": "analyze_performance_trends",
             "description": "Analyze performance trends and identify optimization opportunities",
-            "parameters": {
-                "type": "object",
-                "properties": {}
-            }
-        }
+            "parameters": {"type": "object", "properties": {}},
+        },
     },
     {
         "type": "function",
         "function": {
             "name": "optimize_pipeline_performance",
             "description": "Provide comprehensive pipeline optimization recommendations",
-            "parameters": {
-                "type": "object",
-                "properties": {}
-            }
-        }
+            "parameters": {"type": "object", "properties": {}},
+        },
     },
     {
         "type": "function",
@@ -818,14 +901,11 @@ TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "task_id": {
-                        "type": "string",
-                        "description": "Unique identifier for the task"
-                    }
+                    "task_id": {"type": "string", "description": "Unique identifier for the task"}
                 },
-                "required": ["task_id"]
-            }
-        }
+                "required": ["task_id"],
+            },
+        },
     },
     {
         "type": "function",
@@ -838,12 +918,12 @@ TOOLS = [
                     "status": {
                         "type": "string",
                         "description": "Optional status filter (pending, running, completed, failed, cancelled)",
-                        "enum": ["pending", "running", "completed", "failed", "cancelled"]
+                        "enum": ["pending", "running", "completed", "failed", "cancelled"],
                     }
-                }
-            }
-        }
-    }
+                },
+            },
+        },
+    },
 ]
 
 
@@ -858,9 +938,9 @@ AGENT_INFO = {
         "Performance trend analysis",
         "Resource utilization analysis",
         "Alert generation",
-        "Optimization recommendations"
+        "Optimization recommendations",
     ],
-    "tools": TOOLS
+    "tools": TOOLS,
 }
 
 

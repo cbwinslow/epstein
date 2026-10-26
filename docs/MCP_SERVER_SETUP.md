@@ -124,7 +124,7 @@ The server provides 8 MCP tools:
 The project requires integration with several key libraries:
 
 1. **OpenTelemetry** - Observability and tracing
-2. **OpenObservability** - Monitoring and metrics  
+2. **OpenObservability** - Monitoring and metrics
 3. **OpenRouter SDK** - AI model access
 4. **Additional Utilities** - Supporting libraries
 
@@ -212,28 +212,28 @@ from opentelemetry.instrumentation.aiohttp import AioHttpInstrumentor
 
 def setup_opentelemetry(app=None, service_name="epstein_files", endpoint=None):
     """Configure OpenTelemetry tracing"""
-    
+
     # Set up tracer provider
     trace.set_tracer_provider(TracerProvider())
-    
+
     # Configure exporters
     exporters = [ConsoleSpanExporter()]
     if endpoint:
         exporters.append(OTLPSpanExporter(endpoint=endpoint))
-    
+
     # Add span processors
     for exporter in exporters:
         trace.get_tracer_provider().add_span_processor(
             BatchSpanProcessor(exporter)
         )
-    
+
     # Instrument libraries
     if app:
         FastAPIInstrumentor.instrument_app(app)
-    
+
     RequestsInstrumentor().instrument()
     AioHttpInstrumentor().instrument()
-    
+
     return trace.get_tracer(__name__)
 
 
@@ -265,61 +265,61 @@ from typing import Dict, Any
 
 class OpenObservabilityMonitor:
     """Monitoring and metrics collection"""
-    
+
     def __init__(self, service_name="epstein_files", endpoint=None):
         self.service_name = service_name
         self.endpoint = endpoint
         self.metrics = {}
         self.start_time = time.time()
-    
+
     def track_metric(self, name: str, value: float, tags: Dict[str, str] = None):
         """Track a metric"""
         if tags is None:
             tags = {}
-        
+
         if name not in self.metrics:
             self.metrics[name] = []
-        
+
         self.metrics[name].append({
             "value": value,
             "timestamp": time.time(),
             "tags": tags
         })
-        
+
         # Keep metrics manageable
         if len(self.metrics[name]) > 1000:
             self.metrics[name] = self.metrics[name][-500:]
-    
+
     def increment_counter(self, name: str, amount: int = 1, tags: Dict[str, str] = None):
         """Increment a counter metric"""
         if tags is None:
             tags = {}
-        
+
         current = self.get_counter(name, tags)
         self.track_metric(name, current + amount, tags)
-    
+
     def get_counter(self, name: str, tags: Dict[str, str] = None) -> int:
         """Get current counter value"""
         if tags is None:
             tags = {}
-        
+
         if name not in self.metrics:
             return 0
-        
+
         # Find most recent value with matching tags
         for entry in reversed(self.metrics[name]):
             if entry["tags"] == tags:
                 return int(entry["value"])
-        
+
         return 0
-    
+
     def record_duration(self, name: str, duration: float, tags: Dict[str, str] = None):
         """Record operation duration"""
         if tags is None:
             tags = {}
-        
+
         self.track_metric(f"{name}_duration", duration, tags)
-    
+
     def get_metrics(self) -> Dict[str, Any]:
         """Get all collected metrics"""
         return {
@@ -327,7 +327,7 @@ class OpenObservabilityMonitor:
             "uptime": time.time() - self.start_time,
             "metrics": self.metrics
         }
-    
+
     def export_metrics(self) -> Dict[str, Any]:
         """Export metrics in standard format"""
         export = {
@@ -335,7 +335,7 @@ class OpenObservabilityMonitor:
             "timestamp": time.time(),
             "metrics": []
         }
-        
+
         for name, values in self.metrics.items():
             if values:
                 latest = values[-1]
@@ -345,7 +345,7 @@ class OpenObservabilityMonitor:
                     "timestamp": latest["timestamp"],
                     "tags": latest["tags"]
                 })
-        
+
         return export
 
 
@@ -387,12 +387,12 @@ from typing import Dict, Any, List, Optional
 
 class OpenRouterClient:
     """Client for OpenRouter AI services"""
-    
+
     def __init__(self, api_key: str = None):
         self.api_key = api_key or os.getenv('OPENROUTER_API_KEY')
         if not self.api_key:
             raise ValueError("OpenRouter API key not configured")
-        
+
         # Import openrouter SDK
         try:
             import openrouter
@@ -400,14 +400,14 @@ class OpenRouterClient:
             self.sdk.api_key = self.api_key
         except ImportError:
             raise ImportError("OpenRouter SDK not installed. Run: pip install openrouter-sdk")
-    
+
     def list_models(self) -> List[Dict[str, Any]]:
         """List available AI models"""
         try:
             return self.sdk.Model.list()
         except Exception as e:
             raise Exception(f"Failed to list models: {e}")
-    
+
     def generate_text(
         self,
         model: str,
@@ -428,7 +428,7 @@ class OpenRouterClient:
             return response.choices[0].text.strip()
         except Exception as e:
             raise Exception(f"Text generation failed: {e}")
-    
+
     def analyze_document(
         self,
         model: str,
@@ -442,16 +442,16 @@ class OpenRouterClient:
             "sentiment": f"Analyze sentiment of this document:\n\n{document_text}",
             "keywords": f"Extract key phrases from this document:\n\n{document_text}"
         }
-        
+
         prompt = prompts.get(analysis_type, analysis_type)
-        
+
         try:
             result = self.generate_text(
                 model=model,
                 prompt=prompt,
                 max_tokens=500
             )
-            
+
             return {
                 "analysis_type": analysis_type,
                 "result": result,
@@ -460,7 +460,7 @@ class OpenRouterClient:
             }
         except Exception as e:
             raise Exception(f"Document analysis failed: {e}")
-    
+
     def chat_completion(
         self,
         model: str,
@@ -539,11 +539,11 @@ from typing import Dict, Any, Optional
 def generate_file_hash(file_path: str, algorithm: str = "sha256") -> str:
     """Generate hash for a file"""
     hash_func = getattr(hashlib, algorithm)()
-    
+
     with open(file_path, 'rb') as f:
         while chunk := f.read(8192):
             hash_func.update(chunk)
-    
+
     return hash_func.hexdigest()
 
 
@@ -551,15 +551,15 @@ def safe_filename(filename: str, max_length: int = 100) -> str:
     """Generate safe filename"""
     # Remove invalid characters
     safe = re.sub(r'[^\w\s\-_.]', '_', filename)
-    
+
     # Limit length
     if len(safe) > max_length:
         name, ext = os.path.splitext(safe)
         safe = name[:max_length - len(ext)] + ext
-    
+
     # Remove leading/trailing spaces and dots
     safe = safe.strip().strip('.')
-    
+
     return safe or "untitled"
 
 
@@ -582,7 +582,7 @@ def read_json_file(file_path: str) -> Dict[str, Any]:
 def write_json_file(file_path: str, data: Dict[str, Any], indent: int = 2) -> None:
     """Write JSON file safely"""
     ensure_directory(os.path.dirname(file_path))
-    
+
     with open(file_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=indent, ensure_ascii=False)
 
@@ -644,7 +644,7 @@ def generate_unique_id(prefix: str = "id") -> str:
 def retry_function(func, max_attempts: int = 3, delay: float = 1.0, *args, **kwargs):
     """Retry a function with exponential backoff"""
     last_exception = None
-    
+
     for attempt in range(1, max_attempts + 1):
         try:
             return func(*args, **kwargs)
@@ -652,7 +652,7 @@ def retry_function(func, max_attempts: int = 3, delay: float = 1.0, *args, **kwa
             last_exception = e
             if attempt < max_attempts:
                 time.sleep(delay * (2 ** (attempt - 1)))
-    
+
     raise Exception(f"Function failed after {max_attempts} attempts: {last_exception}")
 
 
@@ -903,20 +903,20 @@ class PipelineIntegrator:
     def __init__(self):
         # Set up observability
         setup_opentelemetry(service_name="epstein_pipeline")
-        
+
         # Initialize MCP server
         self.downloader = EpsteinFilesDownloader()
-        
+
         # Start server in background
         self.server_task = asyncio.create_task(self.downloader.run())
-    
+
     async def process_collection(self, collection_id: str):
         """Process entire collection through pipeline"""
-        
+
         # 1. Discover documents
         documents = await self.downloader.get_collection_documents(collection_id)
         track_metric("documents_discovered", len(documents))
-        
+
         # 2. Download documents
         download_tasks = []
         for doc in documents:
@@ -926,7 +926,7 @@ class PipelineIntegrator:
                 metadata={"document_id": doc.document_id}
             )
             download_tasks.append(task)
-        
+
         # 3. Monitor downloads
         completed = 0
         while completed < len(download_tasks):
@@ -934,31 +934,31 @@ class PipelineIntegrator:
                 status = await self.downloader.get_download_status(task.task_id)
                 if status.status == "completed":
                     completed += 1
-                    
+
                     # 4. Process downloaded document
                     await self._process_document(status.destination, status.metadata)
-            
+
             await asyncio.sleep(5)
-        
+
         return completed
-    
+
     async def _process_document(self, file_path: str, metadata: dict):
         """Process individual document"""
-        
+
         # Read document content
         with open(file_path, 'r') as f:
             content = f.read()
-        
+
         # 5. AI Analysis
         analysis = analyze_with_ai(
             model="mistralai/mistral-7b-instruct",
             document_text=content,
             analysis_type="entities"
         )
-        
+
         # 6. Store results
         # ... database storage logic
-        
+
         track_metric("documents_processed", 1, {"source": metadata.get("source")})
 
 

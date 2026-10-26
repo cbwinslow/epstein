@@ -142,7 +142,7 @@ rules:
 
 refactor:
   skip_default_rules: false
-  
+
 github:
   request_review: author
   sourcery_branch: sourcery/main
@@ -193,7 +193,7 @@ tools:
   - name: list_collections
     description: List available document collections
     endpoint: http://localhost:8765/collections
-  
+
   - name: download_collection
     description: Download documents from a collection
     endpoint: http://localhost:8765/download/bulk
@@ -241,11 +241,11 @@ agents:
   - name: downloader
     type: document-retrieval
     endpoint: http://localhost:8765
-    
+
   - name: processor
     type: document-analysis
     endpoint: http://localhost:8766
-    
+
   - name: orchestrator
     type: coordinator
     agents: [downloader, processor]
@@ -339,12 +339,12 @@ updates:
     labels:
       - "dependencies"
       - "python"
-    
+
   - package-ecosystem: "pip"
     directory: "/mcp_servers/epstein_files_downloader"
     schedule:
       interval: "weekly"
-    
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -376,16 +376,16 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       security-events: write
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: python
           queries: security-and-quality
-      
+
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
 ```
@@ -484,14 +484,14 @@ Define quality gates in CI/CD:
 quality_gates:
   - name: CodeRabbit Approval
     required: true
-    
+
   - name: Sourcery Score
     minimum: 85
-    
+
   - name: CodeQL
     severity: high
     block_on_failure: true
-    
+
   - name: Test Coverage
     minimum: 80
 ```
@@ -506,11 +506,11 @@ alerts:
     - type: error
       threshold: 10/hour
       notify: slack
-      
+
   codeql:
     - severity: high
       notify: email
-      
+
   dependabot:
     - type: security
       notify: slack
