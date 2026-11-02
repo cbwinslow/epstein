@@ -6,6 +6,7 @@ Usage:
 
 By default it writes a JSON file with issues and a human-readable MASTER_TASKS.md. With --create-issues it will attempt to use `gh` CLI to create issues (dry-run default).
 """
+
 from __future__ import annotations
 
 import argparse
@@ -29,28 +30,28 @@ def load_tasks(path: Path) -> dict:
 def tasks_to_issues(tasks: dict) -> list[dict]:
     issues = []
     for m in tasks.get("milestones", []):
-        milestone_id = m.get('id', '').lower()
-        milestone_title = m.get('title', '')
+        milestone_id = m.get("id", "").lower()
+        milestone_title = m.get("title", "")
 
         for t in m.get("tasks", []):
-            task_id = t.get('id', '')
+            task_id = t.get("id", "")
             title = f"task: {t.get('title')}"
 
             # Build body with all available metadata
-            body_parts = [t.get('description', '')]
+            body_parts = [t.get("description", "")]
 
             # Add priority if present
-            priority = t.get('priority', '')
+            priority = t.get("priority", "")
             if priority:
                 body_parts.append(f"\n**Priority**: {priority}")
 
             # Add tests if present
-            tests = t.get('tests', [])
+            tests = t.get("tests", [])
             if tests:
                 body_parts.append("\n\n**Tests**:")
                 for test in tests:
-                    cmd = test.get('cmd', '')
-                    expect = test.get('expect', '')
+                    cmd = test.get("cmd", "")
+                    expect = test.get("expect", "")
                     body_parts.append(f"- Command: `{cmd}`")
                     body_parts.append(f"  - Expected: {expect}")
 
@@ -63,7 +64,7 @@ def tasks_to_issues(tasks: dict) -> list[dict]:
             labels = ["task", milestone_id]
 
             # Add custom labels from task if present
-            custom_labels = t.get('labels', [])
+            custom_labels = t.get("labels", [])
             if custom_labels:
                 labels.extend(custom_labels)
 
@@ -71,13 +72,15 @@ def tasks_to_issues(tasks: dict) -> list[dict]:
             if priority:
                 labels.append(priority.lower())
 
-            issues.append({
-                "title": title,
-                "body": body,
-                "labels": labels,
-                "milestone_id": milestone_id,
-                "task_id": task_id
-            })
+            issues.append(
+                {
+                    "title": title,
+                    "body": body,
+                    "labels": labels,
+                    "milestone_id": milestone_id,
+                    "task_id": task_id,
+                }
+            )
 
     return issues
 
@@ -95,7 +98,7 @@ def write_outputs(issues: list[dict], md_path: Path, json_path: Path) -> None:
     # Group by milestone
     current_milestone = None
     for i in issues:
-        milestone = i.get('milestone_id', '')
+        milestone = i.get("milestone_id", "")
         if milestone != current_milestone:
             lines.append(f"\n## Milestone: {milestone.upper()}\n\n")
             current_milestone = milestone
@@ -111,7 +114,17 @@ def write_outputs(issues: list[dict], md_path: Path, json_path: Path) -> None:
 def create_github_issue(issue: dict) -> bool:
     # Use `gh issue create --title <title> --body <body> --label <labels>`
     labels = ",".join(issue.get("labels", []))
-    cmd = ["gh", "issue", "create", "--title", issue["title"], "--body", issue["body"], "--label", labels]
+    cmd = [
+        "gh",
+        "issue",
+        "create",
+        "--title",
+        issue["title"],
+        "--body",
+        issue["body"],
+        "--label",
+        labels,
+    ]
     try:
         subprocess.run(cmd, check=True)
         return True
@@ -143,7 +156,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.create_issues:
         if args.dry_run:
-            print("Dry run - no issues will be created. Use --no-dry-run --create-issues to create.")
+            print(
+                "Dry run - no issues will be created. Use --no-dry-run --create-issues to create."
+            )
         else:
             for i in issues:
                 ok = create_github_issue(i)

@@ -1,7 +1,7 @@
 # Analysis Methodology & Playbook
 
-**Version**: 1.0  
-**Date**: 2025-12-31  
+**Version**: 1.0
+**Date**: 2025-12-31
 **Purpose**: Guide for conducting evidence-based analysis of Epstein documents
 
 ## Table of Contents
@@ -248,7 +248,7 @@ ORDER BY strength DESC
 **Queries**:
 ```sql
 -- SQL: Get all dated events for entity
-SELECT 
+SELECT
   e.entity_text as entity,
   dt.page_number,
   d.date as doc_date,
@@ -287,7 +287,7 @@ ORDER BY e.date
 // Find all flights for person
 MATCH (p:Person {name: 'Jeffrey Epstein'})-[t:TRAVELED_WITH]->(other:Person)
 WHERE t.date IS NOT NULL
-RETURN t.date, t.aircraft, t.departure, t.destination, 
+RETURN t.date, t.aircraft, t.departure, t.destination,
        collect(other.name) as passengers
 ORDER BY t.date
 
@@ -403,12 +403,12 @@ Retrieved: [Date accessed]
 ```markdown
 # Finding F-2025-001: Documented Travel Connection
 
-**Category**: Travel Pattern  
-**Confidence**: High  
+**Category**: Travel Pattern
+**Confidence**: High
 **Date Created**: 2025-12-31
 
 ## Summary
-Flight logs show Person A traveled with Jeffrey Epstein on three documented occasions 
+Flight logs show Person A traveled with Jeffrey Epstein on three documented occasions
 between 2005-2007, visiting Little St. James island twice and Palm Beach once.
 
 ## Evidence
@@ -624,9 +624,9 @@ AI Agents for analysis:
 
 ```sql
 -- Find all entities of type PERSON
-SELECT DISTINCT entity_text 
-FROM doc_analysis.entities 
-WHERE entity_type = 'PERSON' 
+SELECT DISTINCT entity_text
+FROM doc_analysis.entities
+WHERE entity_type = 'PERSON'
 ORDER BY entity_text;
 
 -- Find documents mentioning specific entity
@@ -638,12 +638,12 @@ WHERE e.entity_text = 'Jeffrey Epstein'
 ORDER BY d.date, dt.page_number;
 
 -- Find entity co-occurrences
-SELECT e1.entity_text as entity1, e2.entity_text as entity2, 
+SELECT e1.entity_text as entity1, e2.entity_text as entity2,
        COUNT(DISTINCT e1.document_id) as doc_count
 FROM doc_analysis.entities e1
 JOIN doc_analysis.entities e2 ON e1.document_id = e2.document_id
 WHERE e1.entity_text < e2.entity_text  -- Avoid duplicates
-  AND e1.entity_type = 'PERSON' 
+  AND e1.entity_type = 'PERSON'
   AND e2.entity_type = 'PERSON'
 GROUP BY e1.entity_text, e2.entity_text
 HAVING COUNT(DISTINCT e1.document_id) >= 3
@@ -677,7 +677,7 @@ RETURN common.name
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2025-12-31  
-**Maintained By**: Epstein Project Analysis Team  
+**Document Version**: 1.0
+**Last Updated**: 2025-12-31
+**Maintained By**: Epstein Project Analysis Team
 **Feedback**: Submit issues via GitHub Issue Template

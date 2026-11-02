@@ -1,4 +1,5 @@
 """Minimal LangChain adapter (lazy import) for Mission Control PoC."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -14,6 +15,7 @@ class LangChainAdapter:
             return
         try:
             import langchain
+
             # Minimal client placeholder; real implementation would use langchain LLM wrappers
             self._client = langchain
         except Exception as e:
@@ -23,4 +25,9 @@ class LangChainAdapter:
         """Run a prompt and return a structured response (PoC)."""
         self._ensure_client()
         # PoC: return echo of prompt with metadata
-        return {"model": self.model, "prompt": prompt, "context": context or {}, "result": f"Echo: {prompt}"}
+        return {
+            "model": self.model,
+            "prompt": prompt,
+            "context": context or {},
+            "result": f"Echo: {prompt}",
+        }

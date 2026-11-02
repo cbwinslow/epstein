@@ -100,7 +100,9 @@ def ensure_collection(client: QdrantClient, collection: str, dim: int) -> None:
     )
 
 
-def fetch_chunks(conn: psycopg.Connection, resume_after: int | None, limit: int | None) -> Iterable[ChunkRow]:
+def fetch_chunks(
+    conn: psycopg.Connection, resume_after: int | None, limit: int | None
+) -> Iterable[ChunkRow]:
     base = """
     SELECT c.id AS chunk_id, c.doc_id, c.start_char, c.end_char, c.chunk_index, c.chunk_text,
            d.source_url
@@ -128,7 +130,9 @@ def fetch_chunks(conn: psycopg.Connection, resume_after: int | None, limit: int 
                 end_char=int(row["end_char"]),
                 chunk_index=int(row["chunk_index"]),
                 chunk_text=str(row.get("chunk_text") or ""),
-                source_url=(str(row.get("source_url")) if row.get("source_url") is not None else None),
+                source_url=(
+                    str(row.get("source_url")) if row.get("source_url") is not None else None
+                ),
             )
 
 
@@ -163,7 +167,9 @@ def main() -> int:
 
     state_path = Path(args.state_file)
     state = load_state(state_path) if args.resume else {}
-    resume_after = int(state.get("last_chunk_id")) if args.resume and state.get("last_chunk_id") else None
+    resume_after = (
+        int(state.get("last_chunk_id")) if args.resume and state.get("last_chunk_id") else None
+    )
 
     embedder = TextEmbedding(args.model)
     qclient = QdrantClient(url=args.qdrant_url)
@@ -209,7 +215,10 @@ def main() -> int:
 
             total += len(points)
             last = batch[-1].chunk_id
-            save_state(state_path, {"last_chunk_id": last, "collection": args.collection, "model": args.model})
+            save_state(
+                state_path,
+                {"last_chunk_id": last, "collection": args.collection, "model": args.model},
+            )
             dt = time.time() - t0
             print(f"[embed] upserted {len(points)} (total {total}) in {dt:.2f}s; last={last}")
 
@@ -304,8 +313,10 @@ def main() -> int:
                 print(f"score={h.score:.4f} chunk_id={cid} doc_id={payload.get('doc_id')}")
                 if row:
                     print(f"source_url: {row.get('source_url')}")
-                    print(f"offsets: {row.get('start_char')}..{row.get('end_char')} idx={row.get('chunk_index')}")
-                    text = str(row.get('chunk_text') or "").replace("\n", " ")
+                    print(
+                        f"offsets: {row.get('start_char')}..{row.get('end_char')} idx={row.get('chunk_index')}"
+                    )
+                    text = str(row.get("chunk_text") or "").replace("\n", " ")
                     excerpt = text[:600]
                     print(f"excerpt: {excerpt}{'...' if len(text) > 600 else ''}")
                 print("-" * 80)

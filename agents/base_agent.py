@@ -16,6 +16,7 @@ from typing import Any
 
 class AgentStatus(Enum):
     """Agent operational status"""
+
     IDLE = "idle"
     INITIALIZING = "initializing"
     READY = "ready"
@@ -26,6 +27,7 @@ class AgentStatus(Enum):
 
 class AgentCapability(Enum):
     """Standard agent capabilities"""
+
     DOCUMENT_PROCESSING = "document_processing"
     ENTITY_EXTRACTION = "entity_extraction"
     VECTOR_SEARCH = "vector_search"
@@ -40,6 +42,7 @@ class AgentCapability(Enum):
 @dataclass
 class AgentMetadata:
     """Metadata describing an agent"""
+
     name: str
     version: str
     description: str
@@ -59,13 +62,14 @@ class AgentMetadata:
             "author": self.author,
             "created_at": self.created_at,
             "tags": self.tags,
-            "dependencies": self.dependencies
+            "dependencies": self.dependencies,
         }
 
 
 @dataclass
 class AgentHealth:
     """Agent health status"""
+
     status: AgentStatus
     uptime_seconds: float = 0.0
     total_requests: int = 0
@@ -91,7 +95,7 @@ class AgentHealth:
             "failed_requests": self.failed_requests,
             "success_rate": self.success_rate,
             "last_error": self.last_error,
-            "last_error_timestamp": self.last_error_timestamp
+            "last_error_timestamp": self.last_error_timestamp,
         }
 
 
@@ -103,11 +107,7 @@ class BaseAgent(ABC):
     This ensures consistent interfaces and common functionality across the system.
     """
 
-    def __init__(
-        self,
-        agent_id: str,
-        config: dict[str, Any] | None = None
-    ):
+    def __init__(self, agent_id: str, config: dict[str, Any] | None = None):
         """
         Initialize the base agent.
 
@@ -165,9 +165,7 @@ class BaseAgent(ABC):
         Returns:
             AgentHealth object with current health status
         """
-        self._health.uptime_seconds = (
-            datetime.utcnow() - self._start_time
-        ).total_seconds()
+        self._health.uptime_seconds = (datetime.utcnow() - self._start_time).total_seconds()
         return self._health
 
     async def get_capabilities(self) -> list[AgentCapability]:
@@ -191,7 +189,7 @@ class BaseAgent(ABC):
         Returns:
             Configuration value or default
         """
-        keys = key.split('.')
+        keys = key.split(".")
         value = self.config
 
         for k in keys:
@@ -235,7 +233,7 @@ class BaseAgent(ABC):
             "agent_id": self.agent_id,
             "metadata": metadata.to_dict(),
             "health": self._health.to_dict(),
-            "config": self.config
+            "config": self.config,
         }
 
     def __repr__(self) -> str:
@@ -353,7 +351,7 @@ class AgentRegistry:
             "total_instances": len(self._agents),
             "total_classes": len(self._agent_classes),
             "agent_ids": list(self._agents.keys()),
-            "agent_classes": list(self._agent_classes.keys())
+            "agent_classes": list(self._agent_classes.keys()),
         }
 
 
