@@ -11,6 +11,6 @@
 \i ../schema.sql
 
 -- Record migration completion
-INSERT INTO schema_migrations (version, description, executed_at) 
+INSERT INTO schema_migrations (version, description, executed_at)
 VALUES ('001_initial', 'Initial schema creation', NOW())
 ON CONFLICT (version) DO NOTHING;

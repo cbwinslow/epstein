@@ -14,6 +14,7 @@ from typing import Any
 @dataclass
 class DocumentAnalysisResult:
     """Represents a document analysis result"""
+
     document_id: str
     file_path: str
     analysis_type: str
@@ -49,7 +50,7 @@ class DocumentAnalysisAgent:
             await asyncio.sleep(1)  # Simulate processing time
 
             metadata = {
-                "file_name": file_path.split('/')[-1],
+                "file_name": file_path.split("/")[-1],
                 "file_size": 1528456,  # bytes
                 "file_type": "application/pdf",
                 "page_count": 25,
@@ -58,7 +59,7 @@ class DocumentAnalysisAgent:
                 "author": "John Doe",
                 "title": "Annual Report 2024",
                 "subject": "Business Analysis",
-                "keywords": ["finance", "report", "analysis"]
+                "keywords": ["finance", "report", "analysis"],
             }
 
             analysis_result = {
@@ -68,7 +69,7 @@ class DocumentAnalysisAgent:
                 "status": "completed",
                 "metadata": metadata,
                 "quality_score": 0.95,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
             self.analysis_results[analysis_id] = analysis_result
@@ -79,10 +80,12 @@ class DocumentAnalysisAgent:
                 "analysis_id": analysis_id,
                 "status": "error",
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
-    async def classify_document_content(self, file_path: str, categories: list[str]) -> dict[str, Any]:
+    async def classify_document_content(
+        self, file_path: str, categories: list[str]
+    ) -> dict[str, Any]:
         """
         Classify document content into specified categories.
 
@@ -101,11 +104,13 @@ class DocumentAnalysisAgent:
 
             classification_results = []
             for category in categories:
-                classification_results.append({
-                    "category": category,
-                    "confidence": round(0.7 + (0.3 * (hash(category) % 10) / 10), 2),
-                    "relevant_content": f"Sample content related to {category}"
-                })
+                classification_results.append(
+                    {
+                        "category": category,
+                        "confidence": round(0.7 + (0.3 * (hash(category) % 10) / 10), 2),
+                        "relevant_content": f"Sample content related to {category}",
+                    }
+                )
 
             analysis_result = {
                 "analysis_id": analysis_id,
@@ -114,8 +119,10 @@ class DocumentAnalysisAgent:
                 "status": "completed",
                 "categories": categories,
                 "classification_results": classification_results,
-                "primary_category": classification_results[0]["category"] if classification_results else "unknown",
-                "timestamp": datetime.now().isoformat()
+                "primary_category": (
+                    classification_results[0]["category"] if classification_results else "unknown"
+                ),
+                "timestamp": datetime.now().isoformat(),
             }
 
             self.analysis_results[analysis_id] = analysis_result
@@ -126,7 +133,7 @@ class DocumentAnalysisAgent:
                 "analysis_id": analysis_id,
                 "status": "error",
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
     async def assess_document_quality(self, file_path: str) -> dict[str, Any]:
@@ -152,7 +159,7 @@ class DocumentAnalysisAgent:
                 "ocr_confidence": 0.88,
                 "structure_score": 0.95,
                 "completeness": 0.98,
-                "overall_quality": 0.89
+                "overall_quality": 0.89,
             }
 
             analysis_result = {
@@ -164,9 +171,9 @@ class DocumentAnalysisAgent:
                 "quality_grade": "A" if quality_metrics["overall_quality"] > 0.9 else "B",
                 "recommendations": [
                     "Improve text density for better readability",
-                    "Consider enhancing image resolution"
+                    "Consider enhancing image resolution",
                 ],
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
             self.analysis_results[analysis_id] = analysis_result
@@ -177,7 +184,7 @@ class DocumentAnalysisAgent:
                 "analysis_id": analysis_id,
                 "status": "error",
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
     def get_analysis_result(self, analysis_id: str) -> dict[str, Any]:
@@ -205,12 +212,12 @@ TOOLS = [
                 "properties": {
                     "file_path": {
                         "type": "string",
-                        "description": "Path to the document to analyze"
+                        "description": "Path to the document to analyze",
                     }
                 },
-                "required": ["file_path"]
-            }
-        }
+                "required": ["file_path"],
+            },
+        },
     },
     {
         "type": "function",
@@ -222,18 +229,18 @@ TOOLS = [
                 "properties": {
                     "file_path": {
                         "type": "string",
-                        "description": "Path to the document to classify"
+                        "description": "Path to the document to classify",
                     },
                     "categories": {
                         "type": "array",
                         "items": {"type": "string"},
                         "description": "List of content categories to classify against",
-                        "default": ["financial", "legal", "technical", "medical", "general"]
-                    }
+                        "default": ["financial", "legal", "technical", "medical", "general"],
+                    },
                 },
-                "required": ["file_path"]
-            }
-        }
+                "required": ["file_path"],
+            },
+        },
     },
     {
         "type": "function",
@@ -243,14 +250,11 @@ TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "file_path": {
-                        "type": "string",
-                        "description": "Path to the document to assess"
-                    }
+                    "file_path": {"type": "string", "description": "Path to the document to assess"}
                 },
-                "required": ["file_path"]
-            }
-        }
+                "required": ["file_path"],
+            },
+        },
     },
     {
         "type": "function",
@@ -262,13 +266,13 @@ TOOLS = [
                 "properties": {
                     "analysis_id": {
                         "type": "string",
-                        "description": "ID of the analysis to retrieve"
+                        "description": "ID of the analysis to retrieve",
                     }
                 },
-                "required": ["analysis_id"]
-            }
-        }
-    }
+                "required": ["analysis_id"],
+            },
+        },
+    },
 ]
 
 
@@ -282,9 +286,9 @@ AGENT_INFO = {
         "Content classification",
         "Quality assessment",
         "Readability analysis",
-        "Document structure analysis"
+        "Document structure analysis",
     ],
-    "tools": TOOLS
+    "tools": TOOLS,
 }
 
 
@@ -299,8 +303,7 @@ if __name__ == "__main__":
 
         # Test content classification
         classification_result = await agent.classify_document_content(
-            "example.pdf",
-            ["financial", "legal", "technical"]
+            "example.pdf", ["financial", "legal", "technical"]
         )
         print("Content classification:", json.dumps(classification_result, indent=2))
 

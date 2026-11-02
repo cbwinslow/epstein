@@ -335,7 +335,7 @@ graph TD
     L[Location]
     E[Event]
     D[Document]
-    
+
     %% Epstein-Specific Nodes
     A[Aircraft]
     F[Flight]
@@ -343,7 +343,7 @@ graph TD
     LC[LegalCase]
     PN[PhoneNumber]
     EM[EmailAddress]
-    
+
     %% Relationships
     P -->|KNOWS| P
     P -->|EMPLOYED_BY| O
@@ -355,29 +355,29 @@ graph TD
     P -->|PARTICIPATED_IN| E
     P -->|MENTIONED_IN| D
     P -->|COMMUNICATED_WITH| P
-    
+
     O -->|ASSOCIATED_WITH| O
     O -->|FUNDED_BY| FI
     O -->|MENTIONED_IN| D
-    
+
     A -->|OWNED_BY| P
     A -->|MENTIONED_IN| D
-    
+
     F -->|TRAVELED_ON| P
     F -->|MENTIONED_IN| D
-    
+
     FI -->|FUNDED_BY| P
     FI -->|MENTIONED_IN| D
-    
+
     LC -->|PARTICIPATED_IN| P
     LC -->|MENTIONED_IN| D
-    
+
     PN -->|COMMUNICATED_WITH| P
     PN -->|MENTIONED_IN| D
-    
+
     EM -->|COMMUNICATED_WITH| P
     EM -->|MENTIONED_IN| D
-    
+
     E -->|MENTIONED_IN| D
     L -->|MENTIONED_IN| D
 ```

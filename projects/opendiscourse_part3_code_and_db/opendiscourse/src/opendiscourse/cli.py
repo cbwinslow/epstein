@@ -20,7 +20,9 @@ from opendiscourse.logging import setup_logger
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="OpenDiscourse ingestion runner")
     p.add_argument("--source", default="govinfo", choices=["govinfo"], help="Data source to ingest")
-    p.add_argument("--dry-run", action="store_true", help="Do not download/write; only validate config")
+    p.add_argument(
+        "--dry-run", action="store_true", help="Do not download/write; only validate config"
+    )
     p.add_argument("--limit", type=int, default=0, help="Limit number of items (0 = unlimited)")
     return p
 

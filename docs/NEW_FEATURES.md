@@ -430,6 +430,6 @@ Need help?
 
 ---
 
-**Version**: 2.1.0  
-**Last Updated**: 2026-02-01  
+**Version**: 2.1.0
+**Last Updated**: 2026-02-01
 **Maintainer**: Epstein Project Team

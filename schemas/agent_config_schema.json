@@ -3,7 +3,7 @@
   "title": "Epstein Agent Configuration Schema",
   "description": "Schema for configuring AI agents in the Epstein multi-agent system",
   "version": "2.0.0",
-  
+
   "definitions": {
     "capability": {
       "type": "string",
@@ -21,7 +21,7 @@
         "optimization"
       ]
     },
-    
+
     "tool_definition": {
       "type": "object",
       "required": ["name", "description", "parameters"],
@@ -55,7 +55,7 @@
         }
       }
     },
-    
+
     "agent_config": {
       "type": "object",
       "required": ["name", "description", "version", "capabilities"],
@@ -153,7 +153,7 @@
       }
     }
   },
-  
+
   "type": "object",
   "required": ["schema_version", "agents"],
   "properties": {
@@ -162,7 +162,7 @@
       "const": "2.0.0",
       "description": "Configuration schema version"
     },
-    
+
     "agents": {
       "type": "object",
       "description": "Agent configurations",
@@ -172,7 +172,7 @@
         }
       }
     },
-    
+
     "system_config": {
       "type": "object",
       "description": "System-wide configuration",

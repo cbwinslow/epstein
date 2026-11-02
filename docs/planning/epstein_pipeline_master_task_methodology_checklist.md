@@ -1,16 +1,16 @@
 # Epstein Files — Master Task, TODO, and Methodology Checklist
 
-> **Purpose**: This document is a *ground-truth execution plan* for setting up, validating, operating, and analyzing the Epstein Files document pipeline.  
+> **Purpose**: This document is a *ground-truth execution plan* for setting up, validating, operating, and analyzing the Epstein Files document pipeline.
 > It is written so that **a human or an AI agent** can follow it step-by-step and *prove* completion via tests.
 
 ---
 
 ## LEGEND
 
-- ☐ = Not started  
-- ☐→☑ = Has a measurable test  
-- ☑ = Completed  
-- 🧪 = Test / validation step  
+- ☐ = Not started
+- ☐→☑ = Has a measurable test
+- ☑ = Completed
+- 🧪 = Test / validation step
 - ⚠️ = Common failure / troubleshooting note
 
 ---
@@ -19,9 +19,9 @@
 
 ## 0.1 Understand the Architecture (Conceptual Lock-in)
 
-☐ Understand that **PDFs are never stored in SQL**  
-☐ Understand that **Postgres = structured truth**  
-☐ Understand that **Qdrant = semantic similarity only**  
+☐ Understand that **PDFs are never stored in SQL**
+☐ Understand that **Postgres = structured truth**
+☐ Understand that **Qdrant = semantic similarity only**
 ☐ Understand that **filesystem = immutable artifacts**
 
 🧪 Test of understanding:
@@ -32,9 +32,9 @@
 
 ## 0.2 Threat Model & Methodology Rules
 
-☐ No destructive operations by default  
-☐ Every claim must be evidence-backed  
-☐ Prefer *relationships* over *conclusions*  
+☐ No destructive operations by default
+☐ Every claim must be evidence-backed
+☐ Prefer *relationships* over *conclusions*
 ☐ Avoid narrative framing early
 
 🧪 Test:
@@ -46,8 +46,8 @@
 
 ## 1.1 Fresh Clone Validation
 
-☐ Clone repository  
-☐ Confirm repo has **no generated artifacts** committed  
+☐ Clone repository
+☐ Confirm repo has **no generated artifacts** committed
 ☐ Confirm `.env.example` exists and `.env` does not
 
 🧪 Test:
@@ -60,10 +60,10 @@ Expected: clean repo, ignored paths visible
 
 ## 1.2 Environment Doctor Checks
 
-☐ Run `make doctor`  
-☐ Docker daemon detected  
-☐ docker compose plugin detected  
-☐ Disk space ≥ 2GB free  
+☐ Run `make doctor`
+☐ Docker daemon detected
+☐ docker compose plugin detected
+☐ Disk space ≥ 2GB free
 ☐ No fatal port collisions
 
 🧪 Test:
@@ -82,9 +82,9 @@ Expected: exit code `0` or `2` (warnings allowed)
 
 ## 2.1 Postgres + pgvector Setup
 
-☐ `make bootstrap` executed  
-☐ Postgres container running  
-☐ pgvector extension installed  
+☐ `make bootstrap` executed
+☐ Postgres container running
+☐ pgvector extension installed
 ☐ Schema `doc_analysis` exists
 
 🧪 Test:
@@ -97,8 +97,8 @@ Expected: 1 row
 
 ## 2.2 Qdrant Setup
 
-☐ Qdrant container running  
-☐ REST endpoint reachable  
+☐ Qdrant container running
+☐ REST endpoint reachable
 ☐ Storage volume mounted
 
 🧪 Test:
@@ -111,9 +111,9 @@ Expected: JSON with version info
 
 ## 2.3 Existing Infrastructure (Optional Path)
 
-☐ Ran `scripts/configure.py`  
-☐ External Postgres validated  
-☐ External Qdrant validated  
+☐ Ran `scripts/configure.py`
+☐ External Postgres validated
+☐ External Qdrant validated
 ☐ `.env` written
 
 🧪 Test:
@@ -128,8 +128,8 @@ Expected: EPSTEIN_DSN and QDRANT_URL present
 
 ## 3.1 Config Generation
 
-☐ Ran `make pipeline-init`  
-☐ `config.json` created  
+☐ Ran `make pipeline-init`
+☐ `config.json` created
 ☐ Default values understood
 
 🧪 Test:
@@ -142,8 +142,8 @@ Expected: valid JSON
 
 ## 3.2 Source Selection (CRITICAL THINKING)
 
-☐ Seed URLs chosen deliberately  
-☐ Domains allow-listed  
+☐ Seed URLs chosen deliberately
+☐ Domains allow-listed
 ☐ Scope intentionally constrained
 
 ⚠️ Methodology warning:
@@ -158,9 +158,9 @@ Expected: valid JSON
 
 ## 4.1 Pipeline Run
 
-☐ `make pipeline-run` executed  
-☐ PDFs downloaded  
-☐ OCR performed where needed  
+☐ `make pipeline-run` executed
+☐ PDFs downloaded
+☐ OCR performed where needed
 ☐ Text extracted
 
 🧪 Tests:
@@ -174,7 +174,7 @@ Expected: non-empty directories
 
 ## 4.2 Chunking Validation
 
-☐ Chunks created with overlap  
+☐ Chunks created with overlap
 ☐ Offsets deterministic
 
 🧪 Test:
@@ -187,7 +187,7 @@ Expected: >0 chunks per doc
 
 ## 4.3 Entity Extraction Validation
 
-☐ spaCy model loaded  
+☐ spaCy model loaded
 ☐ Entities written to JSONL
 
 🧪 Test:
@@ -202,9 +202,9 @@ Expected: PERSON / ORG / GPE etc
 
 ## 5.1 Artifact → Postgres Load
 
-☐ `make db-load` executed  
-☐ Documents inserted  
-☐ Chunks inserted  
+☐ `make db-load` executed
+☐ Documents inserted
+☐ Chunks inserted
 ☐ Entities inserted
 
 🧪 Tests:
@@ -219,8 +219,8 @@ Expected: all > 0
 
 ## 5.2 Provenance Integrity Checks
 
-☐ doc_id uniqueness verified  
-☐ chunk offsets consistent  
+☐ doc_id uniqueness verified
+☐ chunk offsets consistent
 ☐ source_url preserved
 
 🧪 Test:
@@ -235,8 +235,8 @@ Expected: zero rows
 
 ## 6.1 Embedding Generation
 
-☐ `make embed` executed  
-☐ Qdrant collection created  
+☐ `make embed` executed
+☐ Qdrant collection created
 ☐ Points inserted
 
 🧪 Tests:
@@ -249,7 +249,7 @@ Expected: collection present
 
 ## 6.2 Semantic Search Validation
 
-☐ `make search Q="..."` returns results  
+☐ `make search Q="..."` returns results
 ☐ Payload includes doc_id + chunk_id
 
 🧪 Test:
@@ -262,9 +262,9 @@ Expected: collection present
 
 ## 7.1 How to Perform Analysis (DO THIS SLOWLY)
 
-☐ Start with **broad semantic queries**  
-☐ Identify recurring entities  
-☐ Track co-occurrence across documents  
+☐ Start with **broad semantic queries**
+☐ Identify recurring entities
+☐ Track co-occurrence across documents
 ☐ Look for temporal clustering
 
 ⚠️ Rule:
@@ -274,9 +274,9 @@ Expected: collection present
 
 ## 7.2 Relationship Discovery Workflow
 
-☐ Pick entity A (person/org)  
-☐ Query semantic space for entity A  
-☐ Extract co-mentioned entities  
+☐ Pick entity A (person/org)
+☐ Query semantic space for entity A
+☐ Extract co-mentioned entities
 ☐ Validate across *multiple documents*
 
 🧪 Test:
@@ -286,9 +286,9 @@ Expected: collection present
 
 ## 7.3 Pattern Types Worth Investigating
 
-☐ Repeated travel references  
-☐ Repeated financial institutions  
-☐ Repeated intermediaries (law firms, shell orgs)  
+☐ Repeated travel references
+☐ Repeated financial institutions
+☐ Repeated intermediaries (law firms, shell orgs)
 ☐ Sudden disappearance of names
 
 ---
@@ -297,16 +297,16 @@ Expected: collection present
 
 ## 8.1 Safe Export Rules
 
-☐ Redacted excerpts only  
-☐ Evidence metadata preserved  
+☐ Redacted excerpts only
+☐ Evidence metadata preserved
 ☐ No narrative framing
 
 ---
 
 ## 8.2 Publication Readiness Checklist
 
-☐ Findings reproducible  
-☐ Queries documented  
+☐ Findings reproducible
+☐ Queries documented
 ☐ Data lineage clear
 
 ---
@@ -315,24 +315,24 @@ Expected: collection present
 
 ## 9.1 Pipeline Failures
 
-☐ Inspect `failures.jsonl`  
-☐ Re-run idempotently  
+☐ Inspect `failures.jsonl`
+☐ Re-run idempotently
 ☐ Never delete artifacts
 
 ---
 
 ## 9.2 Data Quality Issues
 
-☐ OCR noise detected  
-☐ Flag for manual review  
+☐ OCR noise detected
+☐ Flag for manual review
 ☐ Consider re-OCR with different params
 
 ---
 
 # PHASE 10 — CONFIDENCE CHECK (FINAL)
 
-☐ You can recreate the entire system from scratch  
-☐ You can explain every table  
+☐ You can recreate the entire system from scratch
+☐ You can explain every table
 ☐ You can justify every claim with evidence
 
 🧪 Final Test:
@@ -344,10 +344,9 @@ Expected: collection present
 
 If all boxes are checked, the project is:
 
-✔ Reproducible  
-✔ Auditable  
-✔ Methodologically sound  
+✔ Reproducible
+✔ Auditable
+✔ Methodologically sound
 ✔ Ready for careful analysis
 
 **This checklist is intentionally long. That’s the point.**
-

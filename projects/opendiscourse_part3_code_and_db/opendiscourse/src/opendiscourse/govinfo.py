@@ -22,10 +22,9 @@ import os
 from dataclasses import dataclass
 from typing import Any
 
+from opendiscourse.config import Settings
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
-
-from opendiscourse.config import Settings
 
 
 @dataclass
@@ -77,7 +76,9 @@ class GovInfoIngestor:
         # Mark run paused so we don't pretend completion
         with self.engine.connect() as conn:
             conn.execute(
-                text("UPDATE ingestion_runs SET status='paused', finished_at=now() WHERE run_id=:rid::uuid"),
+                text(
+                    "UPDATE ingestion_runs SET status='paused', finished_at=now() WHERE run_id=:rid::uuid"
+                ),
                 {"rid": run_id},
             )
             conn.commit()

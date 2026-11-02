@@ -62,4 +62,3 @@ If you create a finding (issue labeled `finding`), include:
 - confidence
 
 No exceptions.
-

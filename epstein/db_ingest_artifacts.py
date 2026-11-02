@@ -57,6 +57,7 @@ from psycopg.rows import dict_row
 # Logging
 # ------------------------------
 
+
 def setup_logging(verbose: bool) -> None:
     logging.basicConfig(
         level=logging.DEBUG if verbose else logging.INFO,
@@ -67,6 +68,7 @@ def setup_logging(verbose: bool) -> None:
 # ------------------------------
 # IO helpers
 # ------------------------------
+
 
 def iter_jsonl(path: Path) -> Iterator[dict[str, Any]]:
     if not path.exists():
@@ -272,6 +274,7 @@ def insert_entity(conn: psycopg.Connection, obj: dict[str, Any]) -> None:
 # Main loader
 # ------------------------------
 
+
 @dataclass
 class Paths:
     base: Path
@@ -300,7 +303,9 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Load pipeline artifacts into Postgres.")
     ap.add_argument("--artifacts-dir", default="./epstein_artifacts", help="Pipeline output_dir")
     ap.add_argument("--dsn", required=True, help="Postgres DSN")
-    ap.add_argument("--truncate", action="store_true", help="Truncate tables before loading (dangerous)")
+    ap.add_argument(
+        "--truncate", action="store_true", help="Truncate tables before loading (dangerous)"
+    )
     ap.add_argument("--verbose", action="store_true")
     args = ap.parse_args()
 

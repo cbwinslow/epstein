@@ -1,8 +1,8 @@
 # Epstein Files Project - User Instructions Manual
 
-**Version**: 1.0  
-**Last Updated**: January 7, 2026  
-**Current Status**: Active Development  
+**Version**: 1.0
+**Last Updated**: January 7, 2026
+**Current Status**: Active Development
 
 ---
 
@@ -10,7 +10,7 @@
 
 This repository contains a comprehensive document processing pipeline for the Epstein Files project, including document download, OCR processing, entity extraction, and semantic search capabilities.
 
-**Current Collection**: 14,753 files (14,672 DOJ + 81 Congressional)  
+**Current Collection**: 14,753 files (14,672 DOJ + 81 Congressional)
 **Target**: 25,000+ files with full processing pipeline operational
 
 ---
@@ -24,7 +24,7 @@ This repository contains a comprehensive document processing pipeline for the Ep
 ├── docker-compose.yml                # Container orchestration
 ├── .env.example                      # Environment variables template
 ├── pyproject.toml                    # Python dependencies
-├── 
+├──
 ├── epstein/                          # Main pipeline code
 │   ├── epstein_files_pipeline.py     # Core processing pipeline
 │   ├── db_ingest_artifacts.py        # Database ingestion
@@ -638,7 +638,7 @@ rm -rf ./agents/.cache/
 
 #### For Large Document Collections
 
-1. **Increase Workers**: 
+1. **Increase Workers**:
    ```json
    {
      "max_workers": 8,
@@ -751,7 +751,7 @@ python scripts/vector_search_benchmark.py
    ```bash
    # Update dependencies
    uv sync
-   
+
    # Update system packages
    sudo apt update && sudo apt upgrade
    ```
@@ -760,7 +760,7 @@ python scripts/vector_search_benchmark.py
    ```bash
    # Monitor API access
    tail -f ./logs/access.log
-   
+
    # Check authentication logs
    grep "auth" ./logs/application.log
    ```
@@ -769,6 +769,6 @@ python scripts/vector_search_benchmark.py
    ```bash
    # Verify document integrity
    python scripts/validate_documents.py --check-hashes
-   
+
    # Validate database consistency
    python scripts/db_consistency_check.py
