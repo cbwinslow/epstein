@@ -298,20 +298,20 @@ if __name__ == \"__main__\":
     raise SystemExit(main())
 """
 
-(work/"qdrant_embed_chunks.py").write_text(embed_py, encoding="utf-8")
-(work/"qdrant_semantic_search.py").write_text(search_py, encoding="utf-8")
-os.chmod(work/"qdrant_embed_chunks.py", 0o755)
-os.chmod(work/"qdrant_semantic_search.py", 0o755)
+(work / "qdrant_embed_chunks.py").write_text(embed_py, encoding="utf-8")
+(work / "qdrant_semantic_search.py").write_text(search_py, encoding="utf-8")
+os.chmod(work / "qdrant_embed_chunks.py", 0o755)
+os.chmod(work / "qdrant_semantic_search.py", 0o755)
 
 # Patch pyproject.toml to include fastembed
-pyproj_path = work/"pyproject.toml"
+pyproj_path = work / "pyproject.toml"
 pyproj = pyproj_path.read_text(encoding="utf-8")
 if "fastembed" not in pyproj:
     pyproj = pyproj.replace('"qdrant-client>=1.9",', '"qdrant-client>=1.9",\n  "fastembed>=0.3",')
     pyproj_path.write_text(pyproj, encoding="utf-8")
 
 # Patch Makefile to include embed/search targets
-mk_path = work/"Makefile"
+mk_path = work / "Makefile"
 mk = mk_path.read_text(encoding="utf-8")
 if "\n.PHONY: embed" not in mk:
     mk += """
@@ -343,5 +343,4 @@ with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as z:
             z.write(p, p.relative_to(work).as_posix())
 
 print(str(zip_path))
-print("files:", len([p for p in work.rglob('*') if p.is_file()]))
-
+print("files:", len([p for p in work.rglob("*") if p.is_file()]))

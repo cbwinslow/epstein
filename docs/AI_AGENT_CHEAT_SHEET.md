@@ -497,60 +497,60 @@ logger = logging.getLogger(__name__)
 
 class BaseAgent:
     """Base class for all AI agents"""
-    
+
     def __init__(self, agent_id: str, config: Dict[str, Any]):
         self.agent_id = agent_id
         self.config = config
         self.status = "initialized"
         self.current_task = None
-        
+
         # Initialize agent-specific components
         self._init_components()
-        
+
         logger.info(f"🤖 Agent {agent_id} initialized")
-    
+
     def _init_components(self):
         """Initialize agent components"""
         # Override in subclass
         pass
-    
+
     async def start(self):
         """Start agent operations"""
         self.status = "running"
         logger.info(f"🚀 Agent {self.agent_id} started")
-        
+
         # Start main processing loop
         await self._main_loop()
-    
+
     async def _main_loop(self):
         """Main processing loop"""
         while self.status == "running":
             try:
                 # Process tasks
                 await self._process_tasks()
-                
+
                 # Small delay to prevent CPU overload
                 await asyncio.sleep(0.1)
-                
+
             except Exception as e:
                 logger.error(f"❌ Agent {self.agent_id} error: {e}")
                 await asyncio.sleep(1.0)
-    
+
     async def _process_tasks(self):
         """Process pending tasks"""
         # Override in subclass
         pass
-    
+
     async def handle_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Handle a specific task"""
         # Override in subclass
         return {"status": "completed"}
-    
+
     async def stop(self):
         """Stop agent operations"""
         self.status = "stopped"
         logger.info(f"🛑 Agent {self.agent_id} stopped")
-    
+
     def get_status(self) -> Dict[str, Any]:
         """Get current agent status"""
         return {
@@ -563,47 +563,47 @@ class BaseAgent:
 
 class ExampleAgent(BaseAgent):
     """Example agent implementation"""
-    
+
     def __init__(self, agent_id: str, config: Dict[str, Any]):
         super().__init__(agent_id, config)
         # Agent-specific initialization
         self.task_queue = asyncio.Queue()
-    
+
     def _init_components(self):
         """Initialize example agent components"""
         # Initialize tools, clients, etc.
         pass
-    
+
     async def _process_tasks(self):
         """Process tasks from queue"""
         if not self.task_queue.empty():
             task = await self.task_queue.get()
             self.current_task = task["task_id"]
-            
+
             try:
                 result = await self.handle_task(task)
                 logger.info(f"✅ Task {task['task_id']} completed")
-                
+
             except Exception as e:
                 logger.error(f"❌ Task {task['task_id']} failed: {e}")
                 result = {"status": "failed", "error": str(e)}
-            
+
             finally:
                 self.current_task = None
                 # Return result to orchestrator
                 await self._return_result(result)
-    
+
     async def handle_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Handle example task"""
         # Implement task-specific logic
         await asyncio.sleep(1.0)  # Simulate work
-        
+
         return {
             "status": "completed",
             "task_id": task["task_id"],
             "result": {"processed": True}
         }
-    
+
     async def _return_result(self, result: Dict[str, Any]):
         """Return result to orchestrator"""
         # Implement communication with orchestrator
@@ -617,20 +617,20 @@ async def main():
         agent_id="example_agent_1",
         config={"max_tasks": 10}
     )
-    
+
     # Start agent
     await agent.start()
-    
+
     # Add task to queue
     await agent.task_queue.put({
         "task_id": "task_123",
         "type": "example",
         "payload": {"data": "test"}
     })
-    
+
     # Let agent process
     await asyncio.sleep(5.0)
-    
+
     # Stop agent
     await agent.stop()
 
@@ -671,12 +671,12 @@ class AsyncProcessorAgent(BaseAgent):
         # Read document
         with open(document_path, 'r') as f:
             content = f.read()
-        
+
         # Process asynchronously
         await asyncio.sleep(0.1)  # Simulate async work
-        
+
         return {"status": "processed", "content_length": len(content)}
-    
+
     async def handle_task(self, task):
         result = await self.process_document(task["document_path"])
         return {"task_id": task["task_id"], "result": result}
@@ -775,10 +775,10 @@ def report_error(error, context):
         "context": context,
         "timestamp": get_iso_timestamp()
     }
-    
+
     # Log error
     logger.error(f"Error: {error_data}")
-    
+
     # Send to monitoring
     monitor.track_error(error_data)
 ```
@@ -905,7 +905,7 @@ def safe_file_operations(file_path):
     # Validate path
     if not Path(file_path).resolve().parent == Path("/safe/directory"):
         raise ValueError("Invalid file path")
-    
+
     # Use context managers
     with open(file_path, 'r') as f:
         return f.read()
@@ -938,7 +938,7 @@ def validate_request(request):
     # Check headers
     if 'Authorization' not in request.headers:
         raise ValueError("Missing authorization")
-    
+
     # Validate content type
     if request.headers['Content-Type'] != 'application/json':
         raise ValueError("Invalid content type")
@@ -1005,7 +1005,7 @@ def profile_agent():
     import cProfile
     profiler = cProfile.Profile()
     profiler.enable()
-    
+
     try:
         agent.run()
     finally:

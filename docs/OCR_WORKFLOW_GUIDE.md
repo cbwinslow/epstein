@@ -101,7 +101,7 @@ create_release: true
 - **Purpose**: Download documents from government sources
 - **Duration**: ~30-120 minutes
 - **Resources**: CPU: 2 cores, RAM: 4GB
-- **Outputs**: 
+- **Outputs**:
   - Downloaded PDF files
   - Download manifest
   - Download count
@@ -517,7 +517,7 @@ Add additional processing steps:
   run: |
     # Example: Extract specific entities
     python scripts/extract_entities.py ${RESULTS_DIR}/text/
-    
+
     # Example: Generate index
     python scripts/generate_index.py ${RESULTS_DIR}/
 ```

@@ -15,7 +15,10 @@ from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExp
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.metrics import CallbackOptions, Observation
 from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.metrics.export import ConsoleMetricExporter, PeriodicExportingMetricReader
+from opentelemetry.sdk.metrics.export import (
+    ConsoleMetricExporter,
+    PeriodicExportingMetricReader,
+)
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
@@ -27,10 +30,13 @@ class AgentTelemetry:
     Centralized telemetry management for multi-agent system.
     """
 
-    def __init__(self, service_name: str = "epstein-multi-agent-system",
-                 enable_console_export: bool = True,
-                 enable_otlp_export: bool = False,
-                 otlp_endpoint: str | None = None):
+    def __init__(
+        self,
+        service_name: str = "epstein-multi-agent-system",
+        enable_console_export: bool = True,
+        enable_otlp_export: bool = False,
+        otlp_endpoint: str | None = None,
+    ):
         """
         Initialize telemetry with OpenTelemetry SDK.
 
@@ -44,11 +50,13 @@ class AgentTelemetry:
         self.logger = logging.getLogger(__name__)
 
         # Create resource with service information
-        resource = Resource.create({
-            "service.name": service_name,
-            "service.version": "1.0.0",
-            "deployment.environment": "development"
-        })
+        resource = Resource.create(
+            {
+                "service.name": service_name,
+                "service.version": "1.0.0",
+                "deployment.environment": "development",
+            }
+        )
 
         # Setup tracing
         self._setup_tracing(resource, enable_console_export, enable_otlp_export, otlp_endpoint)
@@ -89,16 +97,14 @@ class AgentTelemetry:
         # Add console exporter for debugging
         if console:
             console_reader = PeriodicExportingMetricReader(
-                ConsoleMetricExporter(),
-                export_interval_millis=60000  # Export every 60 seconds
+                ConsoleMetricExporter(), export_interval_millis=60000  # Export every 60 seconds
             )
             readers.append(console_reader)
 
         # Add OTLP exporter for production
         if otlp and endpoint:
             otlp_reader = PeriodicExportingMetricReader(
-                OTLPMetricExporter(endpoint=endpoint, insecure=True),
-                export_interval_millis=60000
+                OTLPMetricExporter(endpoint=endpoint, insecure=True), export_interval_millis=60000
             )
             readers.append(otlp_reader)
 
@@ -109,42 +115,34 @@ class AgentTelemetry:
         """Create standard metrics for agents"""
         # Counter for agent executions
         self.agent_execution_counter = self.meter.create_counter(
-            name="agent.executions",
-            description="Number of agent executions",
-            unit="1"
+            name="agent.executions", description="Number of agent executions", unit="1"
         )
 
         # Counter for agent errors
         self.agent_error_counter = self.meter.create_counter(
-            name="agent.errors",
-            description="Number of agent errors",
-            unit="1"
+            name="agent.errors", description="Number of agent errors", unit="1"
         )
 
         # Histogram for agent execution duration
         self.agent_duration_histogram = self.meter.create_histogram(
-            name="agent.duration",
-            description="Agent execution duration",
-            unit="ms"
+            name="agent.duration", description="Agent execution duration", unit="ms"
         )
 
         # Counter for task completions
         self.task_completion_counter = self.meter.create_counter(
-            name="task.completions",
-            description="Number of completed tasks",
-            unit="1"
+            name="task.completions", description="Number of completed tasks", unit="1"
         )
 
         # Gauge for active agents
         self.active_agents_gauge = self.meter.create_observable_gauge(
             name="agent.active",
             description="Number of active agents",
-            callbacks=[self._get_active_agents]
+            callbacks=[self._get_active_agents],
         )
 
     def _get_active_agents(self, options: CallbackOptions) -> list[Observation]:
         """Callback for active agents gauge"""
-        active_count = len([m for m in self.agent_metrics.values() if m.get('status') == 'running'])
+        active_count = len([m for m in self.agent_metrics.values() if m.get("status") == "running"])
         return [Observation(active_count)]
 
     def trace_agent_execution(self, agent_name: str):
@@ -157,6 +155,7 @@ class AgentTelemetry:
         Returns:
             Decorated function with tracing
         """
+
         def decorator(func: Callable):
             @wraps(func)
             async def async_wrapper(*args, **kwargs):
@@ -166,22 +165,21 @@ class AgentTelemetry:
                     attributes={
                         "agent.name": agent_name,
                         "agent.method": func.__name__,
-                        "agent.type": "async"
-                    }
+                        "agent.type": "async",
+                    },
                 ) as span:
                     start_time = time.time()
 
                     try:
                         # Update agent status
                         self.agent_metrics[agent_name] = {
-                            'status': 'running',
-                            'start_time': start_time
+                            "status": "running",
+                            "start_time": start_time,
                         }
 
                         # Record execution
                         self.agent_execution_counter.add(
-                            1,
-                            {"agent.name": agent_name, "method": func.__name__}
+                            1, {"agent.name": agent_name, "method": func.__name__}
                         )
 
                         # Execute function
@@ -192,8 +190,7 @@ class AgentTelemetry:
 
                         # Record duration
                         self.agent_duration_histogram.record(
-                            duration_ms,
-                            {"agent.name": agent_name, "method": func.__name__}
+                            duration_ms, {"agent.name": agent_name, "method": func.__name__}
                         )
 
                         # Update span with success
@@ -203,14 +200,13 @@ class AgentTelemetry:
 
                         # Update agent status
                         self.agent_metrics[agent_name] = {
-                            'status': 'completed',
-                            'duration': duration_ms
+                            "status": "completed",
+                            "duration": duration_ms,
                         }
 
                         # Record task completion
                         self.task_completion_counter.add(
-                            1,
-                            {"agent.name": agent_name, "status": "success"}
+                            1, {"agent.name": agent_name, "status": "success"}
                         )
 
                         return result
@@ -221,8 +217,7 @@ class AgentTelemetry:
 
                         # Record error
                         self.agent_error_counter.add(
-                            1,
-                            {"agent.name": agent_name, "error.type": type(e).__name__}
+                            1, {"agent.name": agent_name, "error.type": type(e).__name__}
                         )
 
                         # Update span with error
@@ -235,15 +230,14 @@ class AgentTelemetry:
 
                         # Update agent status
                         self.agent_metrics[agent_name] = {
-                            'status': 'failed',
-                            'error': str(e),
-                            'duration': duration_ms
+                            "status": "failed",
+                            "error": str(e),
+                            "duration": duration_ms,
                         }
 
                         # Record task completion with error
                         self.task_completion_counter.add(
-                            1,
-                            {"agent.name": agent_name, "status": "error"}
+                            1, {"agent.name": agent_name, "status": "error"}
                         )
 
                         raise
@@ -256,22 +250,21 @@ class AgentTelemetry:
                     attributes={
                         "agent.name": agent_name,
                         "agent.method": func.__name__,
-                        "agent.type": "sync"
-                    }
+                        "agent.type": "sync",
+                    },
                 ) as span:
                     start_time = time.time()
 
                     try:
                         # Update agent status
                         self.agent_metrics[agent_name] = {
-                            'status': 'running',
-                            'start_time': start_time
+                            "status": "running",
+                            "start_time": start_time,
                         }
 
                         # Record execution
                         self.agent_execution_counter.add(
-                            1,
-                            {"agent.name": agent_name, "method": func.__name__}
+                            1, {"agent.name": agent_name, "method": func.__name__}
                         )
 
                         # Execute function
@@ -282,8 +275,7 @@ class AgentTelemetry:
 
                         # Record duration
                         self.agent_duration_histogram.record(
-                            duration_ms,
-                            {"agent.name": agent_name, "method": func.__name__}
+                            duration_ms, {"agent.name": agent_name, "method": func.__name__}
                         )
 
                         # Update span with success
@@ -293,14 +285,13 @@ class AgentTelemetry:
 
                         # Update agent status
                         self.agent_metrics[agent_name] = {
-                            'status': 'completed',
-                            'duration': duration_ms
+                            "status": "completed",
+                            "duration": duration_ms,
                         }
 
                         # Record task completion
                         self.task_completion_counter.add(
-                            1,
-                            {"agent.name": agent_name, "status": "success"}
+                            1, {"agent.name": agent_name, "status": "success"}
                         )
 
                         return result
@@ -311,8 +302,7 @@ class AgentTelemetry:
 
                         # Record error
                         self.agent_error_counter.add(
-                            1,
-                            {"agent.name": agent_name, "error.type": type(e).__name__}
+                            1, {"agent.name": agent_name, "error.type": type(e).__name__}
                         )
 
                         # Update span with error
@@ -325,21 +315,21 @@ class AgentTelemetry:
 
                         # Update agent status
                         self.agent_metrics[agent_name] = {
-                            'status': 'failed',
-                            'error': str(e),
-                            'duration': duration_ms
+                            "status": "failed",
+                            "error": str(e),
+                            "duration": duration_ms,
                         }
 
                         # Record task completion with error
                         self.task_completion_counter.add(
-                            1,
-                            {"agent.name": agent_name, "status": "error"}
+                            1, {"agent.name": agent_name, "status": "error"}
                         )
 
                         raise
 
             # Return appropriate wrapper based on function type
             import asyncio
+
             if asyncio.iscoroutinefunction(func):
                 return async_wrapper
             else:
@@ -360,7 +350,9 @@ class AgentTelemetry:
         """
         return self.tracer.start_as_current_span(name, attributes=attributes or {})
 
-    def record_metric(self, metric_name: str, value: float, attributes: dict[str, str] | None = None):
+    def record_metric(
+        self, metric_name: str, value: float, attributes: dict[str, str] | None = None
+    ):
         """
         Record a custom metric.
 
@@ -379,22 +371,19 @@ class AgentTelemetry:
         Returns:
             Dictionary of agent metrics
         """
-        return {
-            "agents": self.agent_metrics,
-            "timestamp": datetime.now().isoformat()
-        }
+        return {"agents": self.agent_metrics, "timestamp": datetime.now().isoformat()}
 
     def shutdown(self):
         """Shutdown telemetry providers"""
         try:
             # Shutdown tracer provider
             tracer_provider = trace.get_tracer_provider()
-            if hasattr(tracer_provider, 'shutdown'):
+            if hasattr(tracer_provider, "shutdown"):
                 tracer_provider.shutdown()
 
             # Shutdown meter provider
             meter_provider = metrics.get_meter_provider()
-            if hasattr(meter_provider, 'shutdown'):
+            if hasattr(meter_provider, "shutdown"):
                 meter_provider.shutdown()
 
         except Exception as e:
@@ -405,10 +394,12 @@ class AgentTelemetry:
 _telemetry_instance = None
 
 
-def get_telemetry(service_name: str = "epstein-multi-agent-system",
-                 enable_console_export: bool = True,
-                 enable_otlp_export: bool = False,
-                 otlp_endpoint: str | None = None) -> AgentTelemetry:
+def get_telemetry(
+    service_name: str = "epstein-multi-agent-system",
+    enable_console_export: bool = True,
+    enable_otlp_export: bool = False,
+    otlp_endpoint: str | None = None,
+) -> AgentTelemetry:
     """
     Get or create global telemetry instance.
 
@@ -428,7 +419,7 @@ def get_telemetry(service_name: str = "epstein-multi-agent-system",
             service_name=service_name,
             enable_console_export=enable_console_export,
             enable_otlp_export=enable_otlp_export,
-            otlp_endpoint=otlp_endpoint
+            otlp_endpoint=otlp_endpoint,
         )
 
     return _telemetry_instance
