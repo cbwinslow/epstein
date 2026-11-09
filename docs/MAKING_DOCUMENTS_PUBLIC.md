@@ -76,18 +76,18 @@ Create `index.html` for R2 or GitHub Pages:
     <title>Epstein Documents - OCR Processed Public Archive</title>
     <meta name="description" content="Public archive of OCR-processed documents from DOJ, FBI, and Congressional releases related to Jeffrey Epstein case. Free download, searchable PDFs.">
     <meta name="keywords" content="Epstein, documents, DOJ, FBI, FOIA, public records, court documents, OCR, searchable PDF">
-    
+
     <!-- Open Graph for social sharing -->
     <meta property="og:title" content="Epstein Documents - Public Archive">
     <meta property="og:description" content="Free public archive of OCR-processed Epstein case documents">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://documents.yourdomain.com/">
-    
+
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Epstein Documents - Public Archive">
     <meta name="twitter:description" content="Free public archive of OCR-processed Epstein documents">
-    
+
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -169,11 +169,11 @@ Create `index.html` for R2 or GitHub Pages:
         <h1>📁 Epstein Documents - Public Archive</h1>
         <p>OCR-processed documents from official government sources</p>
     </header>
-    
+
     <div class="disclaimer">
         <strong>⚠️ Disclaimer:</strong> This archive contains public documents released by the U.S. Department of Justice, FBI, and Congressional committees. All documents are public records. No private information has been added. Documents are provided as-is for research and transparency purposes.
     </div>
-    
+
     <section class="stats">
         <div class="stat-card">
             <div class="stat-number" id="total-docs">0</div>
@@ -188,13 +188,13 @@ Create `index.html` for R2 or GitHub Pages:
             <div>Last Updated</div>
         </div>
     </section>
-    
+
     <section class="documents">
         <h2>📄 Available Documents</h2>
         <input type="text" class="search-box" id="search" placeholder="Search documents...">
         <div id="document-list"></div>
     </section>
-    
+
     <section style="margin-top: 40px;">
         <h2>📥 Download Options</h2>
         <ul>
@@ -203,18 +203,18 @@ Create `index.html` for R2 or GitHub Pages:
             <li><strong>Manifest:</strong> <a href="/ocr-results/manifest.json">View document manifest (JSON)</a></li>
         </ul>
     </section>
-    
+
     <section style="margin-top: 40px;">
         <h2>ℹ️ About This Archive</h2>
         <p>This archive was created using automated OCR (Optical Character Recognition) processing to make scanned documents searchable. The workflow is open source and available on GitHub.</p>
-        
+
         <h3>Sources</h3>
         <ul>
             <li><strong>DOJ:</strong> <a href="https://www.justice.gov/epstein/doj-disclosures">Department of Justice Disclosures</a></li>
             <li><strong>FBI:</strong> <a href="https://vault.fbi.gov/jeffrey-epstein">FBI Vault</a></li>
             <li><strong>Congress:</strong> House Oversight Committee Releases</li>
         </ul>
-        
+
         <h3>Processing</h3>
         <ul>
             <li>OCR Engine: OCRmyPDF + Tesseract</li>
@@ -222,7 +222,7 @@ Create `index.html` for R2 or GitHub Pages:
             <li>Quality: Searchable PDFs with extracted text</li>
             <li>Verification: SHA-256 checksums for all files</li>
         </ul>
-        
+
         <h3>Usage</h3>
         <p>All documents are public records. You may:</p>
         <ul>
@@ -231,71 +231,71 @@ Create `index.html` for R2 or GitHub Pages:
             <li>✅ Cite in publications</li>
             <li>✅ Create derivative works</li>
         </ul>
-        
+
         <h3>Citation</h3>
         <p>If citing this archive, please reference:</p>
-        <pre>Epstein Documents Archive (OCR Processed) [dataset]. 
+        <pre>Epstein Documents Archive (OCR Processed) [dataset].
 Available at: https://documents.yourdomain.com/
 Original sources: U.S. Department of Justice, FBI, House Oversight Committee</pre>
         <p><small>Note: Replace 'yourdomain.com' with your actual domain or R2 public URL</small></p>
     </section>
-    
+
     <footer>
         <p><strong>Repository:</strong> <a href="https://github.com/{owner}/{repo}">GitHub Repository</a></p>
         <p><strong>Last Updated:</strong> <span id="footer-date"></span></p>
         <p><strong>Questions?</strong> Open an issue on GitHub</p>
         <p><small>This is a public archive of public records. Not affiliated with any government agency.</small></p>
     </footer>
-    
+
     <script>
         // Load and display documents
         async function loadDocuments() {
             try {
                 const response = await fetch('/ocr-results/manifest.json');
                 const data = await response.json();
-                
+
                 // Update stats
                 document.getElementById('total-docs').textContent = data.total_documents;
-                document.getElementById('total-size').textContent = 
+                document.getElementById('total-size').textContent =
                     (data.documents.reduce((sum, doc) => sum + doc.size, 0) / (1024**3)).toFixed(2) + ' GB';
-                document.getElementById('last-updated').textContent = 
+                document.getElementById('last-updated').textContent =
                     new Date(data.processing_date).toLocaleDateString();
-                document.getElementById('footer-date').textContent = 
+                document.getElementById('footer-date').textContent =
                     new Date(data.processing_date).toLocaleString();
-                
+
                 // Display documents
                 displayDocuments(data.documents);
-                
+
                 // Setup search
                 document.getElementById('search').addEventListener('input', (e) => {
                     const query = e.target.value.toLowerCase();
-                    const filtered = data.documents.filter(doc => 
+                    const filtered = data.documents.filter(doc =>
                         doc.filename.toLowerCase().includes(query)
                     );
                     displayDocuments(filtered);
                 });
-                
+
             } catch (error) {
                 console.error('Error loading documents:', error);
-                document.getElementById('document-list').innerHTML = 
+                document.getElementById('document-list').innerHTML =
                     '<p>Error loading documents. Please try again later.</p>';
             }
         }
-        
+
         function displayDocuments(documents) {
             const list = document.getElementById('document-list');
             list.innerHTML = documents.map(doc => `
                 <div class="document-item">
                     <a href="/ocr-results/${doc.path}" class="document-title">${doc.filename}</a>
                     <div class="document-meta">
-                        Size: ${(doc.size / 1024).toFixed(1)} KB | 
+                        Size: ${(doc.size / 1024).toFixed(1)} KB |
                         SHA-256: ${doc.sha256.substring(0, 16)}...
                         ${doc.text_file ? ' | <a href="/ocr-results/' + doc.text_file + '">📝 Text</a>' : ''}
                     </div>
                 </div>
             `).join('');
         }
-        
+
         // Load documents on page load
         loadDocuments();
     </script>
@@ -331,7 +331,7 @@ wrangler r2 object put epstein-documents/index.html --file index.html
        <!-- Add URLs for each document -->
    </urlset>
    ```
-   
+
    Submit: Search Console → Sitemaps → Add sitemap URL
 
 3. **Request Indexing**
@@ -397,13 +397,13 @@ Link: https://documents.yourdomain.com
 
 **Post Title**:
 ```
-[Dataset] Complete OCR-processed archive of Epstein documents 
+[Dataset] Complete OCR-processed archive of Epstein documents
 from DOJ, FBI, and Congressional releases - 1,500+ searchable PDFs
 ```
 
 **Post Body**:
 ```
-I've created a public archive of OCR-processed documents related to 
+I've created a public archive of OCR-processed documents related to
 the Epstein case from official government sources.
 
 **Features:**
@@ -494,23 +494,23 @@ FOR IMMEDIATE RELEASE
 
 New Public Archive Makes 1,500+ Epstein Documents Searchable
 
-[CITY, DATE] - A comprehensive public archive of documents related to 
-the Jeffrey Epstein case has been made available with full OCR 
-(Optical Character Recognition) processing, making all documents 
+[CITY, DATE] - A comprehensive public archive of documents related to
+the Jeffrey Epstein case has been made available with full OCR
+(Optical Character Recognition) processing, making all documents
 searchable for the first time.
 
 The archive includes documents from:
 - U.S. Department of Justice disclosures
-- FBI Vault FOIA releases  
+- FBI Vault FOIA releases
 - House Oversight Committee releases
 
-All documents are public records that have been previously released 
-by government agencies. The archive provides free, unrestricted access 
+All documents are public records that have been previously released
+by government agencies. The archive provides free, unrestricted access
 with no registration required.
 
-"The goal is to maximize public access to these important public 
-records," said [Your Name]. "By processing these documents with OCR 
-and hosting them freely, we make it easier for journalists, 
+"The goal is to maximize public access to these important public
+records," said [Your Name]. "By processing these documents with OCR
+and hosting them freely, we make it easier for journalists,
 researchers, and the public to search and analyze this information."
 
 Key features:
@@ -645,8 +645,8 @@ Options:
 Always include:
 ```
 This archive contains public documents released by government agencies.
-All documents are public records. We do not add, modify, or redact 
-any information. Documents are provided as-is for research and 
+All documents are public records. We do not add, modify, or redact
+any information. Documents are provided as-is for research and
 transparency purposes.
 
 This archive is not affiliated with any government agency.
@@ -734,7 +734,7 @@ Released under CC0 / Public Domain
 
 ---
 
-**Last Updated**: 2025-01-07  
+**Last Updated**: 2025-01-07
 **Version**: 1.0.0
 
 **Next Steps**: Follow the sections above in order to maximize public access to your document archive!

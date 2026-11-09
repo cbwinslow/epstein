@@ -1,4 +1,3 @@
-
 import pytest
 
 from agents.codex_agent import AGENT_INFO, TOOLS, CodexAgent
