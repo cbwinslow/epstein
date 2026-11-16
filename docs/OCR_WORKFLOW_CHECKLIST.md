@@ -443,7 +443,7 @@ After completing this checklist:
 
 ---
 
-**Last Updated**: 2025-01-07  
+**Last Updated**: 2025-01-07
 **Version**: 1.0.0
 
 **Questions?** Refer to the documentation in `docs/` or open an issue on GitHub.

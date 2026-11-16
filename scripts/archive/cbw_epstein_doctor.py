@@ -325,7 +325,9 @@ def check_tools(logger: Logger, timeout: int) -> CheckResult:
         ok=ok,
         severity=sev,
         summary=(
-            "All required tools present" if ok else f"Missing required: {', '.join(missing_required)}"
+            "All required tools present"
+            if ok
+            else f"Missing required: {', '.join(missing_required)}"
         ),
         details={
             "missing_required": missing_required,
@@ -358,7 +360,11 @@ def check_project_docs(logger: Logger, project_root: Path) -> CheckResult:
         name="project_docs",
         ok=ok,
         severity=sev,
-        summary=("Docs look complete" if ok else f"Missing docs (non-fatal): {', '.join(missing[:6])}{'...' if len(missing)>6 else ''}"),
+        summary=(
+            "Docs look complete"
+            if ok
+            else f"Missing docs (non-fatal): {', '.join(missing[:6])}{'...' if len(missing)>6 else ''}"
+        ),
         details={"present": present, "missing": missing},
         remediation=(
             "If you used my zip bundles, make sure you extracted into the project root (not a nested folder)."
@@ -381,7 +387,9 @@ def check_venv(logger: Logger, project_root: Path, venv_path: Path, timeout: int
     }
 
     if exists:
-        rc, out, err = run_cmd(logger, [str(py), "-c", "import sys; print(sys.executable)"], timeout=timeout)
+        rc, out, err = run_cmd(
+            logger, [str(py), "-c", "import sys; print(sys.executable)"], timeout=timeout
+        )
         details["venv_python_executable"] = out if rc == 0 else None
         details["venv_python_check_err"] = err if rc != 0 else ""
 
@@ -554,7 +562,9 @@ def check_postgres(logger: Logger, timeout: int) -> CheckResult:
     )
 
 
-def check_docker_compose(logger: Logger, project_root: Path, compose_path: Path | None, timeout: int) -> CheckResult:
+def check_docker_compose(
+    logger: Logger, project_root: Path, compose_path: Path | None, timeout: int
+) -> CheckResult:
     # Find compose file if not provided.
     if compose_path is None:
         for cand in [project_root / "docker-compose.yml", project_root / "compose.yml"]:
@@ -617,7 +627,12 @@ def check_docker_compose(logger: Logger, project_root: Path, compose_path: Path 
         ok=ok,
         severity=sev,
         summary=("Compose config valid" if ok else "Compose config invalid"),
-        details={"compose_path": str(compose_path), "stdout": out[-1000:], "stderr": err[-1000:], "rc": rc},
+        details={
+            "compose_path": str(compose_path),
+            "stdout": out[-1000:],
+            "stderr": err[-1000:],
+            "rc": rc,
+        },
         remediation=(
             "Run: docker compose -f docker-compose.yml config (to see validation errors)"
             if not ok
@@ -637,7 +652,14 @@ def check_network(logger: Logger, timeout: int) -> CheckResult:
     all_ok = True
 
     for name, host, port in targets:
-        probe = {"name": name, "host": host, "port": port, "ok": False, "latency_ms": None, "error": ""}
+        probe = {
+            "name": name,
+            "host": host,
+            "port": port,
+            "ok": False,
+            "latency_ms": None,
+            "error": "",
+        }
         t0 = time.time()
         try:
             # Resolve if host is not IP.
@@ -742,7 +764,13 @@ def fix_install_tools(logger: Logger, apply: bool, tools: list[str], timeout: in
                 ok=False,
                 severity="ERROR",
                 summary=f"Failed installing tools via {pm}",
-                details={**details, "failed_cmd": c, "rc": rc, "stdout": out[-1000:], "stderr": err[-1000:]},
+                details={
+                    **details,
+                    "failed_cmd": c,
+                    "rc": rc,
+                    "stdout": out[-1000:],
+                    "stderr": err[-1000:],
+                },
                 remediation="Inspect logs and re-run after resolving repo/package issues.",
             )
 
@@ -757,7 +785,9 @@ def fix_install_tools(logger: Logger, apply: bool, tools: list[str], timeout: in
     )
 
 
-def init_create_venv(logger: Logger, project_root: Path, venv_path: Path, apply: bool, timeout: int) -> CheckResult:
+def init_create_venv(
+    logger: Logger, project_root: Path, venv_path: Path, apply: bool, timeout: int
+) -> CheckResult:
     if (venv_path / "bin" / "python").exists():
         return CheckResult(
             name="init_create_venv",
@@ -797,7 +827,9 @@ def init_create_venv(logger: Logger, project_root: Path, venv_path: Path, apply:
 
     # Upgrade pip tooling (recommended).
     pip = venv_path / "bin" / "pip"
-    rc2, out2, err2 = run_cmd(logger, [str(pip), "install", "-U", "pip", "setuptools", "wheel"], timeout=max(timeout, 120))
+    rc2, out2, err2 = run_cmd(
+        logger, [str(pip), "install", "-U", "pip", "setuptools", "wheel"], timeout=max(timeout, 120)
+    )
 
     return CheckResult(
         name="init_create_venv",
@@ -893,7 +925,11 @@ def build_report(
     checks.append(check_tools(logger, timeout=timeout))
     checks.append(check_project_docs(logger, project_root))
     checks.append(check_venv(logger, project_root, venv_path, timeout=timeout))
-    checks.append(check_requirements_installability(logger, project_root, venv_path, requirements_path, timeout=timeout))
+    checks.append(
+        check_requirements_installability(
+            logger, project_root, venv_path, requirements_path, timeout=timeout
+        )
+    )
     checks.append(check_postgres(logger, timeout=timeout))
     checks.append(check_docker_compose(logger, project_root, compose_path, timeout=timeout))
 
@@ -901,11 +937,19 @@ def build_report(
     if mode in {"fix", "init"}:
         # Install missing required tools.
         missing_required = [t for t in RECOMMENDED_TOOLS if which(t) is None]
-        checks.append(fix_install_tools(logger, apply=apply, tools=missing_required, timeout=timeout))
+        checks.append(
+            fix_install_tools(logger, apply=apply, tools=missing_required, timeout=timeout)
+        )
 
     if mode == "init":
-        checks.append(init_create_venv(logger, project_root, venv_path, apply=apply, timeout=timeout))
-        checks.append(init_install_requirements(logger, project_root, venv_path, requirements_path, apply=apply, timeout=timeout))
+        checks.append(
+            init_create_venv(logger, project_root, venv_path, apply=apply, timeout=timeout)
+        )
+        checks.append(
+            init_install_requirements(
+                logger, project_root, venv_path, requirements_path, apply=apply, timeout=timeout
+            )
+        )
 
     finished_at = now_iso()
     elapsed = round(time.time() - started, 3)
@@ -972,8 +1016,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         prog=SCRIPT_NAME,
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        description=textwrap.dedent(
-            """
+        description=textwrap.dedent("""
             CBW Epstein/OpenDiscourse Doctor
 
             Examples
@@ -989,8 +1032,7 @@ def main() -> int:
 
             # Point at a specific project root
             python3 cbw_epstein_doctor.py --mode doctor --project-root ~/dev/opendiscourse
-            """
-        ).strip(),
+            """).strip(),
     )
 
     parser.add_argument(
@@ -1004,7 +1046,9 @@ def main() -> int:
         action="store_true",
         help="Actually perform system changes (installs, venv creation). Without this, init/fix are DRY-RUN.",
     )
-    parser.add_argument("--project-root", default=os.environ.get("PROJECT_ROOT"), help="Override project root")
+    parser.add_argument(
+        "--project-root", default=os.environ.get("PROJECT_ROOT"), help="Override project root"
+    )
     parser.add_argument("--venv", default=None, help="Venv path (default: <project>/.venv)")
     parser.add_argument("--requirements", default=None, help="Path to requirements.txt")
     parser.add_argument("--compose", default=None, help="Path to docker-compose.yml")
@@ -1055,7 +1099,11 @@ def main() -> int:
 
     print_report(report)
 
-    json_out = Path(args.json_out).expanduser().resolve() if args.json_out else choose_default_json_out(project_root)
+    json_out = (
+        Path(args.json_out).expanduser().resolve()
+        if args.json_out
+        else choose_default_json_out(project_root)
+    )
     try:
         write_json_report(logger, report, json_out)
     except Exception as e:
