@@ -1,7 +1,7 @@
 # Tasks - DOJ Epstein Files Automation System
 
-**Generated:** 2026-02-23  
-**Based on:** Comprehensive validation and assessment  
+**Generated:** 2026-02-23
+**Based on:** Comprehensive validation and assessment
 **Priority Levels:** 🔴 Critical | 🟡 Important | 🟢 Nice to Have
 
 ---
@@ -9,10 +9,10 @@
 ## 🔴 Critical Priority Tasks
 
 ### TASK-001: Fix Rich Dashboard Hanging Issue
-**Status:** 🔴 Open  
-**Component:** Operation Monitor  
-**Issue:** Dashboard causes hang when enabled  
-**Impact:** Cannot use optional dashboard feature  
+**Status:** 🔴 Open
+**Component:** Operation Monitor
+**Issue:** Dashboard causes hang when enabled
+**Impact:** Cannot use optional dashboard feature
 
 **Microgoals (Do one at a time):**
 1. [ ] Read `epstein/operation_monitor.py` lines 450-475
@@ -63,10 +63,10 @@ print('Dashboard test passed')
 ---
 
 ### TASK-002: Add PYTHONPATH Configuration
-**Status:** 🔴 Open  
-**Component:** Setup & Installation  
-**Issue:** Modules require PYTHONPATH to be set  
-**Impact:** Users cannot run scripts without setup  
+**Status:** 🔴 Open
+**Component:** Setup & Installation
+**Issue:** Modules require PYTHONPATH to be set
+**Impact:** Users cannot run scripts without setup
 
 **Microgoals:**
 1. [ ] Create scripts/setup_environment.sh
@@ -115,10 +115,10 @@ python -c "from epstein.download_manager import DownloadManager; print('✓ Impo
 ---
 
 ### TASK-003: Create Installation Script for OCR Dependencies
-**Status:** 🔴 Open  
-**Component:** OCR Processor  
-**Issue:** OCR dependencies not installed  
-**Impact:** OCR features cannot be used  
+**Status:** 🔴 Open
+**Component:** OCR Processor
+**Issue:** OCR dependencies not installed
+**Impact:** OCR features cannot be used
 
 **Microgoals:**
 1. [ ] Create scripts/install_ocr_deps.sh
@@ -193,10 +193,10 @@ python -c "from epstein.ocr_processor import OCRProcessor; OCRProcessor(Path('/t
 ## 🟡 Important Priority Tasks
 
 ### TASK-004: Add Example Configuration Files
-**Status:** 🟡 Open  
-**Component:** Configuration  
-**Issue:** No example configs provided  
-**Impact:** Users don't know how to configure system  
+**Status:** 🟡 Open
+**Component:** Configuration
+**Issue:** No example configs provided
+**Impact:** Users don't know how to configure system
 
 **Files to Create:**
 
@@ -262,10 +262,10 @@ python scripts/pipeline_orchestrator.py --config configs/development.json --skip
 ---
 
 ### TASK-005: Create Real-World Usage Examples
-**Status:** 🟡 Open  
-**Component:** Documentation & Examples  
-**Issue:** No practical usage examples  
-**Impact:** Users don't know how to use system  
+**Status:** 🟡 Open
+**Component:** Documentation & Examples
+**Issue:** No practical usage examples
+**Impact:** Users don't know how to use system
 
 **Files to Create:**
 
@@ -340,10 +340,10 @@ Shows complete automation:
 ---
 
 ### TASK-006: Enhance Validation Script
-**Status:** 🟡 Open  
-**Component:** Testing  
-**Issue:** Validation script hangs on integration test  
-**Impact:** Cannot run full automated validation  
+**Status:** 🟡 Open
+**Component:** Testing
+**Issue:** Validation script hangs on integration test
+**Impact:** Cannot run full automated validation
 
 **Steps to Fix:**
 1. Fix hanging issue in integration test
@@ -376,10 +376,10 @@ cat /tmp/validation_report.json
 ---
 
 ### TASK-007: Add CI/CD GitHub Actions Workflow
-**Status:** 🟡 Open  
-**Component:** CI/CD  
-**Issue:** No automated testing in CI  
-**Impact:** Changes not validated automatically  
+**Status:** 🟡 Open
+**Component:** CI/CD
+**Issue:** No automated testing in CI
+**Impact:** Changes not validated automatically
 
 **Create File:** `.github/workflows/automation-tests.yml`
 ```yaml
@@ -403,21 +403,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.12'
-      
+
       - name: Install dependencies
         run: |
           pip install requests pdfminer.six tqdm rich
-      
+
       - name: Run validation
         run: |
           export PYTHONPATH=$PWD:$PYTHONPATH
           timeout 120 python scripts/validate_automation_system.py --quick
-      
+
       - name: Upload validation report
         if: always()
         uses: actions/upload-artifact@v3
@@ -438,9 +438,9 @@ jobs:
 ## 🟢 Nice to Have Tasks
 
 ### TASK-008: Add Performance Benchmarking
-**Status:** 🟢 Open  
-**Component:** Performance  
-**Priority:** Low  
+**Status:** 🟢 Open
+**Component:** Performance
+**Priority:** Low
 
 **Create File:** `scripts/benchmark_automation_system.py`
 
@@ -460,9 +460,9 @@ jobs:
 ---
 
 ### TASK-009: Add Prometheus Metrics Export
-**Status:** 🟢 Open  
-**Component:** Monitoring  
-**Priority:** Low  
+**Status:** 🟢 Open
+**Component:** Monitoring
+**Priority:** Low
 
 **Changes:**
 - Add prometheus_client dependency
@@ -478,9 +478,9 @@ jobs:
 ---
 
 ### TASK-010: Create Web Dashboard
-**Status:** 🟢 Open  
-**Component:** UI  
-**Priority:** Low  
+**Status:** 🟢 Open
+**Component:** UI
+**Priority:** Low
 
 **Features:**
 - Real-time progress visualization
@@ -590,8 +590,8 @@ sudo apt-get install tesseract-ocr ocrmypdf ghostscript qpdf
 
 ---
 
-**Last Updated:** 2026-02-23  
-**Total Tasks:** 12 (5 Critical, 4 Important, 3 Nice to Have)  
+**Last Updated:** 2026-02-23
+**Total Tasks:** 12 (5 Critical, 4 Important, 3 Nice to Have)
 **Completion:** 0% (0/12 complete)
 
 ---
@@ -615,10 +615,10 @@ sudo apt-get install tesseract-ocr ocrmypdf ghostscript qpdf
 ## 🔴 Critical: Code Quality & Testing
 
 ### TASK-012: Fix Lint Errors (441 errors)
-**Status:** 🔴 Open  
-**Component:** Code Quality  
-**Issue:** 441 ruff lint errors across codebase  
-**Impact:** Code quality, maintainability  
+**Status:** 🔴 Open
+**Component:** Code Quality
+**Issue:** 441 ruff lint errors across codebase
+**Impact:** Code quality, maintainability
 
 **Microgoals:**
 1. [ ] Run `uv run ruff check . --fix` to auto-fix
@@ -626,7 +626,7 @@ sudo apt-get install tesseract-ocr ocrmypdf ghostscript qpdf
 3. [ ] Verify no regressions
 
 **Steps:**
-1. Run `uv run ruff check . --fix` 
+1. Run `uv run ruff check . --fix`
 2. Review and fix remaining issues
 3. Add pre-commit hook to prevent future issues
 
@@ -644,10 +644,10 @@ uv run ruff check .
 ---
 
 ### TASK-013: Fix Type Errors (52 mypy errors)
-**Status:** 🔴 Open  
-**Component:** Type Safety  
-**Issue:** 52 mypy type errors  
-**Impact:** Type safety, runtime errors  
+**Status:** 🔴 Open
+**Component:** Type Safety
+**Issue:** 52 mypy type errors
+**Impact:** Type safety, runtime errors
 
 **Microgoals:**
 1. [ ] Run mypy on epstein/ folder
@@ -673,9 +673,9 @@ uv run mypy epstein/ --ignore-missing-imports
 
 ### TASK-014: Fix Test Collection Errors
 **Status:** ✅ Complete (2026-02-23)
-**Component:** Testing  
-**Issue:** 11 test files have collection errors (PYTHONPATH not set)  
-**Impact:** Cannot run tests  
+**Component:** Testing
+**Issue:** 11 test files have collection errors (PYTHONPATH not set)
+**Impact:** Cannot run tests
 
 **Fixed:**
 - Created `tests/conftest.py` with sys.path setup
@@ -684,9 +684,9 @@ uv run mypy epstein/ --ignore-missing-imports
 ---
 
 ### TASK-023: Improve Test Quality & Coverage
-**Status:** 🟡 Open  
-**Component:** Testing  
-**Issue:** Tests pass but may not validate correctness  
+**Status:** 🟡 Open
+**Component:** Testing
+**Issue:** Tests pass but may not validate correctness
 
 **Current Problems:**
 - Only mocked unit tests (no integration/E2E)
@@ -740,9 +740,9 @@ uv run pytest tests/e2e/
 ---
 
 ### TASK-015: Consolidate Duplicate Files
-**Status:** 🔴 Open  
-**Component:** Code Organization  
-**Issue:** Multiple duplicate/redundant files  
+**Status:** 🔴 Open
+**Component:** Code Organization
+**Issue:** Multiple duplicate/redundant files
 
 **Duplicates Found:**
 1. `epstein/qdrant_embed_chunks.py`, `qdrant_embed_chunks_1.py`, `qdrant_embed_chunks2.py`
@@ -777,9 +777,9 @@ python -c "from epstein.qdrant_embed_chunks import *"
 ## 🟡 Important: Architecture & Deployment
 
 ### TASK-016: Fix Makefile Duplicate Targets
-**Status:** 🟡 Open  
-**Component:** Build System  
-**Issue:** Makefile has duplicate `lint` target  
+**Status:** 🟡 Open
+**Component:** Build System
+**Issue:** Makefile has duplicate `lint` target
 
 **Microgoals:**
 1. [ ] Review Makefile
@@ -804,9 +804,9 @@ make lint
 ---
 
 ### TASK-017: Implement Remote Deployment System
-**Status:** 🟡 Open  
-**Component:** Deployment  
-**Issue:** No remote deployment system for async processing  
+**Status:** 🟡 Open
+**Component:** Deployment
+**Issue:** No remote deployment system for async processing
 
 **Current State:**
 - Local Docker compose exists
@@ -849,13 +849,13 @@ docker-compose -f docker-compose.production.yml config
 ---
 
 ### TASK-018: Add Health Check & Monitoring Endpoints
-**Status:** 🟡 Open  
-**Component:** Observability  
-**Issue:** No /health endpoint for deployment  
+**Status:** 🟡 Open
+**Component:** Observability
+**Issue:** No /health endpoint for deployment
 
 **Microgoals:**
 1. [ ] Add /health endpoint to MCP servers
-2. [ ] Add /ready endpoint  
+2. [ ] Add /ready endpoint
 3. [ ] Add Prometheus metrics
 4. [ ] Configure health checks in docker-compose
 
@@ -880,9 +880,9 @@ curl http://localhost:8765/ready
 ---
 
 ### TASK-019: Document Main Processing Pipeline
-**Status:** 🟡 Open  
-**Component:** Documentation  
-**Issue:** No clear documentation of main workflow  
+**Status:** 🟡 Open
+**Component:** Documentation
+**Issue:** No clear documentation of main workflow
 
 **Pipeline Flow (to document):**
 1. Download → 2. Extract → 3. OCR → 4. Chunk → 5. NER → 6. Embed → 7. Store
@@ -916,8 +916,8 @@ make pipeline-run
 ## 🟢 Nice to Have: Improvements
 
 ### TASK-020: Add Code Coverage Reporting
-**Status:** 🟢 Open  
-**Component:** Testing  
+**Status:** 🟢 Open
+**Component:** Testing
 
 **Steps:**
 1. Configure pytest-cov
@@ -927,14 +927,14 @@ make pipeline-run
 ---
 
 ### TASK-021: Add Performance Benchmarks
-**Status:** 🟢 Open  
-**Component:** Performance  
+**Status:** 🟢 Open
+**Component:** Performance
 
 ---
 
 ### TASK-022: Create API Documentation (Swagger)
-**Status:** 🟢 Open  
-**Component:** Documentation  
+**Status:** 🟢 Open
+**Component:** Documentation
 
 ---
 
@@ -986,10 +986,10 @@ make pipeline-run
 ## 🔴 Critical: Security Vulnerabilities (GitHub Reported)
 
 ### TASK-011: Fix GitHub-Detected Vulnerabilities
-**Status:** 🔴 Open  
-**Component:** Dependencies  
-**Issue:** 12 vulnerabilities (3 high, 5 moderate, 4 low) detected by GitHub  
-**Impact:** Security risks in dependencies  
+**Status:** 🔴 Open
+**Component:** Dependencies
+**Issue:** 12 vulnerabilities (3 high, 5 moderate, 4 low) detected by GitHub
+**Impact:** Security risks in dependencies
 
 **Microgoals:**
 1. [ ] Check GitHub Security tab for details

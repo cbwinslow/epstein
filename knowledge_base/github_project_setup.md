@@ -51,7 +51,7 @@ The GitHub Project is organized into the following views:
 
 #### Category
 - **Type**: Single select
-- **Options**: 
+- **Options**:
   - Core Processing
   - Database & Storage
   - Orchestration & Monitoring

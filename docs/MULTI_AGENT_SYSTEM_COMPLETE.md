@@ -370,7 +370,7 @@ Pre-configured dashboards for:
    ```bash
    # Check dependencies
    pip list | grep -E "qdrant|psycopg2|spacy|opentelemetry"
-   
+
    # Verify services
    curl http://localhost:6333/collections
    psql $POSTGRES_DSN -c "SELECT 1"
@@ -380,7 +380,7 @@ Pre-configured dashboards for:
    ```bash
    # Check OTLP collector
    curl http://localhost:4317
-   
+
    # Verify environment variables
    env | grep OTEL
    ```
@@ -389,7 +389,7 @@ Pre-configured dashboards for:
    ```bash
    # Run with debug logging
    pytest tests/ -v --log-cli-level=DEBUG
-   
+
    # Check test database
    docker-compose -f tests/docker-compose.test.yml ps
    ```

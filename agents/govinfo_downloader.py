@@ -22,6 +22,7 @@ from tqdm import tqdm
 @dataclass
 class GovInfoConfig:
     """Configuration for GovInfo.gov downloader"""
+
     base_url: str = "https://www.govinfo.gov"
     bulk_api_url: str = "https://www.govinfo.gov/bulkdata/bulkdata"
     collections_url: str = "https://www.govinfo.gov/bulkdata"
@@ -36,6 +37,7 @@ class GovInfoConfig:
 @dataclass
 class GovInfoDocument:
     """Represents a document from govinfo.gov"""
+
     package_id: str
     title: str
     granule_id: str | None = None
@@ -52,32 +54,33 @@ class GovInfoDownloader:
     def __init__(self, config: GovInfoConfig):
         self.config = config
         self.session = requests.Session()
-        self.session.headers.update({'User-Agent': config.user_agent})
+        self.session.headers.update({"User-Agent": config.user_agent})
         self.logger = logging.getLogger(__name__)
 
     def discover_collections(self) -> list[dict]:
         """Discover available collections from govinfo.gov"""
         try:
             response = self.session.get(
-                self.config.collections_url,
-                timeout=self.config.timeout_seconds
+                self.config.collections_url, timeout=self.config.timeout_seconds
             )
             response.raise_for_status()
 
-            soup = BeautifulSoup(response.text, 'html.parser')
+            soup = BeautifulSoup(response.text, "html.parser")
             collections = []
 
             # Look for collection links/tables
-            for link in soup.find_all('a', href=True):
-                href = link.get('href', '')
-                if 'bulkdata' in href and 'collection' in href.lower():
-                    title = link.get_text('').strip()
+            for link in soup.find_all("a", href=True):
+                href = link.get("href", "")
+                if "bulkdata" in href and "collection" in href.lower():
+                    title = link.get_text("").strip()
                     if title:
-                        collections.append({
-                            'name': title,
-                            'url': f"https://www.govinfo.gov{href}",
-                            'id': href.split('/')[-1] if href else ''
-                        })
+                        collections.append(
+                            {
+                                "name": title,
+                                "url": f"https://www.govinfo.gov{href}",
+                                "id": href.split("/")[-1] if href else "",
+                            }
+                        )
 
             self.logger.info(f"Discovered {len(collections)} collections")
             return collections
@@ -96,7 +99,9 @@ class GovInfoDownloader:
             while True:
                 try:
                     # Try bulk API first
-                    bulk_url = f"{self.config.bulk_api_url}?collection={collection_url.split('/')[-1]}"
+                    bulk_url = (
+                        f"{self.config.bulk_api_url}?collection={collection_url.split('/')[-1]}"
+                    )
                     if offset > 0:
                         bulk_url += f"&offset={offset}"
 
@@ -106,18 +111,18 @@ class GovInfoDownloader:
 
                     data = response.json()
 
-                    if 'packages' in data:
+                    if "packages" in data:
                         batch_packages = []
-                        for pkg_data in data['packages']:
+                        for pkg_data in data["packages"]:
                             doc = GovInfoDocument(
-                                package_id=pkg_data.get('packageId', ''),
-                                title=pkg_data.get('title', ''),
-                                granule_id=pkg_data.get('granuleId'),
-                                granule_title=pkg_data.get('granuleTitle'),
-                                download_url=pkg_data.get('downloadUrl', ''),
-                                file_size=pkg_data.get('size'),
-                                publish_date=pkg_data.get('publishDate'),
-                                collection=pkg_data.get('collectionName')
+                                package_id=pkg_data.get("packageId", ""),
+                                title=pkg_data.get("title", ""),
+                                granule_id=pkg_data.get("granuleId"),
+                                granule_title=pkg_data.get("granuleTitle"),
+                                download_url=pkg_data.get("downloadUrl", ""),
+                                file_size=pkg_data.get("size"),
+                                publish_date=pkg_data.get("publishDate"),
+                                collection=pkg_data.get("collectionName"),
                             )
                             batch_packages.append(doc)
 
@@ -147,7 +152,7 @@ class GovInfoDownloader:
         output_dir.mkdir(parents=True, exist_ok=True)
 
         # Generate safe filename
-        safe_title = re.sub(r'[^\w\s\-_\.]', '_', doc.title)
+        safe_title = re.sub(r"[^\w\s\-_\.]", "_", doc.title)
         filename = f"{doc.package_id}_{safe_title}.pdf"
         filepath = output_dir / filename
 
@@ -161,21 +166,18 @@ class GovInfoDownloader:
                 self.logger.debug(f"Downloading {doc.title} (attempt {attempt + 1})")
 
                 response = self.session.get(
-                    doc.download_url,
-                    timeout=self.config.timeout_seconds,
-                    stream=True
+                    doc.download_url, timeout=self.config.timeout_seconds, stream=True
                 )
                 response.raise_for_status()
 
-                total_size = int(response.headers.get('content-length', 0))
+                total_size = int(response.headers.get("content-length", 0))
 
-                with open(filepath, 'wb') as f, tqdm(
-                    total=total_size,
-                    unit='B',
-                    unit_scale=True,
-                    desc=filename[:50],
-                    leave=False
-                ) as pbar:
+                with (
+                    open(filepath, "wb") as f,
+                    tqdm(
+                        total=total_size, unit="B", unit_scale=True, desc=filename[:50], leave=False
+                    ) as pbar,
+                ):
                     for chunk in response.iter_content(chunk_size=8192):
                         if chunk:
                             f.write(chunk)
@@ -190,15 +192,17 @@ class GovInfoDownloader:
                 if attempt < self.config.max_retries - 1:
                     time.sleep(self.config.retry_delay_seconds)
                 else:
-                    self.logger.error(f"Failed to download {doc.title} after {self.config.max_retries} attempts")
+                    self.logger.error(
+                        f"Failed to download {doc.title} after {self.config.max_retries} attempts"
+                    )
                     return False
 
         return False
 
     def download_collection(self, collection: dict, output_dir: Path) -> tuple[int, int]:
         """Download all documents from a collection"""
-        collection_name = collection.get('name', 'unknown')
-        collection_url = collection.get('url', '')
+        collection_name = collection.get("name", "unknown")
+        collection_url = collection.get("url", "")
 
         self.logger.info(f"Starting download for collection: {collection_name}")
 
@@ -219,7 +223,9 @@ class GovInfoDownloader:
             else:
                 failure_count += 1
 
-        self.logger.info(f"Collection {collection_name} complete: {success_count} success, {failure_count} failures")
+        self.logger.info(
+            f"Collection {collection_name} complete: {success_count} success, {failure_count} failures"
+        )
         return success_count, failure_count
 
     def download_all_collections(self, output_dir: Path) -> dict[str, tuple[int, int]]:
@@ -232,13 +238,13 @@ class GovInfoDownloader:
         results = {}
 
         for collection in tqdm(collections, desc="Processing collections"):
-            collection_name = collection.get('name', 'unknown')
+            collection_name = collection.get("name", "unknown")
             success, failure = self.download_collection(collection, output_dir)
             results[collection_name] = (success, failure)
 
         return results
 
-    def _make_request(self, url: str, method: str = 'GET') -> requests.Response | None:
+    def _make_request(self, url: str, method: str = "GET") -> requests.Response | None:
         """Make HTTP request with retry logic"""
         for attempt in range(self.config.max_retries):
             try:
@@ -252,7 +258,9 @@ class GovInfoDownloader:
                 if attempt < self.config.max_retries - 1:
                     time.sleep(self.config.retry_delay_seconds)
                 else:
-                    self.logger.error(f"Request failed after {self.config.max_retries} attempts: {url}")
+                    self.logger.error(
+                        f"Request failed after {self.config.max_retries} attempts: {url}"
+                    )
                     return None
 
         return None
@@ -263,35 +271,43 @@ def setup_logging(verbose: bool = False):
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(
         level=level,
-        format='%(asctime)s [%(levelname)s] %(message)s',
+        format="%(asctime)s [%(levelname)s] %(message)s",
         handlers=[
             logging.StreamHandler(),
-        ]
+        ],
     )
 
 
 def save_download_report(results: dict[str, tuple[int, int]], output_path: Path):
     """Save a comprehensive download report"""
     report = {
-        'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
-        'collections': results,
-        'summary': {
-            'total_collections': len(results),
-            'total_successes': sum(success for success, _ in results.values()),
-            'total_failures': sum(failure for _, failure in results.values()),
-        }
+        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "collections": results,
+        "summary": {
+            "total_collections": len(results),
+            "total_successes": sum(success for success, _ in results.values()),
+            "total_failures": sum(failure for _, failure in results.values()),
+        },
     }
 
-    with open(output_path / 'download_report.json', 'w') as f:
+    with open(output_path / "download_report.json", "w") as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Enhanced GovInfo.gov Bulk Downloader')
-    parser.add_argument('--output-dir', '-o', default='./downloads', help='Output directory for downloads')
-    parser.add_argument('--collections', '-c', help='Comma-separated list of collection names to download (default: all)')
-    parser.add_argument('--verbose', '-v', action='store_true', help='Enable verbose logging')
-    parser.add_argument('--report-only', action='store_true', help='Only generate report, do not download')
+    parser = argparse.ArgumentParser(description="Enhanced GovInfo.gov Bulk Downloader")
+    parser.add_argument(
+        "--output-dir", "-o", default="./downloads", help="Output directory for downloads"
+    )
+    parser.add_argument(
+        "--collections",
+        "-c",
+        help="Comma-separated list of collection names to download (default: all)",
+    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
+    parser.add_argument(
+        "--report-only", action="store_true", help="Only generate report, do not download"
+    )
 
     args = parser.parse_args()
 
@@ -313,14 +329,11 @@ def main():
     # Download collections
     if args.collections:
         # Download specific collections
-        target_collections = [c.strip() for c in args.collections.split(',')]
+        target_collections = [c.strip() for c in args.collections.split(",")]
         all_collections = downloader.discover_collections()
 
         # Filter to target collections
-        [
-            coll for coll in all_collections
-            if coll['name'] in target_collections
-        ]
+        [coll for coll in all_collections if coll["name"] in target_collections]
     else:
         # Download all collections
         downloader.discover_collections()
@@ -345,5 +358,5 @@ def main():
     print(f"{'='*60}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -91,6 +91,7 @@ HOUSE_OVERSIGHT_RELEASES = [
 # Logging
 # -----------------------------
 
+
 class Log:
     def __init__(self, logfile: Path, verbose: bool = False):
         self.logfile = logfile
@@ -122,6 +123,7 @@ class Log:
 # Data Models
 # -----------------------------
 
+
 @dataclasses.dataclass(frozen=True)
 class DownloadTask:
     source: str
@@ -150,6 +152,7 @@ class DownloadResult:
 # -----------------------------
 # Helpers
 # -----------------------------
+
 
 def sha256_file(path: Path, chunk_size: int = 8 * 1024 * 1024) -> str:
     h = hashlib.sha256()
@@ -191,7 +194,15 @@ def which(cmd: str) -> str | None:
 # HTTP
 # -----------------------------
 
-def http_get_text(sess: requests.Session, url: str, timeout_s: int, max_retries: int, backoff_base_s: float, log: Log) -> str:
+
+def http_get_text(
+    sess: requests.Session,
+    url: str,
+    timeout_s: int,
+    max_retries: int,
+    backoff_base_s: float,
+    log: Log,
+) -> str:
     last_err = None
     for attempt in range(1, max_retries + 1):
         try:
@@ -202,7 +213,9 @@ def http_get_text(sess: requests.Session, url: str, timeout_s: int, max_retries:
         except Exception as e:
             last_err = e
             sleep_s = backoff_base_s ** min(attempt, 6)
-            log.warn(f"GET failed ({attempt}/{max_retries}) for {url}: {e} | backoff {sleep_s:.1f}s")
+            log.warn(
+                f"GET failed ({attempt}/{max_retries}) for {url}: {e} | backoff {sleep_s:.1f}s"
+            )
             time.sleep(sleep_s)
     raise RuntimeError(f"Failed to GET {url} after {max_retries} attempts: {last_err}")
 
@@ -224,6 +237,7 @@ def head_content_length(sess: requests.Session, url: str, timeout_s: int, log: L
 # -----------------------------
 # Downloading (resume + retries)
 # -----------------------------
+
 
 def download_with_resume(
     sess: requests.Session,
@@ -260,7 +274,9 @@ def download_with_resume(
             else:
                 log.info(f"Downloading {dest.name}")
 
-            with sess.get(url, headers=headers, stream=True, timeout=timeout_s, allow_redirects=True) as r:
+            with sess.get(
+                url, headers=headers, stream=True, timeout=timeout_s, allow_redirects=True
+            ) as r:
                 if existing > 0 and r.status_code == 200:
                     log.warn(f"Server ignored Range; restarting download for {dest.name}")
                     mode = "wb"
@@ -278,13 +294,17 @@ def download_with_resume(
 
             final_size = dest.stat().st_size
             if remote_len is not None and final_size != remote_len:
-                raise RuntimeError(f"Size mismatch for {dest.name}: got {final_size}, expected {remote_len}")
+                raise RuntimeError(
+                    f"Size mismatch for {dest.name}: got {final_size}, expected {remote_len}"
+                )
 
             return final_size
 
         except Exception as e:
             sleep_s = backoff_base_s ** min(attempt, 6)
-            log.warn(f"Download failed ({attempt}/{max_retries}) for {url}: {e} | backoff {sleep_s:.1f}s")
+            log.warn(
+                f"Download failed ({attempt}/{max_retries}) for {url}: {e} | backoff {sleep_s:.1f}s"
+            )
             time.sleep(sleep_s)
 
     raise RuntimeError(f"Failed to download {url} after {max_retries} attempts")
@@ -293,6 +313,7 @@ def download_with_resume(
 # -----------------------------
 # ZIP validation + extraction
 # -----------------------------
+
 
 def validate_zip(path: Path) -> tuple[bool, str | None]:
     try:
@@ -344,6 +365,7 @@ def extract_zip(zip_path: Path, out_dir: Path, dry_run: bool, log: Log) -> int:
 # Manifest
 # -----------------------------
 
+
 def append_manifest(manifest_path: Path, record: dict) -> None:
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
     with manifest_path.open("a", encoding="utf-8") as f:
@@ -354,7 +376,16 @@ def append_manifest(manifest_path: Path, record: dict) -> None:
 # Source: DOJ Disclosures
 # -----------------------------
 
-def discover_doj_tasks(sess: requests.Session, index_url: str, out_dir: Path, timeout_s: int, max_retries: int, backoff_base_s: float, log: Log) -> list[DownloadTask]:
+
+def discover_doj_tasks(
+    sess: requests.Session,
+    index_url: str,
+    out_dir: Path,
+    timeout_s: int,
+    max_retries: int,
+    backoff_base_s: float,
+    log: Log,
+) -> list[DownloadTask]:
     """
     Discover DOJ Epstein disclosure datasets.
 
@@ -377,14 +408,22 @@ def discover_doj_tasks(sess: requests.Session, index_url: str, out_dir: Path, ti
     html = http_get_text(sess, index_url, timeout_s, max_retries, backoff_base_s, log)
 
     # Try to find dataset file pages (e.g., "data-set-9-files", "data-set-10-files")
-    dataset_page_matches = re.findall('href="([^"]*data-set-[0-9]+-files)"', html, flags=re.IGNORECASE)
+    dataset_page_matches = re.findall(
+        'href="([^"]*data-set-[0-9]+-files)"', html, flags=re.IGNORECASE
+    )
     dataset_pages = sorted({normalize_url(index_url, m) for m in dataset_page_matches})
 
     if not dataset_pages:
-        log.warn("DOJ: Could not find explicit dataset file pages on index; attempting broader extraction.")
+        log.warn(
+            "DOJ: Could not find explicit dataset file pages on index; attempting broader extraction."
+        )
         # Fallback: find any pages with "data-set-N" pattern
-        dataset_page_matches = re.findall('href="([^"]*data-set-[0-9]+[^\"]*)"', html, flags=re.IGNORECASE)
-        dataset_pages = sorted({normalize_url(index_url, m) for m in dataset_page_matches if "data-set" in m})
+        dataset_page_matches = re.findall(
+            'href="([^"]*data-set-[0-9]+[^"]*)"', html, flags=re.IGNORECASE
+        )
+        dataset_pages = sorted(
+            {normalize_url(index_url, m) for m in dataset_page_matches if "data-set" in m}
+        )
 
     log.info(f"DOJ: Found {len(dataset_pages)} potential dataset page(s)")
 
@@ -467,11 +506,26 @@ def discover_doj_tasks(sess: requests.Session, index_url: str, out_dir: Path, ti
 # Source: FBI Vault
 # -----------------------------
 
-def discover_fbi_vault_tasks(sess: requests.Session, vault_url: str, out_dir: Path, timeout_s: int, max_retries: int, backoff_base_s: float, log: Log) -> list[DownloadTask]:
+
+def discover_fbi_vault_tasks(
+    sess: requests.Session,
+    vault_url: str,
+    out_dir: Path,
+    timeout_s: int,
+    max_retries: int,
+    backoff_base_s: float,
+    log: Log,
+) -> list[DownloadTask]:
     html = http_get_text(sess, vault_url, timeout_s, max_retries, backoff_base_s, log)
 
-    part_links = re.findall('href="([^"]*/Jeffrey%20Epstein%20Part%20[0-9]{2})"', html, flags=re.IGNORECASE)
-    part_links += re.findall('href="([^"]*/jeffrey-epstein/Jeffrey%20Epstein%20Part%20[0-9]{2})"', html, flags=re.IGNORECASE)
+    part_links = re.findall(
+        'href="([^"]*/Jeffrey%20Epstein%20Part%20[0-9]{2})"', html, flags=re.IGNORECASE
+    )
+    part_links += re.findall(
+        'href="([^"]*/jeffrey-epstein/Jeffrey%20Epstein%20Part%20[0-9]{2})"',
+        html,
+        flags=re.IGNORECASE,
+    )
     parts = sorted({normalize_url(vault_url, p) for p in part_links})
 
     raw_base = out_dir / DEFAULT_RAW_DIR / "fbi_vault"
@@ -517,13 +571,22 @@ def discover_fbi_vault_tasks(sess: requests.Session, vault_url: str, out_dir: Pa
 # Source: House Oversight (Drive + Dropbox)
 # -----------------------------
 
+
 def extract_house_folder_links(page_html: str, page_url: str) -> list[str]:
     links = re.findall('href="([^"]+)"', page_html, flags=re.IGNORECASE)
     abs_links = [normalize_url(page_url, href) for href in links]
     return [u for u in abs_links if ("drive.google.com" in u or "dropbox.com" in u)]
 
 
-def discover_house_oversight_tasks(sess: requests.Session, release_urls: list[str], out_dir: Path, timeout_s: int, max_retries: int, backoff_base_s: float, log: Log) -> list[DownloadTask]:
+def discover_house_oversight_tasks(
+    sess: requests.Session,
+    release_urls: list[str],
+    out_dir: Path,
+    timeout_s: int,
+    max_retries: int,
+    backoff_base_s: float,
+    log: Log,
+) -> list[DownloadTask]:
     tasks: list[DownloadTask] = []
     raw_base = out_dir / DEFAULT_RAW_DIR / "house_oversight"
 
@@ -564,7 +627,9 @@ def discover_house_oversight_tasks(sess: requests.Session, release_urls: list[st
         uniq.setdefault(key, t)
 
     out = [uniq[k] for k in sorted(uniq)]
-    log.info(f"HOUSE: Discovered {len(out)} folder task(s) across {len(release_urls)} release page(s).")
+    log.info(
+        f"HOUSE: Discovered {len(out)} folder task(s) across {len(release_urls)} release page(s)."
+    )
     return out
 
 
@@ -596,7 +661,18 @@ def run_dropbox_hint(url: str) -> None:
 # Task execution
 # -----------------------------
 
-def execute_task(task: DownloadTask, sess: requests.Session, out_dir: Path, timeout_s: int, max_retries: int, backoff_base_s: float, chunk_bytes: int, dry_run: bool, log: Log) -> DownloadResult:
+
+def execute_task(
+    task: DownloadTask,
+    sess: requests.Session,
+    out_dir: Path,
+    timeout_s: int,
+    max_retries: int,
+    backoff_base_s: float,
+    chunk_bytes: int,
+    dry_run: bool,
+    log: Log,
+) -> DownloadResult:
     manifest_path = out_dir / DEFAULT_MANIFEST_DIR / f"{task.source}.manifest.jsonl"
 
     try:
@@ -677,7 +753,15 @@ def execute_task(task: DownloadTask, sess: requests.Session, out_dir: Path, time
             if not dry_run:
                 append_manifest(manifest_path, rec)
 
-            return DownloadResult(source=task.source, name=task.name, url=task.url, dest=task.dest, kind=task.kind, ok=True, meta=task.meta)
+            return DownloadResult(
+                source=task.source,
+                name=task.name,
+                url=task.url,
+                dest=task.dest,
+                kind=task.kind,
+                ok=True,
+                meta=task.meta,
+            )
 
         raise RuntimeError(f"Unsupported task kind: {task.kind}")
 
@@ -696,27 +780,56 @@ def execute_task(task: DownloadTask, sess: requests.Session, out_dir: Path, time
         if not dry_run:
             append_manifest(manifest_path, rec)
 
-        return DownloadResult(source=task.source, name=task.name, url=task.url, dest=task.dest, kind=task.kind, ok=False, error=str(e), meta=task.meta)
+        return DownloadResult(
+            source=task.source,
+            name=task.name,
+            url=task.url,
+            dest=task.dest,
+            kind=task.kind,
+            ok=False,
+            error=str(e),
+            meta=task.meta,
+        )
 
 
 # -----------------------------
 # Main
 # -----------------------------
 
+
 def main() -> int:
-    p = argparse.ArgumentParser(description="Unified Epstein files downloader (DOJ + FBI + House Oversight links).")
-    p.add_argument("--out-dir", default=str(Path.cwd() / "epstein_project"), help="Base output directory")
-    p.add_argument("--sources", default="doj,fbi,house", help="Comma-separated sources: doj,fbi,house")
+    p = argparse.ArgumentParser(
+        description="Unified Epstein files downloader (DOJ + FBI + House Oversight links)."
+    )
+    p.add_argument(
+        "--out-dir", default=str(Path.cwd() / "epstein_project"), help="Base output directory"
+    )
+    p.add_argument(
+        "--sources", default="doj,fbi,house", help="Comma-separated sources: doj,fbi,house"
+    )
 
-    p.add_argument("--doj-index-url", default=DEFAULT_DOJ_INDEX_URL, help="DOJ disclosures index URL")
-    p.add_argument("--fbi-vault-url", default=DEFAULT_FBI_VAULT_EPSTEIN_URL, help="FBI Vault Epstein URL")
-    p.add_argument("--house-release-url", action="append", default=[], help="House Oversight press release URL (repeatable)")
+    p.add_argument(
+        "--doj-index-url", default=DEFAULT_DOJ_INDEX_URL, help="DOJ disclosures index URL"
+    )
+    p.add_argument(
+        "--fbi-vault-url", default=DEFAULT_FBI_VAULT_EPSTEIN_URL, help="FBI Vault Epstein URL"
+    )
+    p.add_argument(
+        "--house-release-url",
+        action="append",
+        default=[],
+        help="House Oversight press release URL (repeatable)",
+    )
 
-    p.add_argument("--max-workers", type=int, default=DEFAULT_MAX_WORKERS, help="Parallel worker threads")
+    p.add_argument(
+        "--max-workers", type=int, default=DEFAULT_MAX_WORKERS, help="Parallel worker threads"
+    )
     p.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT_S, help="HTTP timeout seconds")
     p.add_argument("--retries", type=int, default=DEFAULT_MAX_RETRIES, help="Max retries")
     p.add_argument("--backoff", type=float, default=DEFAULT_BACKOFF_BASE_S, help="Backoff base")
-    p.add_argument("--chunk-bytes", type=int, default=DEFAULT_CHUNK_BYTES, help="Download chunk size")
+    p.add_argument(
+        "--chunk-bytes", type=int, default=DEFAULT_CHUNK_BYTES, help="Download chunk size"
+    )
     p.add_argument("--user-agent", default=DEFAULT_USER_AGENT, help="User-Agent header")
     p.add_argument("--dry-run", action="store_true", help="Show plan; do not download")
     p.add_argument("--verbose", action="store_true", help="Verbose logging")
@@ -740,14 +853,26 @@ def main() -> int:
     tasks: list[DownloadTask] = []
 
     if "doj" in sources:
-        tasks.extend(discover_doj_tasks(sess, args.doj_index_url, out_dir, args.timeout, args.retries, args.backoff, log))
+        tasks.extend(
+            discover_doj_tasks(
+                sess, args.doj_index_url, out_dir, args.timeout, args.retries, args.backoff, log
+            )
+        )
 
     if "fbi" in sources:
-        tasks.extend(discover_fbi_vault_tasks(sess, args.fbi_vault_url, out_dir, args.timeout, args.retries, args.backoff, log))
+        tasks.extend(
+            discover_fbi_vault_tasks(
+                sess, args.fbi_vault_url, out_dir, args.timeout, args.retries, args.backoff, log
+            )
+        )
 
     if "house" in sources:
         rels = args.house_release_url[:] if args.house_release_url else HOUSE_OVERSIGHT_RELEASES
-        tasks.extend(discover_house_oversight_tasks(sess, rels, out_dir, args.timeout, args.retries, args.backoff, log))
+        tasks.extend(
+            discover_house_oversight_tasks(
+                sess, rels, out_dir, args.timeout, args.retries, args.backoff, log
+            )
+        )
 
     if not tasks:
         log.error("No tasks discovered. Exiting.")
@@ -767,10 +892,23 @@ def main() -> int:
     results: list[DownloadResult] = []
 
     if file_tasks:
-        log.info(f"Executing {len(file_tasks)} file task(s) with max_workers={max(1, args.max_workers)}")
+        log.info(
+            f"Executing {len(file_tasks)} file task(s) with max_workers={max(1, args.max_workers)}"
+        )
         with cf.ThreadPoolExecutor(max_workers=max(1, args.max_workers)) as ex:
             futs = [
-                ex.submit(execute_task, t, sess, out_dir, args.timeout, args.retries, args.backoff, args.chunk_bytes, args.dry_run, log)
+                ex.submit(
+                    execute_task,
+                    t,
+                    sess,
+                    out_dir,
+                    args.timeout,
+                    args.retries,
+                    args.backoff,
+                    args.chunk_bytes,
+                    args.dry_run,
+                    log,
+                )
                 for t in file_tasks
             ]
             for fut in cf.as_completed(futs):
@@ -783,7 +921,17 @@ def main() -> int:
 
     for t in folder_tasks:
         log.info(f"Executing folder task: [{t.source}] {t.name}")
-        res = execute_task(t, sess, out_dir, args.timeout, args.retries, args.backoff, args.chunk_bytes, args.dry_run, log)
+        res = execute_task(
+            t,
+            sess,
+            out_dir,
+            args.timeout,
+            args.retries,
+            args.backoff,
+            args.chunk_bytes,
+            args.dry_run,
+            log,
+        )
         results.append(res)
         if res.ok:
             log.info(f"OK [{res.source}] {res.name}")
