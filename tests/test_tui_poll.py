@@ -1,4 +1,3 @@
-
 import pytest
 
 from tools.mission_control.app import MissionControlApp
@@ -14,7 +13,10 @@ class DummyPane:
 
 class DummyOrch:
     async def get_status(self):
-        return {"agents": {"a": {"status": "ok"}}, "tasks": {"total": 2, "pending": 1, "running": 0, "completed": 1, "failed": 0}}
+        return {
+            "agents": {"a": {"status": "ok"}},
+            "tasks": {"total": 2, "pending": 1, "running": 0, "completed": 1, "failed": 0},
+        }
 
 
 @pytest.mark.asyncio
@@ -28,4 +30,6 @@ async def test_poll_updates_panes(monkeypatch):
 
     await app._poll_status()
     assert "a: ok" in app.agents_pane.content
-    assert "total:2" in app.tasks_pane.content or "total:2" in app.tasks_pane.content.replace(' ', '')
+    assert "total:2" in app.tasks_pane.content or "total:2" in app.tasks_pane.content.replace(
+        " ", ""
+    )

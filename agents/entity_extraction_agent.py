@@ -13,6 +13,7 @@ from typing import Any
 @dataclass
 class ExtractedEntity:
     """Represents an extracted entity"""
+
     entity_id: str
     entity_type: str
     text: str
@@ -25,6 +26,7 @@ class ExtractedEntity:
 @dataclass
 class EntityRelationship:
     """Represents a relationship between entities"""
+
     relationship_id: str
     source_entity: str
     target_entity: str
@@ -86,8 +88,12 @@ class EntityExtractionAgent:
                         text=entity_text,
                         confidence=round(0.8 + (0.2 * (len(entities) % 5) / 5), 2),
                         start_pos=text.find(entity_text) if entity_text in text else 0,
-                        end_pos=text.find(entity_text) + len(entity_text) if entity_text in text else len(entity_text),
-                        context=f"Context around {entity_text}"
+                        end_pos=(
+                            text.find(entity_text) + len(entity_text)
+                            if entity_text in text
+                            else len(entity_text)
+                        ),
+                        context=f"Context around {entity_text}",
                     )
                     extracted_entities.append(entity)
                     entity_map[entity_id] = entity
@@ -100,7 +106,7 @@ class EntityExtractionAgent:
                 "entity_types": entity_types,
                 "entities": [entity.__dict__ for entity in extracted_entities],
                 "total_entities": len(extracted_entities),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
             return result
@@ -110,10 +116,12 @@ class EntityExtractionAgent:
                 "extraction_id": extraction_id,
                 "status": "error",
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
-    async def extract_entity_relationships(self, text: str, entity_types: list[str]) -> dict[str, Any]:
+    async def extract_entity_relationships(
+        self, text: str, entity_types: list[str]
+    ) -> dict[str, Any]:
         """
         Extract relationships between entities in text.
 
@@ -140,7 +148,7 @@ class EntityExtractionAgent:
             # Mock relationship extraction
             if len(entities) >= 2:
                 for i in range(min(3, len(entities))):
-                    for j in range(i+1, min(i+3, len(entities))):
+                    for j in range(i + 1, min(i + 3, len(entities))):
                         source_entity = entities[i]["text"]
                         target_entity = entities[j]["text"]
 
@@ -151,7 +159,7 @@ class EntityExtractionAgent:
                             target_entity=target_entity,
                             relationship_type="RELATED_TO",
                             confidence=round(0.7 + (0.3 * (i + j) / 10), 2),
-                            evidence=f"Evidence linking {source_entity} and {target_entity}"
+                            evidence=f"Evidence linking {source_entity} and {target_entity}",
                         )
                         relationships.append(relationship)
                         relationship_map[relationship_id] = relationship
@@ -164,7 +172,7 @@ class EntityExtractionAgent:
                 "entity_types": entity_types,
                 "relationships": [relationship.__dict__ for relationship in relationships],
                 "total_relationships": len(relationships),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
             return result
@@ -174,7 +182,7 @@ class EntityExtractionAgent:
                 "extraction_id": extraction_id,
                 "status": "error",
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
     async def build_knowledge_graph(self, text: str, entity_types: list[str]) -> dict[str, Any]:
@@ -203,22 +211,26 @@ class EntityExtractionAgent:
             edges = []
 
             for entity in entities:
-                nodes.append({
-                    "id": entity["entity_id"],
-                    "label": entity["text"],
-                    "type": entity["entity_type"],
-                    "confidence": entity["confidence"]
-                })
+                nodes.append(
+                    {
+                        "id": entity["entity_id"],
+                        "label": entity["text"],
+                        "type": entity["entity_type"],
+                        "confidence": entity["confidence"],
+                    }
+                )
 
             for relationship in relationships:
-                edges.append({
-                    "id": relationship["relationship_id"],
-                    "source": relationship["source_entity"],
-                    "target": relationship["target_entity"],
-                    "type": relationship["relationship_type"],
-                    "confidence": relationship["confidence"],
-                    "evidence": relationship["evidence"]
-                })
+                edges.append(
+                    {
+                        "id": relationship["relationship_id"],
+                        "source": relationship["source_entity"],
+                        "target": relationship["target_entity"],
+                        "type": relationship["relationship_type"],
+                        "confidence": relationship["confidence"],
+                        "evidence": relationship["evidence"],
+                    }
+                )
 
             knowledge_graph = {
                 "nodes": nodes,
@@ -227,8 +239,15 @@ class EntityExtractionAgent:
                     "total_nodes": len(nodes),
                     "total_edges": len(edges),
                     "density": round(len(edges) / len(nodes) if nodes else 0, 2),
-                    "average_confidence": round(sum(r["confidence"] for r in relationships) / len(relationships) if relationships else 0, 2)
-                }
+                    "average_confidence": round(
+                        (
+                            sum(r["confidence"] for r in relationships) / len(relationships)
+                            if relationships
+                            else 0
+                        ),
+                        2,
+                    ),
+                },
             }
 
             self.knowledge_graph[graph_id] = knowledge_graph
@@ -238,7 +257,7 @@ class EntityExtractionAgent:
                 "text_length": len(text),
                 "entity_types": entity_types,
                 "knowledge_graph": knowledge_graph,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
             return result
@@ -248,7 +267,7 @@ class EntityExtractionAgent:
                 "graph_id": graph_id,
                 "status": "error",
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
     def get_extraction_result(self, extraction_id: str) -> dict[str, Any]:
@@ -280,18 +299,18 @@ TOOLS = [
                 "properties": {
                     "text": {
                         "type": "string",
-                        "description": "Text content to analyze for entities"
+                        "description": "Text content to analyze for entities",
                     },
                     "entity_types": {
                         "type": "array",
                         "items": {"type": "string"},
                         "description": "List of entity types to extract (PERSON, ORG, LOC, DATE, etc.)",
-                        "default": ["PERSON", "ORG", "LOC", "DATE"]
-                    }
+                        "default": ["PERSON", "ORG", "LOC", "DATE"],
+                    },
                 },
-                "required": ["text"]
-            }
-        }
+                "required": ["text"],
+            },
+        },
     },
     {
         "type": "function",
@@ -303,18 +322,18 @@ TOOLS = [
                 "properties": {
                     "text": {
                         "type": "string",
-                        "description": "Text content to analyze for entity relationships"
+                        "description": "Text content to analyze for entity relationships",
                     },
                     "entity_types": {
                         "type": "array",
                         "items": {"type": "string"},
                         "description": "List of entity types to consider for relationships",
-                        "default": ["PERSON", "ORG", "LOC"]
-                    }
+                        "default": ["PERSON", "ORG", "LOC"],
+                    },
                 },
-                "required": ["text"]
-            }
-        }
+                "required": ["text"],
+            },
+        },
     },
     {
         "type": "function",
@@ -326,18 +345,18 @@ TOOLS = [
                 "properties": {
                     "text": {
                         "type": "string",
-                        "description": "Text content to analyze for knowledge graph construction"
+                        "description": "Text content to analyze for knowledge graph construction",
                     },
                     "entity_types": {
                         "type": "array",
                         "items": {"type": "string"},
                         "description": "List of entity types to include in the knowledge graph",
-                        "default": ["PERSON", "ORG", "LOC"]
-                    }
+                        "default": ["PERSON", "ORG", "LOC"],
+                    },
                 },
-                "required": ["text"]
-            }
-        }
+                "required": ["text"],
+            },
+        },
     },
     {
         "type": "function",
@@ -349,12 +368,12 @@ TOOLS = [
                 "properties": {
                     "extraction_id": {
                         "type": "string",
-                        "description": "ID of the extraction to retrieve"
+                        "description": "ID of the extraction to retrieve",
                     }
                 },
-                "required": ["extraction_id"]
-            }
-        }
+                "required": ["extraction_id"],
+            },
+        },
     },
     {
         "type": "function",
@@ -366,13 +385,13 @@ TOOLS = [
                 "properties": {
                     "graph_id": {
                         "type": "string",
-                        "description": "ID of the knowledge graph to retrieve"
+                        "description": "ID of the knowledge graph to retrieve",
                     }
                 },
-                "required": ["graph_id"]
-            }
-        }
-    }
+                "required": ["graph_id"],
+            },
+        },
+    },
 ]
 
 
@@ -386,9 +405,9 @@ AGENT_INFO = {
         "Relationship mapping",
         "Knowledge graph construction",
         "Named entity recognition",
-        "Semantic analysis"
+        "Semantic analysis",
     ],
-    "tools": TOOLS
+    "tools": TOOLS,
 }
 
 
@@ -400,24 +419,17 @@ if __name__ == "__main__":
         sample_text = "John Doe works at Acme Corporation in New York. Jane Smith is the CEO of Global Tech based in San Francisco."
 
         # Test entity extraction
-        entities_result = await agent.extract_entities(
-            sample_text,
-            ["PERSON", "ORG", "LOC"]
-        )
+        entities_result = await agent.extract_entities(sample_text, ["PERSON", "ORG", "LOC"])
         print("Entity extraction:", json.dumps(entities_result, indent=2))
 
         # Test relationship extraction
         relationships_result = await agent.extract_entity_relationships(
-            sample_text,
-            ["PERSON", "ORG"]
+            sample_text, ["PERSON", "ORG"]
         )
         print("Relationship extraction:", json.dumps(relationships_result, indent=2))
 
         # Test knowledge graph construction
-        kg_result = await agent.build_knowledge_graph(
-            sample_text,
-            ["PERSON", "ORG", "LOC"]
-        )
+        kg_result = await agent.build_knowledge_graph(sample_text, ["PERSON", "ORG", "LOC"])
         print("Knowledge graph:", json.dumps(kg_result, indent=2))
 
     asyncio.run(main())

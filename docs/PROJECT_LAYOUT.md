@@ -2,30 +2,30 @@
 
 ## What we are keeping
 
-- `epstein_files_pipeline.py`  
+- `epstein_files_pipeline.py`
   The core pipeline (download → OCR → text → chunk → NER → safe_exports). Keep it as the single source of truth for reproducible extraction.
 
-- `cbw_bootstrap_project_ubuntu.sh`  
+- `cbw_bootstrap_project_ubuntu.sh`
   Your one-shot project bootstrap script (system deps + uv + Python 3.10 + lock file + basic docs).
 
-- `vector_db_bootstrap.sh`  
+- `vector_db_bootstrap.sh`
   The local data stack bootstrap (Qdrant + Postgres/pgvector + schema).
 
-- `db_ingest_artifacts.py`  
+- `db_ingest_artifacts.py`
   Loads pipeline outputs into Postgres, so you can query and build reports.
 
-- `Makefile`  
+- `Makefile`
   One-liners for repeatable commands.
 
 ## What we should delete (redundant)
 
-- `setup.sh`  
+- `setup.sh`
   Redundant with `cbw_bootstrap_project_ubuntu.sh`.
 
-- `project_markdown_starter_pack_uv_python_3.md`  
+- `project_markdown_starter_pack_uv_python_3.md`
   Redundant once the bootstrap script is generating README/USAGE/AGENTS/RULES.
 
-- `vector_db_bootstrap_qdrant_optional_postgres_pgvector.sh`  
+- `vector_db_bootstrap_qdrant_optional_postgres_pgvector.sh`
   Replaced by `vector_db_bootstrap.sh` (v2) which also creates the schema.
 
 > If you want, we can keep a `docs/` folder with the old markdown as historical reference, but it’s cleaner to remove it now.
@@ -91,4 +91,3 @@ Once this works, we can add:
 - date normalization + timelines
 - custom NER patterns
 - vector indexing + hybrid retrieval
-
