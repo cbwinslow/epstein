@@ -23,9 +23,7 @@ class TestTelemetry:
     def telemetry(self):
         """Create telemetry instance for testing"""
         return AgentTelemetry(
-            service_name="test-telemetry",
-            enable_console_export=False,
-            enable_otlp_export=False
+            service_name="test-telemetry", enable_console_export=False, enable_otlp_export=False
         )
 
     def test_telemetry_initialization(self, telemetry):
@@ -37,6 +35,7 @@ class TestTelemetry:
     @pytest.mark.asyncio
     async def test_trace_agent_execution_async(self, telemetry):
         """Test tracing async agent execution"""
+
         @telemetry.trace_agent_execution("test_agent")
         async def test_function():
             await asyncio.sleep(0.01)
@@ -47,6 +46,7 @@ class TestTelemetry:
 
     def test_trace_agent_execution_sync(self, telemetry):
         """Test tracing sync agent execution"""
+
         @telemetry.trace_agent_execution("test_agent_sync")
         def test_function():
             return {"status": "success"}
@@ -57,6 +57,7 @@ class TestTelemetry:
     @pytest.mark.asyncio
     async def test_trace_agent_execution_error(self, telemetry):
         """Test tracing agent execution with error"""
+
         @telemetry.trace_agent_execution("test_agent_error")
         async def test_function():
             raise ValueError("Test error")
@@ -71,17 +72,14 @@ class TestVectorDBAnalyzer:
     @pytest.fixture
     def analyzer(self):
         """Create analyzer instance for testing"""
-        config = {
-            'qdrant_url': 'http://localhost:6333',
-            'default_collection': 'test_collection'
-        }
+        config = {"qdrant_url": "http://localhost:6333", "default_collection": "test_collection"}
         return VectorDBAnalyzer(config)
 
     @pytest.mark.asyncio
     async def test_analyze_collection_error_handling(self, analyzer):
         """Test error handling in collection analysis"""
         # Mock connection failure
-        with patch.object(analyzer, '_connect_to_qdrant', return_value=False):
+        with patch.object(analyzer, "_connect_to_qdrant", return_value=False):
             result = await analyzer.analyze_collection("test_collection")
 
         # Should return error
@@ -91,8 +89,8 @@ class TestVectorDBAnalyzer:
     @pytest.mark.asyncio
     async def test_benchmark_query_performance(self, analyzer):
         """Test query performance benchmarking"""
-        with patch.object(analyzer, '_connect_to_qdrant', return_value=True):
-            with patch.object(analyzer, 'qdrant_client') as mock_client:
+        with patch.object(analyzer, "_connect_to_qdrant", return_value=True):
+            with patch.object(analyzer, "qdrant_client") as mock_client:
                 # Setup mock search results
                 mock_result = [Mock(score=0.95), Mock(score=0.87)]
                 mock_client.search.return_value = mock_result
@@ -113,16 +111,16 @@ class TestDatabaseTroubleshooter:
     def troubleshooter(self):
         """Create troubleshooter instance for testing"""
         config = {
-            'postgres_dsn': 'postgresql://test:test@localhost:5432/test',
-            'monitoring_interval': 60,
-            'slow_query_threshold': 1000
+            "postgres_dsn": "postgresql://test:test@localhost:5432/test",
+            "monitoring_interval": 60,
+            "slow_query_threshold": 1000,
         }
         return DatabaseTroubleshooter(config)
 
     @pytest.mark.asyncio
     async def test_check_database_health_error_handling(self, troubleshooter):
         """Test error handling in database health check"""
-        with patch.object(troubleshooter, '_create_connection_pool', return_value=False):
+        with patch.object(troubleshooter, "_create_connection_pool", return_value=False):
             result = await troubleshooter.check_database_health()
 
         # Should return error
@@ -136,11 +134,7 @@ class TestPipelineMonitor:
     @pytest.fixture
     def monitor(self):
         """Create monitor instance for testing"""
-        config = {
-            'health_check_interval': 30,
-            'task_timeout': 3600,
-            'max_concurrent_tasks': 10
-        }
+        config = {"health_check_interval": 30, "task_timeout": 3600, "max_concurrent_tasks": 10}
         return PipelineMonitor(config)
 
     @pytest.mark.asyncio
@@ -161,10 +155,10 @@ class TestMultiAgentOrchestrator:
     def orchestrator(self):
         """Create orchestrator instance for testing"""
         config = {
-            'default_mode': 'adaptive',
-            'max_concurrent_tasks': 4,
-            'enable_a2a_communication': True,
-            'enable_error_recovery': True
+            "default_mode": "adaptive",
+            "max_concurrent_tasks": 4,
+            "enable_a2a_communication": True,
+            "enable_error_recovery": True,
         }
         return MultiAgentOrchestrator(config)
 
@@ -172,9 +166,15 @@ class TestMultiAgentOrchestrator:
     async def test_run_health_check(self, orchestrator):
         """Test health check workflow"""
         # Mock agent methods
-        with patch.object(orchestrator.agents['pipeline_monitor'], 'monitor_pipeline_health') as mock_pipeline:
-            with patch.object(orchestrator.agents['vector_db_analyzer'], 'analyze_all_collections') as mock_vector:
-                with patch.object(orchestrator.agents['db_troubleshooter'], 'check_database_health') as mock_db:
+        with patch.object(
+            orchestrator.agents["pipeline_monitor"], "monitor_pipeline_health"
+        ) as mock_pipeline:
+            with patch.object(
+                orchestrator.agents["vector_db_analyzer"], "analyze_all_collections"
+            ) as mock_vector:
+                with patch.object(
+                    orchestrator.agents["db_troubleshooter"], "check_database_health"
+                ) as mock_db:
                     # Setup mock results
                     mock_pipeline.return_value = {"health_status": "healthy"}
                     mock_vector.return_value = {"qdrant_status": "healthy"}
@@ -193,9 +193,7 @@ class TestMultiAgentOrchestrator:
 def setup_telemetry():
     """Setup telemetry for all tests"""
     telemetry = get_telemetry(
-        service_name="test-suite",
-        enable_console_export=False,
-        enable_otlp_export=False
+        service_name="test-suite", enable_console_export=False, enable_otlp_export=False
     )
     yield telemetry
     telemetry.shutdown()

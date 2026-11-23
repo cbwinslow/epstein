@@ -2,7 +2,9 @@ import importlib.util
 import os
 import types
 
-spec = importlib.util.spec_from_file_location("doctor", os.path.join(os.path.dirname(__file__), "..", "scripts", "doctor.py"))
+spec = importlib.util.spec_from_file_location(
+    "doctor", os.path.join(os.path.dirname(__file__), "..", "scripts", "doctor.py")
+)
 doctor = importlib.util.module_from_spec(spec)
 assert spec is not None
 spec.loader.exec_module(doctor)  # type: ignore
@@ -72,7 +74,9 @@ def test_check_postgres_with_dsn_and_psycopg(monkeypatch):
             pass
 
     # Ensure psycopg is present in doctor module and mock connect
-    monkeypatch.setattr(doctor, "psycopg", types.SimpleNamespace(connect=lambda dsn, timeout=3: DummyConn()))
+    monkeypatch.setattr(
+        doctor, "psycopg", types.SimpleNamespace(connect=lambda dsn, timeout=3: DummyConn())
+    )
 
     ok, msg = doctor.check_postgres()
     assert ok is True

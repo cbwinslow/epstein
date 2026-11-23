@@ -10,7 +10,9 @@ import urllib.request
 
 def run(cmd: list[str]) -> tuple[int, str]:
     try:
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=False)
+        p = subprocess.run(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=False
+        )
         return p.returncode, p.stdout.strip()
     except Exception as e:
         return 99, str(e)

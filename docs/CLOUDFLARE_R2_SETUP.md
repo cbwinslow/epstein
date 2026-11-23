@@ -92,7 +92,7 @@ This guide walks through setting up Cloudflare R2 to host OCR-processed Epstein 
 
 2. **Configure Token Permissions**
    - **Token Name**: `github-actions-ocr-workflow`
-   - **Permissions**: 
+   - **Permissions**:
      - ✅ Object Read & Write
    - **Bucket Restriction**: Select `epstein-documents`
    - **Expiration**: Set to 1 year (or longer)
@@ -138,14 +138,14 @@ This guide walks through setting up Cloudflare R2 to host OCR-processed Epstein 
    ```bash
    # Install Wrangler CLI locally
    npm install -g wrangler
-   
+
    # Authenticate
    wrangler login
-   
+
    # Test upload
    echo "Test file" > test.txt
    wrangler r2 object put epstein-documents/test/test.txt --file test.txt
-   
+
    # Verify
    wrangler r2 object get epstein-documents/test/test.txt
    ```
@@ -447,8 +447,8 @@ If you prefer AWS S3:
 
 ---
 
-**Last Updated**: 2025-01-07  
-**Version**: 1.0.0  
+**Last Updated**: 2025-01-07
+**Version**: 1.0.0
 **Author**: Epstein Project Team
 
 **Questions?** Open an issue or check [OCR_WORKFLOW_GUIDE.md](./OCR_WORKFLOW_GUIDE.md)

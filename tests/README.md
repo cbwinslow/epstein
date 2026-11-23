@@ -122,14 +122,14 @@ class TestMyAgent:
     @pytest.fixture
     def agent(self):
         return MyAgent(config={})
-    
+
     @pytest.fixture
     def telemetry(self):
         return get_telemetry(
             service_name="test-my-agent",
             enable_console_export=False
         )
-    
+
     @pytest.mark.asyncio
     async def test_my_method(self, agent, telemetry):
         with telemetry.create_span("test_my_method"):
@@ -146,7 +146,7 @@ from unittest.mock import Mock, patch
 async def test_with_mocks(self, agent, telemetry):
     with patch.object(agent, 'external_service') as mock_service:
         mock_service.return_value = {"data": "test"}
-        
+
         with telemetry.create_span("test_with_mocks"):
             result = await agent.process()
             assert result["data"] == "test"
@@ -194,7 +194,7 @@ Test reports are generated in multiple formats:
    ```bash
    # Check database services are running
    docker-compose ps
-   
+
    # Verify connection strings
    psql $POSTGRES_DSN -c "SELECT 1"
    ```

@@ -22,8 +22,8 @@ All agents communicate via the **Model Context Protocol (MCP)**, ensuring standa
 ## Core Processing Agents
 
 ### 1. Document Analysis Agent
-**File**: `agents/document_analysis_agent.py`  
-**Category**: Core Processing  
+**File**: `agents/document_analysis_agent.py`
+**Category**: Core Processing
 **Primary Function**: Analyze and extract information from various document types
 
 **Key Capabilities**:
@@ -51,8 +51,8 @@ All agents communicate via the **Model Context Protocol (MCP)**, ensuring standa
 **Related Documentation**: [Document Analysis Agent Details](knowledge_base/agents/core/document_analysis.md)
 
 ### 2. Epstein Data Processor
-**File**: `agents/epstein_data_processor.py`  
-**Category**: Core Processing  
+**File**: `agents/epstein_data_processor.py`
+**Category**: Core Processing
 **Primary Function**: Process and analyze Epstein document datasets
 
 **Key Capabilities**:
@@ -80,8 +80,8 @@ All agents communicate via the **Model Context Protocol (MCP)**, ensuring standa
 **Related Documentation**: [Epstein Data Processor Details](knowledge_base/agents/core/epstein_data_processor.md)
 
 ### 3. Entity Extraction Agent
-**File**: `agents/entity_extraction_agent.py`  
-**Category**: Core Processing  
+**File**: `agents/entity_extraction_agent.py`
+**Category**: Core Processing
 **Primary Function**: Extract and classify entities from processed documents
 
 **Key Capabilities**:
@@ -111,8 +111,8 @@ All agents communicate via the **Model Context Protocol (MCP)**, ensuring standa
 ## Database & Storage Agents
 
 ### 4. Vector Database Analyzer
-**File**: `agents/vector_db_analyzer.py`  
-**Category**: Database & Storage  
+**File**: `agents/vector_db_analyzer.py`
+**Category**: Database & Storage
 **Primary Function**: Manage and analyze vector database operations
 
 **Key Capabilities**:
@@ -140,8 +140,8 @@ All agents communicate via the **Model Context Protocol (MCP)**, ensuring standa
 **Related Documentation**: [Vector Database Analyzer Details](knowledge_base/agents/database/vector_db_analyzer.md)
 
 ### 5. Database Troubleshooter
-**File**: `agents/db_troubleshooter.py`  
-**Category**: Database & Storage  
+**File**: `agents/db_troubleshooter.py`
+**Category**: Database & Storage
 **Primary Function**: Diagnose and resolve database issues
 
 **Key Capabilities**:
@@ -171,8 +171,8 @@ All agents communicate via the **Model Context Protocol (MCP)**, ensuring standa
 ## Orchestration & Monitoring Agents
 
 ### 6. Multi-Agent Orchestrator
-**File**: `agents/multi_agent_orchestrator.py`  
-**Category**: Orchestration & Monitoring  
+**File**: `agents/multi_agent_orchestrator.py`
+**Category**: Orchestration & Monitoring
 **Primary Function**: Coordinate and manage multiple agents
 
 **Key Capabilities**:
@@ -200,8 +200,8 @@ All agents communicate via the **Model Context Protocol (MCP)**, ensuring standa
 **Related Documentation**: [Multi-Agent Orchestrator Details](knowledge_base/agents/orchestration/multi_agent_orchestrator.md)
 
 ### 7. Pipeline Monitor
-**File**: `agents/pipeline_monitor.py`  
-**Category**: Orchestration & Monitoring  
+**File**: `agents/pipeline_monitor.py`
+**Category**: Orchestration & Monitoring
 **Primary Function**: Monitor data pipeline health and performance
 
 **Key Capabilities**:
@@ -234,8 +234,8 @@ All agents communicate via the **Model Context Protocol (MCP)**, ensuring standa
 ## Specialized Utility Agents
 
 ### 8. Government Information Downloader
-**File**: `agents/govinfo_downloader.py`  
-**Category**: Specialized Utility  
+**File**: `agents/govinfo_downloader.py`
+**Category**: Specialized Utility
 **Primary Function**: Download and process government information from various sources
 
 **Key Capabilities**:
@@ -441,9 +441,9 @@ For agent-related issues:
 
 ### Epstein Files Downloader MCP Server
 
-**Location**: `mcp_servers/epstein_files_downloader/server.py`  
-**Status**: Active  
-**Version**: 1.0.0  
+**Location**: `mcp_servers/epstein_files_downloader/server.py`
+**Status**: Active
+**Version**: 1.0.0
 **Purpose**: Programmatic access to DOJ, FBI, and House Oversight document releases
 
 #### Key Capabilities
